@@ -34,7 +34,7 @@ func newService(n entities.NewService, teamID string) entities.Service {
 	return entities.Service{
 		ID: uuid.NewUUID(), Slug: n.Slug, Name: strings.TrimSpace(n.Name), Description: strings.TrimSpace(n.Description),
 		OwnerTeamID: teamID, GitHubRepo: strings.TrimSpace(n.GitHubRepo), ImageRepository: strings.TrimSpace(n.ImageRepository),
-		CreatedAt: clock.Now().UTC(),
+		BuildWorkflow: entities.DefaultBuildWorkflow, CreatedAt: clock.Now().UTC(),
 	}
 }
 

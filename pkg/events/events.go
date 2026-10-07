@@ -27,4 +27,5 @@ const (
 	TargetUser    = "user"
 	TargetService = "service"
 	TargetConfig  = "config"
+	TargetRelease = "release"
 )

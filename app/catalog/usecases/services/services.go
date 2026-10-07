@@ -67,3 +67,7 @@ func (u ServicesUsecase) ListOwnedBy(ctx context.Context, teamSlug string) ([]en
 	}
 	return u.store.List(ctx, entities.ServiceFilter{OwnerTeamIDs: []string{teamID}})
 }
+
+func (u ServicesUsecase) ForRepository(ctx context.Context, githubRepo string) ([]entities.Service, error) {
+	return u.store.List(ctx, entities.ServiceFilter{GitHubRepo: githubRepo})
+}

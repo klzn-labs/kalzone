@@ -14,6 +14,8 @@ const (
 	CodeLastMaintainer   Code = "err_last_maintainer"
 	CodeSignInFailed     Code = "err_sign_in_failed"
 	CodeInvalidCSRFToken Code = "err_invalid_csrf_token"
+	CodeUpstream         Code = "err_upstream"
+	CodeNotConfigured    Code = "err_not_configured"
 )
 
 type AppError struct {

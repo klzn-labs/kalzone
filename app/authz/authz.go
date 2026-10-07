@@ -15,6 +15,7 @@ const (
 	DeleteService   Action = "service.delete"
 	TransferService Action = "service.transfer"
 	EditConfig      Action = "config.edit"
+	CreateRelease   Action = "release.create"
 	Deploy          Action = "deploy"
 	ManageMembers   Action = "team.members"
 	ManageTeams     Action = "teams.manage"
@@ -72,7 +73,7 @@ func (p Policy) Can(ctx context.Context, a actor.Actor, action Action, r Resourc
 
 func (p Policy) requiredRole(ctx context.Context, action Action, r Resource) (Role, error) {
 	switch action {
-	case CreateService, EditService:
+	case CreateService, EditService, CreateRelease:
 		return RoleMember, nil
 	case DeleteService, TransferService, ManageMembers:
 		return RoleMaintainer, nil
