@@ -1,0 +1,16 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+<div class="login-page">
+  <div class="card login-card">
+    <span class="brand-mark">{{icon "logo"}}</span>
+    <h1>Welcome to Platform</h1>
+    <p class="lead">Your services, teams and environments in one place.</p>
+    {{with .Data.Error}}<div class="alert alert-danger">{{icon "alert"}}<span>{{.}}</span></div>{{end}}
+    <a class="btn btn-github" href="/auth/github?next={{.Data.Next}}">{{icon "github"}}Continue with GitHub</a>
+    <p class="fine">Anyone with a GitHub account can sign in and look around.<br>A team maintainer has to add you before you can change things.</p>
+  </div>
+</div>
+</body>
+</html>{{end}}

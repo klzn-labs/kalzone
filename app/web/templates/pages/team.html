@@ -1,0 +1,67 @@
+{{define "content"}}
+{{$d := .Data}}{{$csrf := .Viewer.CSRFToken}}{{$slug := $d.Team.Slug}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/teams">Teams</a> / {{$slug}}</div>
+    <div class="title-row">
+      {{template "service-icon" dict "Slug" $slug "Name" $d.Team.Name "Large" true}}
+      <div><h1>{{$d.Team.Name}}</h1><div class="row" style="margin-top:4px"><span class="mono muted">{{$slug}}</span><span class="badge">{{len $d.Members}} members</span><span class="badge">{{len $d.Services}} services</span></div></div>
+    </div>
+  </div>
+  <div class="actions"><a class="btn btn-primary" href="/services/new?team={{$slug}}">{{icon "plus"}}New service</a></div>
+</div>
+
+<div class="split">
+  <div>
+    <div class="section-title mt-0"><h2>Services</h2></div>
+    {{if $d.Services}}<div class="grid grid-2">{{range $d.Services}}{{template "service-card" .}}{{end}}</div>
+    {{else}}<div class="card">{{template "empty" dict "Icon" "box" "Title" "This team owns no services" "Text" "Register one and it will show up here." "Href" (printf "/services/new?team=%s" $slug) "Action" "New service"}}</div>{{end}}
+
+    {{if $d.IsAdmin}}
+    <div class="card danger-zone" style="margin-top:24px">
+      <div class="card-header"><div><h2>Danger zone</h2><p>Admins only</p></div></div>
+      <div class="card-body"><div class="danger-row">
+        <div><h3>Delete this team</h3><p>Only possible once it owns no services. Memberships are removed.</p></div>
+        <form method="post" action="/teams/{{$slug}}/delete" hx-post="/teams/{{$slug}}/delete" hx-confirm="Delete the team {{$d.Team.Name}}?" hx-target="next .form-error">
+          {{template "csrf" $csrf}}<button class="btn btn-danger">{{icon "trash"}}Delete team</button>
+        </form>
+        <div class="form-error" style="width:100%"></div>
+      </div></div>
+    </div>
+    {{end}}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div><h2>Members</h2><p>{{if $d.CanManage}}You can manage this team{{else}}Ask a maintainer to change membership{{end}}</p></div></div>
+    {{if $d.Members}}
+    <ul class="timeline">
+      {{range $d.Members}}
+      <li>
+        {{template "avatar" dict "Name" .User.Name "Login" .User.Login "URL" .User.AvatarURL "Class" ""}}
+        <div class="what"><div class="line"><b>{{if .User.Name}}{{.User.Name}}{{else}}{{.User.Login}}{{end}}</b></div><div class="small muted">@{{.User.Login}}</div></div>
+        <div class="row" style="margin-left:auto">
+          {{template "role-badge" (print .Role)}}
+          {{if $d.CanManage}}
+          <form method="post" action="/teams/{{$slug}}/members/{{.User.Login}}/remove" hx-post="/teams/{{$slug}}/members/{{.User.Login}}/remove" hx-confirm="Remove @{{.User.Login}} from {{$d.Team.Name}}?" hx-target="closest .card" hx-swap="afterbegin">
+            {{template "csrf" $csrf}}<button class="btn btn-ghost btn-icon btn-sm" title="Remove @{{.User.Login}}" aria-label="Remove @{{.User.Login}}">{{icon "x"}}</button>
+          </form>
+          {{end}}
+        </div>
+      </li>
+      {{end}}
+    </ul>
+    {{else}}{{template "empty" dict "Icon" "users" "Title" "No members yet" "Text" "Add the first maintainer." "Href" "" "Action" ""}}{{end}}
+    {{if $d.CanManage}}
+    <form class="card-body" style="border-top:1px solid var(--border)" method="post" action="/teams/{{$slug}}/members" hx-post="/teams/{{$slug}}/members" hx-target="find .form-error">
+      {{template "csrf" $csrf}}
+      <div class="form-error"></div>
+      <div class="field"><label for="member-login">GitHub login</label><input id="member-login" name="login" type="text" class="mono" placeholder="octocat" required><span class="hint">They need to have signed in once.</span></div>
+      <div class="form-inline" style="margin-top:12px">
+        <div class="field"><label for="member-role">Role</label><select id="member-role" name="role"><option value="member">Member — edits dev</option><option value="maintainer">Maintainer — edits prod, manages team</option></select></div>
+        <button class="btn btn-primary">{{icon "plus"}}Add or change</button>
+      </div>
+    </form>
+    {{end}}
+  </div>
+</div>
+{{end}}

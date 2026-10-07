@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: Rollout strategy
+        type: choice
+        options: [canary, bluegreen]
+        default: bluegreen
+
+concurrency:
+  group: release-controlplane
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push image
+        run: |
+          docker build -t adrianozdp/platform-controlplane:${{ github.sha }} .
+          docker push adrianozdp/platform-controlplane:${{ github.sha }}
+
+  install-deployctl:
+    needs: test
+    uses: adrianozp/infra-plateful/.github/workflows/install-deployctl.yml@main
+    secrets: inherit
+
+  deploy:
+    needs: [publish, install-deployctl]
+    uses: adrianozp/infra-plateful/.github/workflows/deploy.yml@main
+    with:
+      service: controlplane
+      image: adrianozdp/platform-controlplane:${{ github.sha }}
+      version: ${{ github.sha }}
+      strategy: ${{ inputs.strategy }}
+    secrets: inherit

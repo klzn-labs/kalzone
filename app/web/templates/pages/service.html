@@ -1,0 +1,88 @@
+{{define "content"}}
+{{$d := .Data}}
+{{template "service-header" dict "Service" $d.Service "Team" $d.Team "Envs" $d.Envs "Tab" "overview"}}
+
+<div class="split">
+  <div class="stack">
+    <div class="card">
+      <div class="card-header"><div><h2>About</h2><p>What this service is and where it comes from</p></div></div>
+      <div class="card-body">
+        <dl class="details">
+          <dt>Description</dt><dd>{{if $d.Service.Description}}{{$d.Service.Description}}{{else}}<span class="muted">No description yet.</span>{{end}}</dd>
+          <dt>Owner</dt><dd><a href="/teams/{{$d.Team.Slug}}">{{$d.Team.Name}}</a></dd>
+          <dt>Repository</dt><dd>{{if $d.Service.GitHubRepo}}<a class="mono" href="https://github.com/{{$d.Service.GitHubRepo}}" target="_blank" rel="noopener">{{$d.Service.GitHubRepo}}</a>{{else}}<span class="muted">Not linked</span>{{end}}</dd>
+          <dt>Image</dt><dd>{{if $d.Service.ImageRepository}}<span class="mono">{{$d.Service.ImageRepository}}</span>{{else}}<span class="muted">Not set</span>{{end}}</dd>
+          <dt>Registered</dt><dd><span title="{{date $d.Service.CreatedAt}}">{{ago $d.Service.CreatedAt}}</span></dd>
+        </dl>
+        {{if $d.CanEdit}}
+        <details class="disclosure" style="margin-top:18px">
+          <summary class="btn btn-sm">{{icon "edit"}}<span class="closed-only">Edit details</span><span class="open-only">Close editor</span></summary>
+          <form class="inline-panel" method="post" action="/services/{{$d.Service.Slug}}/update" hx-post="/services/{{$d.Service.Slug}}/update" hx-target="find .form-error">
+            {{template "csrf" $.Viewer.CSRFToken}}
+            <div class="form-error"></div>
+            <div class="field"><label>Display name</label><input name="name" type="text" value="{{$d.Service.Name}}" required maxlength="120"></div>
+            <div class="field"><label>Description</label><textarea name="description" maxlength="2000">{{$d.Service.Description}}</textarea></div>
+            <div class="form-row" style="margin-top:16px">
+              <div class="field"><label>GitHub repository</label><input name="github_repo" type="text" class="mono" value="{{$d.Service.GitHubRepo}}" placeholder="owner/name"></div>
+              <div class="field"><label>Image repository</label><input name="image_repository" type="text" class="mono" value="{{$d.Service.ImageRepository}}" placeholder="docker.io/team/api"></div>
+            </div>
+            <div class="form-actions"><button class="btn btn-primary">Save changes</button></div>
+          </form>
+        </details>
+        {{end}}
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      {{range $d.Envs}}
+      <a class="card service-card" href="/services/{{$d.Service.Slug}}/env/{{.Env.Slug}}">
+        <div class="row"><h2>{{.Env.Name}}</h2><span class="spacer"></span>{{template "env-badge" .Env.Slug}}</div>
+        {{if .Revision.Number}}
+          <dl class="kv" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <div><dt>Revision</dt><dd>r{{.Revision.Number}}</dd></div>
+            <div><dt>Replicas</dt><dd>{{.Revision.Spec.Replicas}}</dd></div>
+            <div><dt>Variables</dt><dd>{{len .Revision.Env}}</dd></div>
+            <div><dt>Secrets</dt><dd>{{len .Revision.Secrets}}</dd></div>
+          </dl>
+          <div class="row small muted">{{icon "globe"}}{{if .Revision.Spec.Host}}<span class="mono">{{.Revision.Spec.Host}}</span>{{else}}no public host{{end}}</div>
+        {{else}}
+          <p class="muted">Not configured yet. Defaults apply until someone saves a revision.</p>
+        {{end}}
+      </a>
+      {{end}}
+    </div>
+
+    {{if $d.CanMaintain}}
+    <div class="card danger-zone">
+      <div class="card-header"><div><h2>Danger zone</h2><p>Maintainers of {{$d.Team.Name}} and admins only</p></div></div>
+      <div class="card-body">
+        <div class="danger-row">
+          <div><h3>Move to another team</h3><p>The new team becomes responsible for this service and its config.</p></div>
+          <form class="form-inline" method="post" action="/services/{{$d.Service.Slug}}/transfer" hx-post="/services/{{$d.Service.Slug}}/transfer" hx-target="next .form-error">
+            {{template "csrf" $.Viewer.CSRFToken}}
+            <select name="team" aria-label="New owning team" style="width:200px">{{range $d.Teams}}{{if ne .ID $d.Team.ID}}<option value="{{.Slug}}">{{.Name}}</option>{{end}}{{end}}</select>
+            <button class="btn">{{icon "swap"}}Move</button>
+          </form>
+          <div class="form-error" style="width:100%"></div>
+        </div>
+        <div class="danger-row">
+          <div><h3>Delete this service</h3><p>It disappears from the catalog. Its slug stays reserved and its history stays in the audit log.</p></div>
+          <form class="form-inline" method="post" action="/services/{{$d.Service.Slug}}/delete" hx-post="/services/{{$d.Service.Slug}}/delete" hx-target="next .form-error">
+            {{template "csrf" $.Viewer.CSRFToken}}
+            <input type="text" name="confirm" class="mono" placeholder="{{$d.Service.Slug}}" aria-label="Type the slug to confirm" style="width:200px">
+            <button class="btn btn-danger">{{icon "trash"}}Delete</button>
+          </form>
+          <div class="form-error" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
+    {{end}}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div><h2>Activity</h2><p>Changes to this service</p></div></div>
+    {{if $d.Activity}}<ul class="timeline">{{range $d.Activity}}{{template "activity-line" .}}{{end}}</ul>
+    {{else}}{{template "empty" dict "Icon" "history" "Title" "No activity yet" "Text" "Edits and config changes will show up here." "Href" "" "Action" ""}}{{end}}
+  </div>
+</div>
+{{end}}

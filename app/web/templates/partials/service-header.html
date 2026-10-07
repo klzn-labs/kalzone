@@ -1,0 +1,23 @@
+{{define "service-header"}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/services">Services</a> / <a href="/teams/{{.Team.Slug}}">{{.Team.Slug}}</a></div>
+    <div class="title-row">
+      {{template "service-icon" dict "Slug" .Service.Slug "Name" .Service.Name "Large" true}}
+      <div>
+        <h1>{{.Service.Name}}</h1>
+        <div class="row" style="margin-top:4px">
+          <span class="mono muted">{{.Service.Slug}}</span>
+          <span class="badge badge-accent">{{icon "users"}}{{.Team.Name}}</span>
+          {{if .Service.GitHubRepo}}<a class="badge badge-outline" href="https://github.com/{{.Service.GitHubRepo}}" target="_blank" rel="noopener">{{icon "github"}}{{.Service.GitHubRepo}}</a>{{end}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<nav class="tabs">
+  <a class="tab {{if eq .Tab "overview"}}active{{end}}" href="/services/{{.Service.Slug}}">{{icon "layers"}}Overview</a>
+  {{$tab := .Tab}}{{$slug := .Service.Slug}}
+  {{range .Envs}}<a class="tab {{if eq $tab .Env.Slug}}active{{end}}" href="/services/{{$slug}}/env/{{.Env.Slug}}">{{if .Env.Protected}}{{icon "lock"}}{{else}}{{icon "server"}}{{end}}{{.Env.Name}}</a>{{end}}
+</nav>
+{{end}}

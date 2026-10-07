@@ -1,0 +1,39 @@
+{{define "content"}}
+{{$d := .Data}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/services">Services</a> / New</div>
+    <h1>Register a service</h1>
+    <p class="lead">A service is one container image plus its config. You can set the config for each environment once it exists.</p>
+  </div>
+</div>
+
+{{if not $d.CanPick}}
+<div class="alert alert-warn" style="margin-bottom:20px">{{icon "alert"}}<span>You need to be on a team to register a service. Ask a team maintainer to add <b>@{{.Viewer.Actor.Login}}</b>.</span></div>
+{{end}}
+
+<form class="card" method="post" action="/services" hx-post="/services" hx-target="find .form-error">
+  {{template "csrf" .Viewer.CSRFToken}}
+  <div class="card-body">
+    <div class="form-error"></div>
+    <div class="form-row">
+      <div class="field"><label for="name">Display name</label><input id="name" name="name" type="text" placeholder="Places API" required maxlength="120"></div>
+      <div class="field"><label for="slug">Slug</label><input id="slug" name="slug" type="text" class="mono" placeholder="places-api" required pattern="[a-z][a-z0-9-]{1,38}[a-z0-9]"><span class="hint">Lowercase letters, digits and dashes. It can't be changed later.</span></div>
+    </div>
+    <div class="field"><label for="team">Owning team</label>
+      <select id="team" name="team" required {{if not $d.CanPick}}disabled{{end}}>
+        {{range $d.Teams}}<option value="{{.Slug}}" {{if eq .Slug $d.Selected}}selected{{end}}>{{.Name}} ({{.Slug}})</option>{{end}}
+      </select>
+    </div>
+    <div class="field"><label for="description">Description</label><textarea id="description" name="description" maxlength="2000" placeholder="What does it do, and who calls it?"></textarea></div>
+    <div class="form-row">
+      <div class="field"><label for="github_repo">GitHub repository <span class="muted">(optional)</span></label><input id="github_repo" name="github_repo" type="text" class="mono" placeholder="adrianozp/go-plateful"></div>
+      <div class="field"><label for="image_repository">Image repository <span class="muted">(optional)</span></label><input id="image_repository" name="image_repository" type="text" class="mono" placeholder="docker.io/adrianozdp/plateful-api"><span class="hint">Without a tag; releases pin a digest later.</span></div>
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="/services">Cancel</a>
+      <button class="btn btn-primary" {{if not $d.CanPick}}disabled{{end}}>{{icon "plus"}}Create service</button>
+    </div>
+  </div>
+</form>
+{{end}}

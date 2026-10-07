@@ -1,0 +1,22 @@
+{{define "avatar"}}{{if .URL}}<img class="avatar {{.Class}}" src="{{.URL}}" alt="" title="@{{.Login}}" loading="lazy">{{else}}<span class="avatar {{.Class}}" title="@{{.Login}}">{{initials (or .Name .Login)}}</span>{{end}}{{end}}
+
+{{define "service-icon"}}<span class="service-icon {{if .Large}}lg{{end}} hue-{{hue .Slug}}">{{initials .Name}}</span>{{end}}
+
+{{define "env-badge"}}{{if eq . "prod"}}<span class="badge badge-prod">{{icon "lock"}}prod</span>{{else}}<span class="badge badge-dev"><span class="dot"></span>{{.}}</span>{{end}}{{end}}
+
+{{define "role-badge"}}{{if eq . "maintainer"}}<span class="badge badge-accent">{{icon "shield"}}maintainer</span>{{else if eq . "member"}}<span class="badge">member</span>{{end}}{{end}}
+
+{{define "csrf"}}<input type="hidden" name="_csrf" value="{{.}}">{{end}}
+
+{{define "flash"}}{{if .Message}}<div class="toast {{if .Error}}error{{end}}" role="status">{{if .Error}}{{icon "alert"}}{{else}}{{icon "check"}}{{end}}<span>{{.Message}}</span></div>{{end}}{{end}}
+
+{{define "empty"}}<div class="empty"><div class="empty-icon">{{icon .Icon}}</div><h3>{{.Title}}</h3><p>{{.Text}}</p>{{if .Href}}<a class="btn btn-primary" href="{{.Href}}">{{icon "plus"}}{{.Action}}</a>{{end}}</div>{{end}}
+
+{{define "activity-line"}}<li>
+  {{template "avatar" dict "Name" "" "Login" .ActorLogin "URL" "" "Class" "avatar-sm"}}
+  <div class="what">
+    <div class="line"><b>@{{.ActorLogin}}</b> {{.Phrase}} {{if .Link}}<a href="{{.Link}}">{{.TargetName}}</a>{{else}}<b>{{.TargetName}}</b>{{end}}</div>
+    {{if or .Environment .Detail}}<div class="sub">{{if .Environment}}{{template "env-badge" .Environment}}{{end}}{{if .Detail}}<span class="badge badge-outline mono">{{.Detail}}</span>{{end}}</div>{{end}}
+  </div>
+  <time class="when" datetime="{{iso .At}}" title="{{date .At}}">{{ago .At}}</time>
+</li>{{end}}

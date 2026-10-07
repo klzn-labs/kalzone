@@ -1,0 +1,37 @@
+{{define "content"}}
+{{$d := .Data}}{{$csrf := .Viewer.CSRFToken}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Organization</div>
+    <h1>People</h1>
+    <p class="lead">Everyone who has signed in. Platform admins can do anything, including creating teams.</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead><tr><th>Person</th><th>Teams</th><th>Last sign-in</th><th class="right">Role</th></tr></thead>
+    <tbody>
+    {{range $d.People}}
+      <tr>
+        <td><div class="cell-user">{{template "avatar" dict "Name" .User.Name "Login" .User.Login "URL" .User.AvatarURL "Class" ""}}<div><div><b>{{if .User.Name}}{{.User.Name}}{{else}}{{.User.Login}}{{end}}</b></div><div class="sub">@{{.User.Login}}</div></div></div></td>
+        <td><div class="row">{{range .Teams}}<a class="badge badge-accent" href="/teams/{{.Team.Slug}}">{{.Team.Slug}}{{if eq (print .Role) "maintainer"}} · maintainer{{end}}</a>{{else}}<span class="muted">—</span>{{end}}</div></td>
+        <td class="muted nowrap" title="{{date .User.LastLoginAt}}">{{ago .User.LastLoginAt}}</td>
+        <td class="right">
+          <div class="row" style="justify-content:flex-end">
+          {{if .User.Admin}}<span class="badge badge-warn">{{icon "shield"}}admin</span>{{end}}
+          {{if and $d.IsAdmin (ne .User.Login $d.Self)}}
+            <form method="post" action="/people/{{.User.Login}}/admin" hx-post="/people/{{.User.Login}}/admin" hx-target="closest .card" hx-swap="afterbegin">
+              {{template "csrf" $csrf}}
+              {{if .User.Admin}}<input type="hidden" name="admin" value="false"><button class="btn btn-sm btn-ghost">Revoke admin</button>
+              {{else}}<input type="hidden" name="admin" value="true"><button class="btn btn-sm">Make admin</button>{{end}}
+            </form>
+          {{end}}
+          </div>
+        </td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}

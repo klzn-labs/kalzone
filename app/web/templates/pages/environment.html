@@ -1,0 +1,146 @@
+{{define "content"}}
+{{$d := .Data}}{{$csrf := .Viewer.CSRFToken}}
+{{$base := printf "/services/%s/env/%s" $d.Service.Slug $d.Env.Slug}}
+{{template "service-header" dict "Service" $d.Service "Team" $d.Team "Envs" $d.Envs "Tab" $d.Env.Slug}}
+
+{{if $d.Env.Protected}}
+<div class="lock-banner">{{icon "lock"}}<span><b>{{$d.Env.Name}} is protected.</b> Only maintainers of {{$d.Team.Name}} and platform admins can change its config.</span></div>
+{{end}}
+
+<div class="split">
+  <div class="stack">
+    <div class="card">
+      <div class="card-header">
+        <div><h2>Runtime</h2><p>{{if $d.Revision.Number}}Revision r{{$d.Revision.Number}} · saved {{ago $d.Revision.CreatedAt}}{{else}}Defaults · nothing saved yet{{end}}</p></div>
+        {{template "env-badge" $d.Env.Slug}}
+      </div>
+      <div class="card-body">
+        <dl class="kv">
+          <div><dt>Port</dt><dd>{{$d.Revision.Spec.Port}}</dd></div>
+          <div><dt>Health check</dt><dd>{{$d.Revision.Spec.HealthPath}}</dd></div>
+          <div><dt>Replicas</dt><dd>{{$d.Revision.Spec.Replicas}}</dd></div>
+          <div><dt>Memory</dt><dd>{{$d.Revision.Spec.MemoryMB}} MB</dd></div>
+          <div><dt>CPU</dt><dd>{{$d.Revision.Spec.CPUMillis}}m</dd></div>
+          <div><dt>Public host</dt>{{if $d.Revision.Spec.Host}}<dd>{{$d.Revision.Spec.Host}}</dd>{{else}}<dd class="empty">none</dd>{{end}}</div>
+        </dl>
+        {{if $d.CanEdit}}
+        <details class="disclosure" style="margin-top:16px">
+          <summary class="btn btn-sm">{{icon "settings"}}<span class="closed-only">Change runtime settings</span><span class="open-only">Close</span></summary>
+          <form class="inline-panel" method="post" action="{{$base}}/spec" hx-post="{{$base}}/spec" hx-target="find .form-error">
+            {{template "csrf" $csrf}}
+            <div class="form-error"></div>
+            <div class="form-row">
+              <div class="field"><label>Port</label><input name="port" type="number" min="1" max="65535" value="{{$d.Revision.Spec.Port}}" required></div>
+              <div class="field"><label>Health path</label><input name="health_path" type="text" class="mono" value="{{$d.Revision.Spec.HealthPath}}" required></div>
+              <div class="field"><label>Replicas</label><input name="replicas" type="number" min="1" max="5" value="{{$d.Revision.Spec.Replicas}}" required></div>
+            </div>
+            <div class="form-row" style="margin-top:12px">
+              <div class="field"><label>Memory (MB)</label><input name="memory_mb" type="number" min="32" max="4096" value="{{$d.Revision.Spec.MemoryMB}}" required></div>
+              <div class="field"><label>CPU (millicores)</label><input name="cpu_millis" type="number" min="50" max="4000" step="50" value="{{$d.Revision.Spec.CPUMillis}}" required></div>
+              <div class="field"><label>Public host</label><input name="host" type="text" class="mono" value="{{$d.Revision.Spec.Host}}" placeholder="api.kalz.one"></div>
+            </div>
+            <div class="field"><label>Why the change? <span class="muted">(optional)</span></label><input name="message" type="text" maxlength="255" placeholder="More memory for the import job"></div>
+            <div class="form-actions"><button class="btn btn-primary">Save as new revision</button></div>
+          </form>
+        </details>
+        {{end}}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div><h2>Environment variables</h2><p>Plain values, visible to everyone who can see this service</p></div><span class="badge">{{len $d.Variables}}</span></div>
+      {{if $d.Variables}}
+      <table class="table">
+        <thead><tr><th>Name</th><th>Value</th>{{if $d.CanEdit}}<th class="right"><span class="sr-only">Actions</span></th>{{end}}</tr></thead>
+        <tbody>
+        {{range $d.Variables}}
+          <tr>
+            <td class="key">{{.Name}}</td>
+            <td class="value">{{.Value}}</td>
+            {{if $d.CanEdit}}<td class="right">
+              <form method="post" action="{{$base}}/variables/{{.Name}}/remove" hx-post="{{$base}}/variables/{{.Name}}/remove" hx-confirm="Remove {{.Name}} from {{$d.Env.Name}}?" hx-target="closest .card" hx-swap="afterbegin">
+                {{template "csrf" $csrf}}<button class="btn btn-ghost btn-icon btn-sm" title="Remove {{.Name}}" aria-label="Remove {{.Name}}">{{icon "trash"}}</button>
+              </form>
+            </td>{{end}}
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+      {{else}}{{template "empty" dict "Icon" "settings" "Title" "No variables" "Text" "Add the first one below." "Href" "" "Action" ""}}{{end}}
+      {{if $d.CanEdit}}
+      <div class="card-body" style="border-top:1px solid var(--border)">
+        <form method="post" action="{{$base}}/variables" hx-post="{{$base}}/variables" hx-target="find .form-error">
+          {{template "csrf" $csrf}}
+          <div class="form-error"></div>
+          <div class="form-inline">
+            <div class="field"><label for="var-name">Name</label><input id="var-name" name="name" type="text" class="mono" placeholder="LOG_LEVEL" required pattern="[A-Z_][A-Z0-9_]*"></div>
+            <div class="field" style="flex:2"><label for="var-value">Value</label><input id="var-value" name="value" type="text" class="mono" placeholder="info"></div>
+            <button class="btn btn-primary">{{icon "plus"}}Add or update</button>
+          </div>
+        </form>
+      </div>
+      {{end}}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div><h2>Secrets</h2><p>Encrypted at rest. Values are write-only and never shown again.</p></div><span class="badge">{{icon "key"}}{{len $d.Secrets}}</span></div>
+      {{if $d.Secrets}}
+      <table class="table">
+        <thead><tr><th>Name</th><th>Value</th><th>Last set</th>{{if $d.CanEdit}}<th class="right"><span class="sr-only">Actions</span></th>{{end}}</tr></thead>
+        <tbody>
+        {{range $d.Secrets}}
+          <tr>
+            <td class="key">{{.Name}}</td>
+            <td><span class="masked">••••••••</span></td>
+            <td><div class="cell-user">{{template "avatar" dict "Name" .SetBy.Name "Login" .SetBy.Login "URL" .SetBy.AvatarURL "Class" "avatar-sm"}}<span><span class="muted">@{{.SetBy.Login}}</span> · <span title="{{date .Info.SetAt}}">{{ago .Info.SetAt}}</span></span></div></td>
+            {{if $d.CanEdit}}<td class="right">
+              <form method="post" action="{{$base}}/secrets/{{.Name}}/remove" hx-post="{{$base}}/secrets/{{.Name}}/remove" hx-confirm="Remove the secret {{.Name}} from {{$d.Env.Name}}?" hx-target="closest .card" hx-swap="afterbegin">
+                {{template "csrf" $csrf}}<button class="btn btn-ghost btn-icon btn-sm" title="Remove {{.Name}}" aria-label="Remove {{.Name}}">{{icon "trash"}}</button>
+              </form>
+            </td>{{end}}
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+      {{else}}{{template "empty" dict "Icon" "key" "Title" "No secrets" "Text" "Database passwords, API keys and tokens belong here." "Href" "" "Action" ""}}{{end}}
+      {{if $d.CanEdit}}
+      <div class="card-body" style="border-top:1px solid var(--border)">
+        <form method="post" action="{{$base}}/secrets" hx-post="{{$base}}/secrets" hx-target="find .form-error" autocomplete="off">
+          {{template "csrf" $csrf}}
+          <div class="form-error"></div>
+          <div class="form-inline">
+            <div class="field"><label for="secret-name">Name</label><input id="secret-name" name="name" type="text" class="mono" placeholder="DB_PASSWORD" required pattern="[A-Z_][A-Z0-9_]*"></div>
+            <div class="field" style="flex:2"><label for="secret-value">Value</label><input id="secret-value" name="value" type="password" class="mono" placeholder="Paste the value" required autocomplete="new-password"></div>
+            <button class="btn btn-primary">{{icon "lock"}}Save secret</button>
+          </div>
+        </form>
+      </div>
+      {{end}}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div><h2>Revision history</h2><p>Every change is a new, immutable revision</p></div></div>
+    {{if $d.History}}
+      {{range $d.History}}
+      <div class="revision">
+        <div class="revision-head">
+          <span class="revision-number">r{{.Revision.Number}}</span>
+          <span class="msg">{{if .Revision.Message}}{{.Revision.Message}}{{else}}<span class="muted">No message</span>{{end}}</span>
+        </div>
+        <div class="row small muted" style="margin-top:6px">{{template "avatar" dict "Name" .Author.Name "Login" .Author.Login "URL" .Author.AvatarURL "Class" "avatar-sm"}}@{{.Author.Login}} · <span title="{{date .Revision.CreatedAt}}">{{ago .Revision.CreatedAt}}</span></div>
+        {{if .Changes}}
+        <div class="diff">
+          {{range .Changes}}
+            {{if eq (print .Kind) "added"}}<div class="diff-line diff-added"><span class="sign">+</span><span class="k">{{.Key}}</span>{{if eq .Section "env"}}<span class="v">= {{.After}}</span>{{else if eq .Section "secret"}}<span class="v">secret</span>{{end}}</div>
+            {{else if eq (print .Kind) "removed"}}<div class="diff-line diff-removed"><span class="sign">−</span><span class="k">{{.Key}}</span>{{if eq .Section "secret"}}<span class="v">secret</span>{{end}}</div>
+            {{else}}<div class="diff-line diff-changed"><span class="sign">~</span><span class="k">{{.Key}}</span>{{if eq .Section "secret"}}<span class="v">new value</span>{{else}}<span class="v"><s>{{.Before}}</s> → {{.After}}</span>{{end}}</div>{{end}}
+          {{end}}
+        </div>
+        {{end}}
+      </div>
+      {{end}}
+    {{else}}{{template "empty" dict "Icon" "history" "Title" "No revisions yet" "Text" "The first change you save becomes r1." "Href" "" "Action" ""}}{{end}}
+  </div>
+</div>
+{{end}}
