@@ -1,0 +1,88 @@
+package mysql
+
+import (
+	"context"
+	"errors"
+
+	"github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/go-sql-driver/mysql"
+	"gorm.io/gorm"
+)
+
+const duplicateEntry = 1062
+
+const currentRevisionOfPair = "number = (SELECT MAX(m.number) FROM config_revisions m " +
+	"WHERE m.service_id = config_revisions.service_id AND m.environment = config_revisions.environment)"
+
+var errConcurrentRevision = apperror.Conflict("the config changed while you were editing it, reload and try again")
+
+type ConfigRepository struct {
+	db *gorm.DB
+}
+
+func NewConfigRepository(db *gorm.DB) ConfigRepository {
+	return ConfigRepository{db: db}
+}
+
+func (r ConfigRepository) Latest(ctx context.Context, serviceID, environment string) (entities.Revision, bool, error) {
+	var model revision
+	err := r.db.WithContext(ctx).Where("service_id = ? AND environment = ?", serviceID, environment).
+		Order("number DESC").Take(&model).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entities.Revision{}, false, nil
+	}
+	if err != nil {
+		return entities.Revision{}, false, err
+	}
+	result, err := model.toEntity()
+	return result, err == nil, err
+}
+
+func (r ConfigRepository) History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Revision, error) {
+	var models []revision
+	err := r.db.WithContext(ctx).Where("service_id = ? AND environment = ?", serviceID, environment).
+		Order("number DESC").Limit(limit).Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
+	return toRevisions(models)
+}
+
+func (r ConfigRepository) Insert(ctx context.Context, rev entities.Revision) error {
+	model, err := fromRevision(rev)
+	if err != nil {
+		return err
+	}
+	err = r.db.WithContext(ctx).Create(&model).Error
+	if isDuplicate(err) {
+		return errConcurrentRevision
+	}
+	return err
+}
+
+func (r ConfigRepository) HostTaken(ctx context.Context, host, serviceID, environment string) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&revision{}).
+		Where("host = ?", host).
+		Where("NOT (service_id = ? AND environment = ?)", serviceID, environment).
+		Where(currentRevisionOfPair).Count(&count).Error
+	return count > 0, err
+}
+
+func toRevisions(models []revision) ([]entities.Revision, error) {
+	result := make([]entities.Revision, 0, len(models))
+	for _, m := range models {
+		rev, err := m.toEntity()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, rev)
+	}
+	return result, nil
+}
+
+func isDuplicate(err error) bool {
+	var mysqlErr *mysql.MySQLError
+	return errors.As(err, &mysqlErr) && mysqlErr.Number == duplicateEntry
+}
