@@ -24,6 +24,12 @@ type Config struct {
 	Build          Build    `mapstructure:"build"`
 	Deploy         Deploy   `mapstructure:"deploy"`
 	Agent          Agent    `mapstructure:"agent"`
+	Grafana        Grafana  `mapstructure:"grafana"`
+}
+
+type Grafana struct {
+	URL   string `mapstructure:"url"`
+	Token string `mapstructure:"token"`
 }
 
 type Deploy struct {
@@ -115,7 +121,7 @@ var envKeys = []string{
 	"admins", "secrets.key", "secrets.key_id", "allowed_domains",
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
-	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token",
+	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token", "grafana.url", "grafana.token",
 }
 
 func bindEnvVars() {
