@@ -15,6 +15,8 @@ const duplicateEntry = 1062
 const currentRevisionOfPair = "number = (SELECT MAX(m.number) FROM config_revisions m " +
 	"WHERE m.service_id = config_revisions.service_id AND m.environment = config_revisions.environment)"
 
+var errRevisionNotFound = apperror.NotFound("config revision not found")
+
 var errConcurrentRevision = apperror.Conflict("the config changed while you were editing it, reload and try again")
 
 type ConfigRepository struct {
@@ -37,6 +39,19 @@ func (r ConfigRepository) Latest(ctx context.Context, serviceID, environment str
 	}
 	result, err := model.toEntity()
 	return result, err == nil, err
+}
+
+func (r ConfigRepository) ByNumber(ctx context.Context, serviceID, environment string, number int) (entities.Revision, error) {
+	var model revision
+	err := r.db.WithContext(ctx).Where("service_id = ? AND environment = ? AND number = ?", serviceID, environment, number).
+		Take(&model).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entities.Revision{}, errRevisionNotFound
+	}
+	if err != nil {
+		return entities.Revision{}, err
+	}
+	return model.toEntity()
 }
 
 func (r ConfigRepository) History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Revision, error) {

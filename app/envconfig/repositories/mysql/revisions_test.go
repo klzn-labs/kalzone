@@ -71,3 +71,16 @@ func Test_HostTaken_OnlyCountsOtherPairsCurrentRevisions(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, taken)
 }
+
+func Test_ByNumber(t *testing.T) {
+	repo := mysql.NewConfigRepository(testdb.Open(t))
+	require.NoError(t, repo.Insert(ctx, revision("r1", "svc", "dev", 1, "a.kalz.one")))
+	require.NoError(t, repo.Insert(ctx, revision("r2", "svc", "dev", 2, "b.kalz.one")))
+
+	first, err := repo.ByNumber(ctx, "svc", "dev", 1)
+	_, missing := repo.ByNumber(ctx, "svc", "dev", 9)
+
+	require.NoError(t, err)
+	require.Equal(t, "a.kalz.one", first.Spec.Host)
+	require.ErrorIs(t, missing, apperror.NotFound(""))
+}
