@@ -17,6 +17,8 @@ type Service struct {
 	OwnerTeamID     string
 	GitHubRepo      string
 	ImageRepository string
+	AutoBuild       bool
+	BuildWorkflow   string
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
 }
@@ -26,11 +28,16 @@ type ServiceChanges struct {
 	Description     *string
 	GitHubRepo      *string
 	ImageRepository *string
+	AutoBuild       *bool
+	BuildWorkflow   *string
 }
 
 type ServiceFilter struct {
 	OwnerTeamIDs []string
+	GitHubRepo   string
 }
+
+const DefaultBuildWorkflow = "platform-build.yml"
 
 type NewService struct {
 	Slug            string

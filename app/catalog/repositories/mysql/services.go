@@ -50,12 +50,8 @@ func (r ServiceRepository) List(ctx context.Context, filter entities.ServiceFilt
 	if filter.OwnerTeamIDs != nil && len(filter.OwnerTeamIDs) == 0 {
 		return []entities.Service{}, nil
 	}
-	tx := r.db.WithContext(ctx).Where("deleted_at IS NULL")
-	if filter.OwnerTeamIDs != nil {
-		tx = tx.Where("owner_team_id IN ?", filter.OwnerTeamIDs)
-	}
 	var models []service
-	if err := tx.Order("slug").Find(&models).Error; err != nil {
+	if err := filtered(r.db.WithContext(ctx), filter).Order("slug").Find(&models).Error; err != nil {
 		return nil, err
 	}
 	result := make([]entities.Service, 0, len(models))
@@ -63,6 +59,17 @@ func (r ServiceRepository) List(ctx context.Context, filter entities.ServiceFilt
 		result = append(result, m.toEntity())
 	}
 	return result, nil
+}
+
+func filtered(tx *gorm.DB, filter entities.ServiceFilter) *gorm.DB {
+	tx = tx.Where("deleted_at IS NULL")
+	if filter.OwnerTeamIDs != nil {
+		tx = tx.Where("owner_team_id IN ?", filter.OwnerTeamIDs)
+	}
+	if filter.GitHubRepo != "" {
+		tx = tx.Where("github_repo = ?", filter.GitHubRepo)
+	}
+	return tx
 }
 
 func (r ServiceRepository) CountOwnedBy(ctx context.Context, teamID string) (int64, error) {
