@@ -17,7 +17,7 @@ import (
 
 const defaultDSN = "root:test@tcp(127.0.0.1:3306)/platform_test"
 
-var tables = []string{"users", "sessions", "teams", "memberships", "services", "config_revisions", "secret_versions", "audit_events"}
+var tables = []string{"users", "sessions", "teams", "memberships", "services", "config_revisions", "secret_versions", "audit_events", "releases"}
 
 var prepare sync.Once
 
