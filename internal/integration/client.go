@@ -112,3 +112,18 @@ func encode(t *testing.T, body any) io.Reader {
 func (c *Client) Cookies(u *url.URL) []*http.Cookie {
 	return c.http.Jar.Cookies(u)
 }
+
+func (s *Suite) Raw(t *testing.T, method, path string, body []byte, headers map[string]string) Response {
+	t.Helper()
+	req, err := http.NewRequest(method, s.Server.URL+path, bytes.NewReader(body))
+	require.NoError(t, err)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	raw, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return Response{Status: resp.StatusCode, Body: string(raw)}
+}

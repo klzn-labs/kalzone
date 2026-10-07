@@ -16,6 +16,9 @@ API on the same usecases. Design documents live in `docs/superpowers/specs`.
 - Secrets encrypted with AES-256-GCM, write-only, versioned with the config
 - One authorization policy (`app/authz`) used by every usecase
 - Audit log of every change
+- Releases: immutable, digest-pinned images. The platform triggers builds in GitHub
+  Actions through a GitHub App, builds report back with a GitHub OIDC token, and
+  third-party images are registered by tag
 
 ## Layout
 
@@ -57,8 +60,30 @@ as a callback URL.
 | `PLATFORM_SECRETS_KEY_ID` | `k1` | stored next to each ciphertext for key rotation |
 | `PLATFORM_ALLOWED_DOMAINS` | `localhost` | hosts a service may claim must end with one of these |
 | `PLATFORM_SESSION_TTL` | `168h` | session lifetime, renewed when less than a day is left |
+| `PLATFORM_GITHUB_APP_ID` | | GitHub App id, needed to start builds |
+| `PLATFORM_GITHUB_APP_PRIVATE_KEY` | | the App's PEM private key (`\n` escapes allowed) |
+| `PLATFORM_GITHUB_WEBHOOK_SECRET` | | secret GitHub signs webhooks with |
+| `PLATFORM_OIDC_ISSUER` | `https://token.actions.githubusercontent.com` | issuer of build tokens |
+| `PLATFORM_OIDC_AUDIENCE` | the base URL | audience build tokens must carry |
+| `PLATFORM_BUILD_TIMEOUT` | `60m` | builds still running after this are marked failed |
 
 Never run production with the default secrets key.
+
+## Builds and releases
+
+1. Give the GitHub App the repository permission **Actions: read and write**,
+   subscribe it to **push** and **workflow run** events with the webhook URL
+   `https://platform.<domain>/webhooks/github`, and install it on the service's
+   repository.
+2. Allow the service's repository to use workflows from this repository
+   (Settings → Actions → General → Access) because this repository is private.
+3. Add `.github/workflows/platform-build.yml` to the service's repository. The
+   Releases tab of every service shows the file; it calls
+   [`build.yml`](.github/workflows/build.yml) here, which builds and pushes the
+   image and reports the digest with the job's OIDC token. The repository needs
+   `DOCKER_USERNAME` and `DOCKER_PASSWORD`; it never holds a platform secret.
+4. Build a ref from the Releases tab, or switch on auto-build to build every
+   push to the default branch.
 
 ## Tests
 

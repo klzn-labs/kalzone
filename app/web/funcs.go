@@ -22,6 +22,7 @@ func funcs() template.FuncMap {
 		"add":      func(a, b int) int { return a + b },
 		"dict":     dict,
 		"upper":    strings.ToUpper,
+		"short":    Short,
 	}
 }
 
@@ -80,4 +81,12 @@ func dict(values ...any) (map[string]any, error) {
 		result[key] = values[i+1]
 	}
 	return result, nil
+}
+
+func Short(value string, n int) string {
+	value = strings.TrimPrefix(value, "sha256:")
+	if len(value) <= n {
+		return value
+	}
+	return value[:n]
 }

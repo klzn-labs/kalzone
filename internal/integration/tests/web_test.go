@@ -22,23 +22,25 @@ func Test_PagesRedirectAnonymousVisitorsToLogin(t *testing.T) {
 	require.Contains(t, login.Body, "Continue with GitHub")
 }
 
+var pages = map[string]string{
+	"/":                             "Places API",
+	"/services":                     "places-api",
+	"/services?filter=mine":         "places-api",
+	"/services/new":                 "Register a service",
+	"/services/places-api":          "Danger zone",
+	"/services/places-api/env/dev":  "LOG_LEVEL",
+	"/services/places-api/releases": "Wire up the repository",
+	"/teams":                        "Places",
+	"/teams/places":                 "@bob",
+	"/audit":                        "changed the config of",
+	"/audit?team=places":            "created service",
+	"/people":                       "@eve",
+}
+
 func Test_EveryPageRenders(t *testing.T) {
 	_, p := setupPlaces(t)
 	p.bob.MustJSON(t, http.MethodPost, "/api/v1/config/places-api/dev/revisions", map[string]any{"set_env": map[string]string{"LOG_LEVEL": "debug"}}, http.StatusCreated, nil)
 
-	pages := map[string]string{
-		"/":                            "Places API",
-		"/services":                    "places-api",
-		"/services?filter=mine":        "places-api",
-		"/services/new":                "Register a service",
-		"/services/places-api":         "Danger zone",
-		"/services/places-api/env/dev": "LOG_LEVEL",
-		"/teams":                       "Places",
-		"/teams/places":                "@bob",
-		"/audit":                       "changed the config of",
-		"/audit?team=places":           "created service",
-		"/people":                      "@eve",
-	}
 	for path, want := range pages {
 		resp := p.mia.Do(t, http.MethodGet, path, nil)
 		require.Equal(t, http.StatusOK, resp.Status, path)
