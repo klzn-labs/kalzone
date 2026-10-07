@@ -67,5 +67,6 @@ func specFrom(c *gin.Context) (envconfig.Spec, error) {
 	return envconfig.Spec{
 		Port: numbers["port"], HealthPath: strings.TrimSpace(c.PostForm("health_path")), Host: strings.ToLower(strings.TrimSpace(c.PostForm("host"))),
 		MemoryMB: numbers["memory_mb"], CPUMillis: numbers["cpu_millis"], Replicas: numbers["replicas"],
+		Command: strings.TrimSpace(c.PostForm("command")),
 	}, nil
 }

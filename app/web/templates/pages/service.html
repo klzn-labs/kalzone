@@ -39,7 +39,7 @@
         <div class="row"><h2>{{.Env.Name}}</h2><span class="spacer"></span>{{template "env-badge" .Env.Slug}}</div>
         {{if .Revision.Number}}
           <dl class="kv" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-            <div><dt>Revision</dt><dd>r{{.Revision.Number}}</dd></div>
+            <div><dt>Config</dt><dd>c{{.Revision.Number}}</dd></div>
             <div><dt>Replicas</dt><dd>{{.Revision.Spec.Replicas}}</dd></div>
             <div><dt>Variables</dt><dd>{{len .Revision.Env}}</dd></div>
             <div><dt>Secrets</dt><dd>{{len .Revision.Secrets}}</dd></div>

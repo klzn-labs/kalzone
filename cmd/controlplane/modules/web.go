@@ -6,6 +6,8 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/app/catalog/usecases/environments"
 	"github.com/adrianozp/platform/app/catalog/usecases/services"
+	"github.com/adrianozp/platform/app/deploy/usecases/agents"
+	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
 	"github.com/adrianozp/platform/app/identity/usecases/users"
 	"github.com/adrianozp/platform/app/release/usecases/releases"
@@ -13,6 +15,7 @@ import (
 	"github.com/adrianozp/platform/app/team/usecases/source"
 	"github.com/adrianozp/platform/app/team/usecases/teams"
 	"github.com/adrianozp/platform/app/web"
+	agentsPage "github.com/adrianozp/platform/app/web/handlers/agents"
 	auditPage "github.com/adrianozp/platform/app/web/handlers/audit"
 	environmentPage "github.com/adrianozp/platform/app/web/handlers/environment"
 	"github.com/adrianozp/platform/app/web/handlers/login"
@@ -33,7 +36,7 @@ func Web() fx.Option {
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
-			releasesPage.NewReleasesHandler,
+			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler,
 		),
 		viewInjections(),
 		pageInjections(),
@@ -46,6 +49,8 @@ func viewInjections() fx.Option {
 		func(u teams.TeamsUsecase) web.TeamFinder { return u },
 		func(s source.LocalTeamSource) web.MembershipSource { return s },
 		func(u configs.ConfigUsecase) web.ConfigReader { return u },
+		func(u deployments.DeploymentsUsecase) web.LiveReader { return u },
+		func(u agents.AgentsUsecase) agentsPage.Agents { return u },
 		func(u environments.EnvironmentsUsecase) web.EnvironmentLister { return u },
 		func(u users.UsersUsecase) web.UserFinder { return u },
 		func(p authz.Policy) web.Authorizer { return p },
@@ -74,6 +79,8 @@ func catalogPageInjections() fx.Option {
 		func(u query.QueryUsecase) servicePage.Events { return u },
 		func(u services.ServicesUsecase) environmentPage.Services { return u },
 		func(u configs.ConfigUsecase) environmentPage.Configs { return u },
+		func(u deployments.DeploymentsUsecase) environmentPage.Deployments { return u },
+		func(u releases.ReleasesUsecase) environmentPage.Releases { return u },
 		func(u services.ServicesUsecase) releasesPage.Services { return u },
 		func(u releases.ReleasesUsecase) releasesPage.Releases { return u },
 	)
@@ -105,6 +112,6 @@ func pageRoutes() fx.Option {
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
-		releasesPage.RegisterReleasesRoutes,
+		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes,
 	)
 }

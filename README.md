@@ -16,6 +16,10 @@ API on the same usecases. Design documents live in `docs/superpowers/specs`.
 - Secrets encrypted with AES-256-GCM, write-only, versioned with the config
 - One authorization policy (`app/authz`) used by every usecase
 - Audit log of every change
+- Deploys: a deployment runs one built release with one config revision in one
+  environment; promote dev to prod, apply new config, roll back to any earlier
+  success. An agent on the host claims deployments, rolls them out with deployctl
+  and reports drift, which the platform turns into a reconcile deployment
 - Releases: immutable, digest-pinned images. The platform triggers builds in GitHub
   Actions through a GitHub App, builds report back with a GitHub OIDC token, and
   third-party images are registered by tag
@@ -66,6 +70,8 @@ as a callback URL.
 | `PLATFORM_OIDC_ISSUER` | `https://token.actions.githubusercontent.com` | issuer of build tokens |
 | `PLATFORM_OIDC_AUDIENCE` | the base URL | audience build tokens must carry |
 | `PLATFORM_BUILD_TIMEOUT` | `60m` | builds still running after this are marked failed |
+| `PLATFORM_AGENT_TOKEN` | | shared secret agents authenticate with; agents are refused without it |
+| `PLATFORM_DEPLOY_TIMEOUT` | `30m` | deployments an agent stopped reporting on are failed after this |
 
 Never run production with the default secrets key.
 
@@ -84,6 +90,34 @@ Never run production with the default secrets key.
    `DOCKER_USERNAME` and `DOCKER_PASSWORD`; it never holds a platform secret.
 4. Build a ref from the Releases tab, or switch on auto-build to build every
    push to the default branch.
+
+## The agent
+
+`cmd/agent` runs on each host, built into `adrianozdp/platform-agent`. It needs the
+Docker socket, the deployctl root and host networking (deployctl talks to
+Prometheus and Traefik on 127.0.0.1):
+
+```
+docker run -d --name platform-agent --network host --restart unless-stopped \
+  -v /var/run/docker.sock:/var/run/docker.sock -v /opt/plateful:/opt/plateful \
+  -e AGENT_PLATFORM_URL=https://platform.kalz.one -e AGENT_TOKEN=... \
+  adrianozdp/platform-agent:<sha>
+```
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `AGENT_PLATFORM_URL` | | control plane URL |
+| `AGENT_TOKEN` | | the control plane's `PLATFORM_AGENT_TOKEN` |
+| `AGENT_NAME` | host name | how the agent shows on the Agents page |
+| `AGENT_ROOT` | `/opt/plateful` | deployctl root |
+| `AGENT_DEPLOYCTL` | `/opt/plateful/bin/deployctl` | deployctl binary |
+| `AGENT_POLL` | `5s` | how often it asks for work |
+| `AGENT_DRIFT_EVERY` | `60s` | how often it compares what runs with what should |
+
+Each service runs as the deployctl service `<service>-<environment>`. A service
+with a public host gets a `Host()` rule on Traefik's TLS entrypoint; one without
+runs as a worker and needs a command. Replicas and CPU limits are not applied by
+this runtime yet.
 
 ## Tests
 

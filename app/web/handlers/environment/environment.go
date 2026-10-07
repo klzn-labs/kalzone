@@ -61,17 +61,20 @@ type data struct {
 	Secrets   []SecretRow
 	History   []RevisionView
 	CanEdit   bool
+	Deploy    DeployView
 }
 
 type EnvironmentHandler struct {
-	renderer *web.Renderer
-	views    web.Views
-	services Services
-	configs  Configs
+	renderer    *web.Renderer
+	views       web.Views
+	services    Services
+	configs     Configs
+	deployments Deployments
+	releases    Releases
 }
 
-func NewEnvironmentHandler(renderer *web.Renderer, views web.Views, services Services, configs Configs) EnvironmentHandler {
-	return EnvironmentHandler{renderer: renderer, views: views, services: services, configs: configs}
+func NewEnvironmentHandler(renderer *web.Renderer, views web.Views, services Services, configs Configs, deployments Deployments, releases Releases) EnvironmentHandler {
+	return EnvironmentHandler{renderer: renderer, views: views, services: services, configs: configs, deployments: deployments, releases: releases}
 }
 
 func (h EnvironmentHandler) Show(c *gin.Context) {
@@ -100,7 +103,8 @@ func (h EnvironmentHandler) build(ctx context.Context, a actor.Actor, serviceSlu
 		return data{}, err
 	}
 	d.CanEdit = h.views.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: d.Service.OwnerTeamID, Environment: envSlug})
-	return d, nil
+	d.Deploy, err = h.deployView(ctx, a, d)
+	return d, err
 }
 
 func (h EnvironmentHandler) frame(ctx context.Context, serviceSlug, envSlug string) (data, error) {
@@ -143,4 +147,9 @@ func RegisterEnvironmentRoutes(routes httpserver.Web, h EnvironmentHandler) {
 	routes.POST(base+"/variables/:name/remove", h.RemoveVariable)
 	routes.POST(base+"/secrets", h.SetSecret)
 	routes.POST(base+"/secrets/:name/remove", h.RemoveSecret)
+	routes.GET(base+"/deploy-panel", h.Panel)
+	routes.POST(base+"/deployments", h.Deploy)
+	routes.POST(base+"/config-applications", h.ApplyConfig)
+	routes.POST(base+"/promotions", h.Promote)
+	routes.POST(base+"/deployments/:id/rollback", h.Rollback)
 }
