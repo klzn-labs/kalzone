@@ -14,4 +14,5 @@ lint:
 	test -z "$$(gofmt -l .)"
 
 docker:
-	docker build -t $(IMAGE):$(VERSION) .
+	docker build --target controlplane -t $(IMAGE):$(VERSION) .
+	docker build --target agent -t adrianozdp/platform-agent:$(VERSION) .

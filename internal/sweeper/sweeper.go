@@ -14,11 +14,11 @@ type Sweeper interface {
 	Sweep(ctx context.Context) (int, error)
 }
 
-func Run(lc fx.Lifecycle, sweeper Sweeper) {
+func Start(lc fx.Lifecycle, name string, sweeper Sweeper) {
 	ctx, cancel := context.WithCancel(context.Background())
 	lc.Append(fx.Hook{
 		OnStart: func(context.Context) error {
-			go loop(ctx, sweeper)
+			go loop(ctx, name, sweeper)
 			return nil
 		},
 		OnStop: func(context.Context) error {
@@ -28,7 +28,7 @@ func Run(lc fx.Lifecycle, sweeper Sweeper) {
 	})
 }
 
-func loop(ctx context.Context, sweeper Sweeper) {
+func loop(ctx context.Context, name string, sweeper Sweeper) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
@@ -36,18 +36,18 @@ func loop(ctx context.Context, sweeper Sweeper) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			sweepOnce(ctx, sweeper)
+			sweepOnce(ctx, name, sweeper)
 		}
 	}
 }
 
-func sweepOnce(ctx context.Context, sweeper Sweeper) {
+func sweepOnce(ctx context.Context, name string, sweeper Sweeper) {
 	swept, err := sweeper.Sweep(ctx)
 	if err != nil {
-		log.Printf("release sweeper: %v", err)
+		log.Printf("%s sweeper: %v", name, err)
 		return
 	}
 	if swept > 0 {
-		log.Printf("release sweeper: timed out %d builds", swept)
+		log.Printf("%s sweeper: timed out %d", name, swept)
 	}
 }

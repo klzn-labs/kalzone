@@ -5,6 +5,7 @@ import (
 
 	"github.com/adrianozp/platform/app/authz"
 	catalog "github.com/adrianozp/platform/app/catalog/entities"
+	deploy "github.com/adrianozp/platform/app/deploy/entities"
 	envconfig "github.com/adrianozp/platform/app/envconfig/entities"
 	identity "github.com/adrianozp/platform/app/identity/entities"
 	team "github.com/adrianozp/platform/app/team/entities"
@@ -23,6 +24,10 @@ type ConfigReader interface {
 	Current(ctx context.Context, serviceSlug, environment string) (envconfig.Revision, error)
 }
 
+type LiveReader interface {
+	Live(ctx context.Context, serviceSlug, environment string) (deploy.Deployment, bool, error)
+}
+
 type EnvironmentLister interface {
 	List(ctx context.Context) ([]catalog.Environment, error)
 }
@@ -39,13 +44,14 @@ type Views struct {
 	teams        TeamFinder
 	memberships  MembershipSource
 	configs      ConfigReader
+	live         LiveReader
 	environments EnvironmentLister
 	users        UserFinder
 	authz        Authorizer
 }
 
-func NewViews(teams TeamFinder, memberships MembershipSource, configs ConfigReader, environments EnvironmentLister, users UserFinder, authz Authorizer) Views {
-	return Views{teams: teams, memberships: memberships, configs: configs, environments: environments, users: users, authz: authz}
+func NewViews(teams TeamFinder, memberships MembershipSource, configs ConfigReader, live LiveReader, environments EnvironmentLister, users UserFinder, authz Authorizer) Views {
+	return Views{teams: teams, memberships: memberships, configs: configs, live: live, environments: environments, users: users, authz: authz}
 }
 
 func (v Views) Can(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) bool {

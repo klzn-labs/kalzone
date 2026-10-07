@@ -25,6 +25,7 @@ import (
 const (
 	Audience      = "http://platform.test"
 	WebhookSecret = "webhook-secret"
+	AgentToken    = "agent-token"
 )
 
 type Suite struct {
@@ -67,6 +68,8 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.GitHub.AppID, cfg.GitHub.AppPrivateKey, cfg.GitHub.WebhookSecret = 1, appKey(t), WebhookSecret
 	cfg.OIDC = config.OIDC{Issuer: s.OIDC.URL, Audience: Audience}
 	cfg.Build.Timeout = time.Hour
+	cfg.Deploy.Timeout = time.Hour
+	cfg.Agent.Token = AgentToken
 	return cfg
 }
 

@@ -127,3 +127,15 @@ func (s *Suite) Raw(t *testing.T, method, path string, body []byte, headers map[
 	require.NoError(t, err)
 	return Response{Status: resp.StatusCode, Body: string(raw)}
 }
+
+func (s *Suite) Agent(t *testing.T, method, path string, body any) Response {
+	t.Helper()
+	raw, err := json.Marshal(body)
+	require.NoError(t, err)
+	if body == nil {
+		raw = nil
+	}
+	return s.Raw(t, method, path, raw, map[string]string{
+		"Authorization": "Bearer " + AgentToken, "X-Agent-Name": "vps-1", "X-Agent-Version": "test", "Content-Type": "application/json",
+	})
+}

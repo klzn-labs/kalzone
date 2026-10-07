@@ -1,0 +1,26 @@
+{{define "content"}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Infrastructure</div>
+    <h1>Agents</h1>
+    <p class="lead">Agents run on the hosts. They claim deployments, roll them out and report drift between what runs and what should run.</p>
+  </div>
+</div>
+<div class="card">
+  {{if .Data}}
+  <table class="table">
+    <thead><tr><th>Agent</th><th>Status</th><th>Version</th><th class="right">Last seen</th></tr></thead>
+    <tbody>
+    {{range .Data}}
+      <tr>
+        <td><div class="cell-user"><span class="service-icon hue-{{hue .Agent.Name}}" style="width:32px;height:32px;border-radius:9px">{{icon "server"}}</span><b class="mono">{{.Agent.Name}}</b></div></td>
+        <td>{{if .Healthy}}<span class="badge badge-ok"><span class="dot"></span>connected</span>{{else}}<span class="badge badge-danger"><span class="dot"></span>silent</span>{{end}}</td>
+        <td class="mono muted">{{.Agent.Version}}</td>
+        <td class="right muted" title="{{date .Agent.LastSeenAt}}">{{ago .Agent.LastSeenAt}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  {{else}}{{template "empty" dict "Icon" "server" "Title" "No agent has connected yet" "Text" "Start the agent on a host with AGENT_PLATFORM_URL and AGENT_TOKEN set." "Href" "" "Action" ""}}{{end}}
+</div>
+{{end}}

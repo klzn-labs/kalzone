@@ -23,6 +23,8 @@ func funcs() template.FuncMap {
 		"dict":     dict,
 		"upper":    strings.ToUpper,
 		"short":    Short,
+		"deref":    deref,
+		"digestOf": digestOf,
 	}
 }
 
@@ -89,4 +91,16 @@ func Short(value string, n int) string {
 		return value
 	}
 	return value[:n]
+}
+
+func deref(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
+}
+
+func digestOf(ref string) string {
+	_, digest, _ := strings.Cut(ref, "@")
+	return digest
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/adrianozp/platform/app/catalog/usecases/services"
 	"github.com/adrianozp/platform/app/release/handlers/callbacks"
 	releasesHandler "github.com/adrianozp/platform/app/release/handlers/releases"
-	"github.com/adrianozp/platform/app/release/handlers/sweeper"
 	"github.com/adrianozp/platform/app/release/handlers/webhooks"
 	"github.com/adrianozp/platform/app/release/repositories/catalog"
 	"github.com/adrianozp/platform/app/release/repositories/githubapp"
@@ -14,6 +13,7 @@ import (
 	"github.com/adrianozp/platform/app/release/usecases/releases"
 	"github.com/adrianozp/platform/internal/eventbus"
 	"github.com/adrianozp/platform/internal/oidc"
+	"github.com/adrianozp/platform/internal/sweeper"
 	"go.uber.org/fx"
 )
 
@@ -27,7 +27,7 @@ func Release() fx.Option {
 		releaseInjections(),
 		fx.Invoke(
 			releasesHandler.RegisterReleasesRoutes, callbacks.RegisterCallbacksRoutes,
-			webhooks.RegisterWebhooksRoutes, sweeper.Run,
+			webhooks.RegisterWebhooksRoutes, startReleaseSweeper,
 		),
 	)
 }
@@ -45,6 +45,9 @@ func releaseInjections() fx.Option {
 		func(v *oidc.Verifier) callbacks.TokenVerifier { return v },
 		func(u releases.ReleasesUsecase) callbacks.Builds { return u },
 		func(u releases.ReleasesUsecase) webhooks.Builds { return u },
-		func(u releases.ReleasesUsecase) sweeper.Sweeper { return u },
 	)
+}
+
+func startReleaseSweeper(lc fx.Lifecycle, u releases.ReleasesUsecase) {
+	sweeper.Start(lc, "release", u)
 }

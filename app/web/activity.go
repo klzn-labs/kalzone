@@ -37,6 +37,10 @@ var phrasings = map[string]phrasing{
 	"release.built":       {"finished a build of", releasesLink, releaseDetail},
 	"release.failed":      {"reported a failed build of", releasesLink, releaseDetail},
 	"release.registered":  {"registered an image for", releasesLink, releaseDetail},
+	"deploy.requested":    {"asked to deploy", configLink, deployDetail},
+	"deploy.succeeded":    {"finished deploying", configLink, deployDetail},
+	"deploy.failed":       {"reported a failed deploy of", configLink, deployDetail},
+	"deploy.drift":        {"found drift and is redeploying", configLink, deployDetail},
 	"user.admin_granted":  {"made an admin:", nil, nil},
 	"user.admin_revoked":  {"removed admin rights from", nil, nil},
 }
@@ -75,6 +79,10 @@ func releasesLink(e audit.Event) string { return "/services/" + e.TargetName + "
 
 func releaseDetail(e audit.Event) string {
 	return fmt.Sprintf("r%v", e.Details["release"])
+}
+
+func deployDetail(e audit.Event) string {
+	return fmt.Sprintf("#%v · r%v · c%v", e.Details["deployment"], e.Details["release"], e.Details["config"])
 }
 
 func memberDetail(e audit.Event) string {

@@ -1,3 +1,85 @@
+{{define "deploy-panel"}}{{$d := .Data}}{{$v := $d.Deploy}}{{$csrf := .CSRF}}
+{{$base := printf "/services/%s/env/%s" $d.Service.Slug $d.Env.Slug}}
+<div id="deploy-panel" class="stack" {{if $v.Current}}hx-get="{{$base}}/deploy-panel" hx-trigger="every 3s" hx-swap="outerHTML"{{end}}>
+  <div class="card live-card">
+    <div class="card-header">
+      <div><h2>Live in {{$d.Env.Name}}</h2><p>{{if $v.HasLive}}Deployment #{{$v.Live.Number}} · {{ago (deref $v.Live.FinishedAt)}}{{else}}Nothing has been deployed here yet{{end}}</p></div>
+      {{if $v.HasLive}}<span class="badge badge-ok"><span class="dot"></span>live</span>{{else}}<span class="badge">empty</span>{{end}}
+    </div>
+    <div class="card-body">
+      {{if $v.HasLive}}
+      <dl class="kv">
+        <div><dt>Release</dt><dd>r{{$v.Live.ReleaseNumber}}</dd></div>
+        <div><dt>Config</dt><dd>c{{$v.Live.ConfigRevision}}</dd></div>
+        <div><dt>Image</dt><dd title="{{$v.Live.ImageRef}}">{{short (digestOf $v.Live.ImageRef) 12}}</dd></div>
+      </dl>
+      {{end}}
+      {{if $v.Current}}
+      <div class="deploy-progress">
+        <div class="row">{{template "deploy-status" (print $v.Current.Status)}}<b>Deployment #{{$v.Current.Number}}</b><span class="muted small">r{{$v.Current.ReleaseNumber}} · c{{$v.Current.ConfigRevision}} · {{$v.Current.Strategy}}{{if $v.Current.Agent}} · on {{$v.Current.Agent}}{{end}}</span></div>
+        <pre class="code log">{{range $v.Log}}{{.Message}}
+{{else}}Waiting for an agent to pick it up…{{end}}</pre>
+      </div>
+      {{end}}
+      {{if and $v.ConfigBehind $v.CanDeploy}}
+      <form class="alert alert-warn" style="margin-top:14px;align-items:center" method="post" action="{{$base}}/config-applications" hx-post="{{$base}}/config-applications" hx-target="next .form-error">
+        {{template "csrf" $csrf}}{{icon "alert"}}<span style="flex:1">Config <b>c{{$d.Revision.Number}}</b> is saved but the live deployment runs <b>c{{$v.Live.ConfigRevision}}</b>.</span>
+        <button class="btn btn-sm">Apply c{{$d.Revision.Number}}</button>
+      </form><div class="form-error"></div>
+      {{end}}
+      {{if $v.CanDeploy}}
+      <div class="deploy-actions">
+        <form class="form-inline" method="post" action="{{$base}}/deployments" hx-post="{{$base}}/deployments" hx-target="next .form-error">
+          {{template "csrf" $csrf}}
+          <div class="field"><label for="release_id">Release</label>
+            <select id="release_id" name="release_id" {{if not $v.Releases}}disabled{{end}}>
+              {{range $v.Releases}}<option value="{{.ID}}">r{{.Number}} · {{if .Tag}}{{.Tag}}{{else}}{{.GitRef}}{{end}}{{if .CommitSHA}} @{{short .CommitSHA 7}}{{end}}</option>{{else}}<option>No built releases yet</option>{{end}}
+            </select>
+          </div>
+          <div class="field" style="max-width:160px"><label for="strategy">Strategy</label><select id="strategy" name="strategy"><option value="bluegreen">Blue-green</option><option value="canary">Canary</option></select></div>
+          <button class="btn btn-primary" {{if or (not $v.Releases) $v.Current}}disabled{{end}}>{{icon "zap"}}Deploy</button>
+        </form>
+        <div class="form-error"></div>
+        {{if $v.PromoteFrom}}
+        <form class="promote" method="post" action="{{$base}}/promotions" hx-post="{{$base}}/promotions" hx-target="next .form-error">
+          {{template "csrf" $csrf}}<input type="hidden" name="from" value="{{$v.PromoteFrom}}">
+          <span class="muted small">{{$v.PromoteFrom}} runs <b>r{{$v.PromoteLive.ReleaseNumber}}</b></span>
+          <button class="btn btn-sm" {{if $v.Current}}disabled{{end}}>{{icon "arrow"}}Promote r{{$v.PromoteLive.ReleaseNumber}} from {{$v.PromoteFrom}}</button>
+        </form>
+        <div class="form-error"></div>
+        {{end}}
+      </div>
+      {{end}}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div><h2>Deployments</h2><p>What ran here, newest first</p></div></div>
+    {{if $v.Rows}}
+    <table class="table">
+      <thead><tr><th>#</th><th>Status</th><th>Release</th><th>Trigger</th><th class="right">When</th></tr></thead>
+      <tbody>
+      {{range $v.Rows}}{{$dep := .Deployment}}
+        <tr>
+          <td><span class="revision-number">#{{$dep.Number}}</span></td>
+          <td>{{template "deploy-status" (print $dep.Status)}}{{if .IsLive}} <span class="badge badge-ok">live</span>{{end}}{{if and $dep.Message (ne $dep.Message "live")}}<div class="small muted" style="max-width:280px;margin-top:4px">{{$dep.Message}}</div>{{end}}</td>
+          <td><span class="mono">r{{$dep.ReleaseNumber}} · c{{$dep.ConfigRevision}}</span></td>
+          <td><span class="small">{{$dep.Trigger}}</span>{{if .RequestedBy.Login}}<div class="small muted">by @{{.RequestedBy.Login}}</div>{{end}}</td>
+          <td class="right nowrap"><span class="muted" title="{{date $dep.CreatedAt}}">{{ago $dep.CreatedAt}}</span>
+            {{if and $v.CanDeploy (eq (print $dep.Status) "succeeded") (not .IsLive)}}
+            <form method="post" action="{{$base}}/deployments/{{$dep.ID}}/rollback" hx-post="{{$base}}/deployments/{{$dep.ID}}/rollback" hx-confirm="Roll {{$d.Env.Name}} back to r{{$dep.ReleaseNumber}} with config c{{$dep.ConfigRevision}}?" hx-target="closest .card" hx-swap="afterbegin" style="display:inline">
+              {{template "csrf" $csrf}}<button class="btn btn-ghost btn-sm" title="Roll back to this deployment">{{icon "history"}}Roll back</button>
+            </form>
+            {{end}}
+          </td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}{{template "empty" dict "Icon" "server" "Title" "No deployments yet" "Text" "Pick a built release above to deploy it." "Href" "" "Action" ""}}{{end}}
+  </div>
+</div>
+{{end}}
+
 {{define "content"}}
 {{$d := .Data}}{{$csrf := .Viewer.CSRFToken}}
 {{$base := printf "/services/%s/env/%s" $d.Service.Slug $d.Env.Slug}}
@@ -9,9 +91,10 @@
 
 <div class="split">
   <div class="stack">
+    {{template "deploy-panel" dict "Data" $d "CSRF" $csrf}}
     <div class="card">
       <div class="card-header">
-        <div><h2>Runtime</h2><p>{{if $d.Revision.Number}}Revision r{{$d.Revision.Number}} · saved {{ago $d.Revision.CreatedAt}}{{else}}Defaults · nothing saved yet{{end}}</p></div>
+        <div><h2>Runtime</h2><p>{{if $d.Revision.Number}}Config c{{$d.Revision.Number}} · saved {{ago $d.Revision.CreatedAt}}{{else}}Defaults · nothing saved yet{{end}}</p></div>
         {{template "env-badge" $d.Env.Slug}}
       </div>
       <div class="card-body">
@@ -21,7 +104,7 @@
           <div><dt>Replicas</dt><dd>{{$d.Revision.Spec.Replicas}}</dd></div>
           <div><dt>Memory</dt><dd>{{$d.Revision.Spec.MemoryMB}} MB</dd></div>
           <div><dt>CPU</dt><dd>{{$d.Revision.Spec.CPUMillis}}m</dd></div>
-          <div><dt>Public host</dt>{{if $d.Revision.Spec.Host}}<dd>{{$d.Revision.Spec.Host}}</dd>{{else}}<dd class="empty">none</dd>{{end}}</div>
+          <div><dt>Public host</dt>{{if $d.Revision.Spec.Host}}<dd>{{$d.Revision.Spec.Host}}</dd>{{else}}<dd class="empty">none{{if $d.Revision.Spec.Command}} · runs {{$d.Revision.Spec.Command}}{{end}}</dd>{{end}}</div>
         </dl>
         {{if $d.CanEdit}}
         <details class="disclosure" style="margin-top:16px">
@@ -39,6 +122,7 @@
               <div class="field"><label>CPU (millicores)</label><input name="cpu_millis" type="number" min="50" max="4000" step="50" value="{{$d.Revision.Spec.CPUMillis}}" required></div>
               <div class="field"><label>Public host</label><input name="host" type="text" class="mono" value="{{$d.Revision.Spec.Host}}" placeholder="api.kalz.one"></div>
             </div>
+            <div class="field"><label>Command <span class="muted">(needed without a public host)</span></label><input name="command" type="text" class="mono" value="{{$d.Revision.Spec.Command}}" placeholder="./worker"></div>
             <div class="field"><label>Why the change? <span class="muted">(optional)</span></label><input name="message" type="text" maxlength="255" placeholder="More memory for the import job"></div>
             <div class="form-actions"><button class="btn btn-primary">Save as new revision</button></div>
           </form>
@@ -125,7 +209,7 @@
       {{range $d.History}}
       <div class="revision">
         <div class="revision-head">
-          <span class="revision-number">r{{.Revision.Number}}</span>
+          <span class="revision-number">c{{.Revision.Number}}</span>
           <span class="msg">{{if .Revision.Message}}{{.Revision.Message}}{{else}}<span class="muted">No message</span>{{end}}</span>
         </div>
         <div class="row small muted" style="margin-top:6px">{{template "avatar" dict "Name" .Author.Name "Login" .Author.Login "URL" .Author.AvatarURL "Class" "avatar-sm"}}@{{.Author.Login}} · <span title="{{date .Revision.CreatedAt}}">{{ago .Revision.CreatedAt}}</span></div>
@@ -140,7 +224,7 @@
         {{end}}
       </div>
       {{end}}
-    {{else}}{{template "empty" dict "Icon" "history" "Title" "No revisions yet" "Text" "The first change you save becomes r1." "Href" "" "Action" ""}}{{end}}
+    {{else}}{{template "empty" dict "Icon" "history" "Title" "No revisions yet" "Text" "The first change you save becomes c1." "Href" "" "Action" ""}}{{end}}
   </div>
 </div>
 {{end}}

@@ -26,10 +26,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and push image
+      - name: Build and push the control plane
         run: |
-          docker build -t adrianozdp/platform-controlplane:${{ github.sha }} .
+          docker build --target controlplane --build-arg VERSION=${{ github.sha }} -t adrianozdp/platform-controlplane:${{ github.sha }} .
           docker push adrianozdp/platform-controlplane:${{ github.sha }}
+      - name: Build and push the agent
+        run: |
+          docker build --target agent --build-arg VERSION=${{ github.sha }} -t adrianozdp/platform-agent:${{ github.sha }} .
+          docker push adrianozdp/platform-agent:${{ github.sha }}
 
   install-deployctl:
     needs: test

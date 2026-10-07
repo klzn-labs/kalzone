@@ -14,8 +14,8 @@ type ServiceCard struct {
 }
 
 type EnvChip struct {
-	Slug     string
-	Revision int
+	Slug    string
+	Release int
 }
 
 type MyTeam struct {
@@ -46,11 +46,11 @@ func (v Views) ServiceCards(ctx context.Context, services []catalog.Service) ([]
 func (v Views) envChips(ctx context.Context, serviceSlug string, envs []catalog.Environment) ([]EnvChip, error) {
 	chips := make([]EnvChip, 0, len(envs))
 	for _, env := range envs {
-		rev, err := v.configs.Current(ctx, serviceSlug, env.Slug)
+		live, _, err := v.live.Live(ctx, serviceSlug, env.Slug)
 		if err != nil {
 			return nil, err
 		}
-		chips = append(chips, EnvChip{Slug: env.Slug, Revision: rev.Number})
+		chips = append(chips, EnvChip{Slug: env.Slug, Release: live.ReleaseNumber})
 	}
 	return chips, nil
 }
