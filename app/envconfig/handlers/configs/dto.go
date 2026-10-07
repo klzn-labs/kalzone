@@ -14,6 +14,7 @@ type specDTO struct {
 	MemoryMB   int    `json:"memory_mb"`
 	CPUMillis  int    `json:"cpu_millis"`
 	Replicas   int    `json:"replicas"`
+	Command    string `json:"command,omitempty"`
 }
 
 type revisionDTO struct {

@@ -61,6 +61,7 @@ func (s Spec) Validate() error {
 		{s.MemoryMB >= 32 && s.MemoryMB <= 4096, "memory must be between 32 and 4096 MB"},
 		{s.CPUMillis >= 50 && s.CPUMillis <= 4000, "CPU must be between 50 and 4000 millicores"},
 		{s.Replicas >= 1 && s.Replicas <= 5, "replicas must be between 1 and 5"},
+		{len(s.Command) <= 255 && !strings.ContainsAny(s.Command, "\n\r"), "command must be one line of at most 255 characters"},
 	}
 	for _, c := range checks {
 		if !c.ok {

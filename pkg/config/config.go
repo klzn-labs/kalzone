@@ -22,6 +22,16 @@ type Config struct {
 	Session        Session  `mapstructure:"session"`
 	OIDC           OIDC     `mapstructure:"oidc"`
 	Build          Build    `mapstructure:"build"`
+	Deploy         Deploy   `mapstructure:"deploy"`
+	Agent          Agent    `mapstructure:"agent"`
+}
+
+type Deploy struct {
+	Timeout time.Duration `mapstructure:"timeout" default:"30m" validate:"gt=0"`
+}
+
+type Agent struct {
+	Token string `mapstructure:"token"`
 }
 
 type OIDC struct {
@@ -105,7 +115,7 @@ var envKeys = []string{
 	"admins", "secrets.key", "secrets.key_id", "allowed_domains",
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
-	"oidc.issuer", "oidc.audience", "build.timeout",
+	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token",
 }
 
 func bindEnvVars() {

@@ -9,6 +9,7 @@ type Spec struct {
 	MemoryMB   int    `json:"memory_mb"`
 	CPUMillis  int    `json:"cpu_millis"`
 	Replicas   int    `json:"replicas"`
+	Command    string `json:"command,omitempty"`
 }
 
 func DefaultSpec() Spec {
@@ -82,4 +83,9 @@ type ServiceRef struct {
 	ID          string
 	Slug        string
 	OwnerTeamID string
+}
+
+type Resolved struct {
+	Revision Revision
+	Secrets  map[string]string
 }

@@ -23,9 +23,10 @@ type Subscriber interface {
 }
 
 const (
-	TargetTeam    = "team"
-	TargetUser    = "user"
-	TargetService = "service"
-	TargetConfig  = "config"
-	TargetRelease = "release"
+	TargetTeam       = "team"
+	TargetUser       = "user"
+	TargetService    = "service"
+	TargetConfig     = "config"
+	TargetRelease    = "release"
+	TargetDeployment = "deployment"
 )
