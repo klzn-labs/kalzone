@@ -1,0 +1,47 @@
+{{define "content"}}
+{{$d := .Data}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Organization</div>
+    <h1>Teams</h1>
+    <p class="lead">Teams own services. Members change dev, maintainers also change prod and manage the team.</p>
+  </div>
+</div>
+
+{{if $d.IsAdmin}}
+<details class="disclosure card" style="margin-bottom:20px">
+  <summary class="card-header" style="border-bottom:0"><div><h2>Create a team</h2><p>Only platform admins can create teams</p></div><span class="btn btn-sm btn-primary">{{icon "plus"}}<span class="closed-only">New team</span><span class="open-only">Close</span></span></summary>
+  <form class="card-body" style="border-top:1px solid var(--border)" method="post" action="/teams" hx-post="/teams" hx-target="find .form-error">
+    {{template "csrf" .Viewer.CSRFToken}}
+    <div class="form-error"></div>
+    <div class="form-inline">
+      <div class="field"><label for="team-name">Name</label><input id="team-name" name="name" type="text" placeholder="Places" required maxlength="120"></div>
+      <div class="field"><label for="team-slug">Slug</label><input id="team-slug" name="slug" type="text" class="mono" placeholder="places" required pattern="[a-z][a-z0-9-]{1,38}[a-z0-9]"></div>
+      <button class="btn btn-primary">Create team</button>
+    </div>
+  </form>
+</details>
+{{end}}
+
+{{if $d.Cards}}
+<div class="grid grid-cards">
+  {{range $d.Cards}}
+  <a class="card service-card" href="/teams/{{.Team.Slug}}">
+    <div class="top">
+      {{template "service-icon" dict "Slug" .Team.Slug "Name" .Team.Name "Large" false}}
+      <div style="min-width:0"><div class="name">{{.Team.Name}}</div><div class="slug">{{.Team.Slug}}</div></div>
+      <span class="spacer"></span>{{template "role-badge" (print .MyRole)}}
+    </div>
+    <div class="meta">
+      <div class="avatar-stack">{{range .Members}}{{template "avatar" dict "Name" .User.Name "Login" .User.Login "URL" .User.AvatarURL "Class" "avatar-sm"}}{{end}}</div>
+      <span class="muted small">{{len .Members}} member{{if ne (len .Members) 1}}s{{end}}</span>
+      <span class="spacer"></span>
+      <span class="badge">{{icon "box"}}{{.Services}} service{{if ne .Services 1}}s{{end}}</span>
+    </div>
+  </a>
+  {{end}}
+</div>
+{{else}}
+<div class="card">{{template "empty" dict "Icon" "users" "Title" "No teams yet" "Text" "A platform admin creates teams, then maintainers add people." "Href" "" "Action" ""}}</div>
+{{end}}
+{{end}}

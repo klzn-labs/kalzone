@@ -1,0 +1,30 @@
+{{define "content"}}
+{{$d := .Data}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Compliance</div>
+    <h1>Audit log</h1>
+    <p class="lead">Every change made on the platform: who, what, where and when. Secret values are never recorded.</p>
+  </div>
+</div>
+
+<form class="card card-body filters" method="get" action="/audit" style="margin-bottom:20px">
+  <div class="form-inline" style="width:100%">
+    <div class="field"><label for="f-team">Team</label><select id="f-team" name="team"><option value="">All teams</option>{{range $d.Teams}}<option value="{{.Slug}}" {{if eq .Slug $d.Query.Team}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
+    <div class="field"><label for="f-service">Service</label><select id="f-service" name="service"><option value="">All services</option>{{range $d.Services}}<option value="{{.Slug}}" {{if eq .Slug $d.Query.Service}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
+    <div class="field"><label for="f-env">Environment</label><select id="f-env" name="env"><option value="">All</option>{{range $d.Envs}}<option value="{{.Slug}}" {{if eq .Slug $d.Query.Environment}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
+    <div class="field"><label for="f-actor">Who</label><input id="f-actor" name="actor" type="text" class="mono" placeholder="github login" value="{{$d.Query.Actor}}"></div>
+    <button class="btn btn-primary">{{icon "search"}}Filter</button>
+    <a class="btn btn-ghost" href="/audit">Reset</a>
+  </div>
+</form>
+
+<div class="card">
+  {{if $d.Activity}}
+    <ul class="timeline">{{range $d.Activity}}{{template "activity-line" .}}{{end}}</ul>
+    {{if $d.Older}}<div class="card-body" style="border-top:1px solid var(--border);text-align:center"><a class="btn btn-sm" href="/audit?team={{$d.Query.Team}}&service={{$d.Query.Service}}&env={{$d.Query.Environment}}&actor={{$d.Query.Actor}}&before={{$d.Older}}">Older events {{icon "arrow"}}</a></div>{{end}}
+  {{else}}
+    {{template "empty" dict "Icon" "activity" "Title" "Nothing matches" "Text" "Try a wider filter." "Href" "" "Action" ""}}
+  {{end}}
+</div>
+{{end}}

@@ -1,0 +1,15 @@
+{{define "service-card"}}<a class="card service-card" href="/services/{{.Service.Slug}}">
+  <div class="top">
+    {{template "service-icon" dict "Slug" .Service.Slug "Name" .Service.Name "Large" false}}
+    <div style="min-width:0">
+      <div class="name">{{.Service.Name}}</div>
+      <div class="slug">{{.Service.Slug}}</div>
+    </div>
+  </div>
+  <p class="desc">{{if .Service.Description}}{{.Service.Description}}{{else}}<span class="muted">No description yet.</span>{{end}}</p>
+  <div class="meta">
+    <span class="badge badge-accent">{{icon "users"}}{{.Team.Slug}}</span>
+    <span class="spacer"></span>
+    <span class="envs">{{range .Envs}}<span class="env-chip" title="{{.Slug}} config revision">{{.Slug}} <b>{{if .Revision}}r{{.Revision}}{{else}}—{{end}}</b></span>{{end}}</span>
+  </div>
+</a>{{end}}

@@ -1,0 +1,27 @@
+package me
+
+import (
+	"net/http"
+
+	"github.com/adrianozp/platform/internal/httpserver"
+	"github.com/adrianozp/platform/internal/requestctx"
+	"github.com/gin-gonic/gin"
+)
+
+type response struct {
+	ID        string `json:"id"`
+	Login     string `json:"login"`
+	Name      string `json:"name"`
+	AvatarURL string `json:"avatar_url"`
+	Admin     bool   `json:"admin"`
+	CSRFToken string `json:"csrf_token"`
+}
+
+func Me(c *gin.Context) {
+	v := requestctx.ViewerFrom(c)
+	c.JSON(http.StatusOK, response{ID: v.Actor.UserID, Login: v.Actor.Login, Name: v.Name, AvatarURL: v.AvatarURL, Admin: v.Actor.Admin, CSRFToken: v.CSRFToken})
+}
+
+func RegisterMeRoutes(api httpserver.API) {
+	api.GET("/me", Me)
+}

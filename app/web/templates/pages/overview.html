@@ -1,0 +1,44 @@
+{{define "content"}}
+{{$d := .Data}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Overview</div>
+    <h1>Welcome back, {{if .Viewer.Name}}{{.Viewer.Name}}{{else}}@{{.Viewer.Actor.Login}}{{end}}</h1>
+    <p class="lead">Here's what your teams own and what changed recently.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/services">{{icon "box"}}Browse services</a>
+    <a class="btn btn-primary" href="/services/new">{{icon "plus"}}New service</a>
+  </div>
+</div>
+
+<div class="grid grid-3">
+  <div class="card stat"><div class="stat-label">Your services</div><div class="stat-value">{{$d.MyServices}}</div><div class="stat-hint">across {{len $d.MyTeams}} team{{if ne (len $d.MyTeams) 1}}s{{end}}</div></div>
+  <div class="card stat"><div class="stat-label">All services</div><div class="stat-value">{{$d.TotalServices}}</div><div class="stat-hint">in the catalog</div></div>
+  <div class="card stat"><div class="stat-label">Teams</div><div class="stat-value">{{$d.TotalTeams}}</div><div class="stat-hint">building on the platform</div></div>
+</div>
+
+<div class="split" style="margin-top:28px">
+  <div>
+    {{if not $d.MyTeams}}
+      <div class="card">{{template "empty" dict "Icon" "users" "Title" "You're not on a team yet" "Text" (printf "Ask a team maintainer to add @%s. Until then you can browse everything." .Viewer.Actor.Login) "Href" "" "Action" ""}}</div>
+    {{end}}
+    {{range $d.MyTeams}}
+      <div class="section-title">
+        <div class="row"><h2><a href="/teams/{{.Team.Slug}}" style="color:inherit">{{.Team.Name}}</a></h2>{{template "role-badge" (print .Role)}}</div>
+        <a class="btn btn-sm btn-ghost" href="/services/new?team={{.Team.Slug}}">{{icon "plus"}}Add service</a>
+      </div>
+      {{if .Services}}
+        <div class="grid grid-2">{{range .Services}}{{template "service-card" .}}{{end}}</div>
+      {{else}}
+        <div class="card">{{template "empty" dict "Icon" "box" "Title" "No services yet" "Text" "Register the first service this team owns." "Href" (printf "/services/new?team=%s" .Team.Slug) "Action" "New service"}}</div>
+      {{end}}
+    {{end}}
+  </div>
+  <div class="card">
+    <div class="card-header"><div><h2>Recent activity</h2><p>Everything that changed on the platform</p></div><a class="btn btn-sm btn-ghost" href="/audit">View all {{icon "arrow"}}</a></div>
+    {{if $d.Activity}}<ul class="timeline">{{range $d.Activity}}{{template "activity-line" .}}{{end}}</ul>
+    {{else}}{{template "empty" dict "Icon" "activity" "Title" "Quiet so far" "Text" "Changes show up here as they happen." "Href" "" "Action" ""}}{{end}}
+  </div>
+</div>
+{{end}}
