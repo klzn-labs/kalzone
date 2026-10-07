@@ -1,0 +1,9 @@
+DROP TABLE audit_events;
+DROP TABLE secret_versions;
+DROP TABLE config_revisions;
+DROP TABLE services;
+DROP TABLE environments;
+DROP TABLE memberships;
+DROP TABLE teams;
+DROP TABLE sessions;
+DROP TABLE users;
