@@ -12,6 +12,7 @@ import (
 	"github.com/adrianozp/platform/app/release/repositories/registry"
 	"github.com/adrianozp/platform/cmd/controlplane/options"
 	"github.com/adrianozp/platform/internal/fakegithub"
+	"github.com/adrianozp/platform/internal/fakegrafana"
 	"github.com/adrianozp/platform/internal/fakeoidc"
 	"github.com/adrianozp/platform/internal/fakeregistry"
 	"github.com/adrianozp/platform/internal/testdb"
@@ -33,6 +34,7 @@ type Suite struct {
 	GitHub   *fakegithub.Server
 	OIDC     *fakeoidc.Issuer
 	Registry *fakeregistry.Registry
+	Grafana  *fakegrafana.Grafana
 	Engine   *gin.Engine
 	nextID   int64
 }
@@ -41,7 +43,7 @@ func NewSuite(t *testing.T) *Suite {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	testdb.Open(t)
-	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), nextID: 1000}
+	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), Grafana: fakegrafana.New(), nextID: 1000}
 	app := fxtest.New(t,
 		options.Options(),
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
@@ -60,6 +62,7 @@ func (s *Suite) close(app *fxtest.App) {
 	s.GitHub.Close()
 	s.OIDC.Close()
 	s.Registry.Close()
+	s.Grafana.Close()
 	app.RequireStop()
 }
 
@@ -70,6 +73,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Build.Timeout = time.Hour
 	cfg.Deploy.Timeout = time.Hour
 	cfg.Agent.Token = AgentToken
+	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token"}
 	return cfg
 }
 

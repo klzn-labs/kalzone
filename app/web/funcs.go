@@ -24,6 +24,7 @@ func funcs() template.FuncMap {
 		"upper":    strings.ToUpper,
 		"short":    Short,
 		"deref":    deref,
+		"list":     func(values ...int) []int { return values },
 		"digestOf": digestOf,
 	}
 }

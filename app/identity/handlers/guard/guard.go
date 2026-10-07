@@ -27,7 +27,7 @@ type Authenticator interface {
 var errInvalidCSRF = apperror.New(apperror.CodeInvalidCSRFToken, "missing or invalid CSRF token, reload the page")
 
 func NewGuards(auth Authenticator) httpserver.Guards {
-	return httpserver.Guards{API: apiGuard(auth), Web: webGuard(auth)}
+	return httpserver.Guards{API: apiGuard(auth), Web: webGuard(auth), Session: sessionGuard(auth)}
 }
 
 func apiGuard(auth Authenticator) gin.HandlerFunc {
@@ -50,6 +50,14 @@ func webGuard(auth Authenticator) gin.HandlerFunc {
 		}
 		if err := checkCSRF(c); err != nil {
 			httperror.Abort(c, err)
+		}
+	}
+}
+
+func sessionGuard(auth Authenticator) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if err := authenticate(c, auth); err != nil {
+			redirectToLogin(c)
 		}
 	}
 }

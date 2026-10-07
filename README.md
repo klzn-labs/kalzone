@@ -20,6 +20,9 @@ API on the same usecases. Design documents live in `docs/superpowers/specs`.
   environment; promote dev to prod, apply new config, roll back to any earlier
   success. An agent on the host claims deployments, rolls them out with deployctl
   and reports drift, which the platform turns into a reconcile deployment
+- Observability: Grafana behind the platform's sign-in at `/grafana`, a dashboard
+  per service written through Grafana's API, and its panels embedded in each
+  environment tab (metrics from Prometheus, logs from Loki)
 - Releases: immutable, digest-pinned images. The platform triggers builds in GitHub
   Actions through a GitHub App, builds report back with a GitHub OIDC token, and
   third-party images are registered by tag
@@ -71,6 +74,8 @@ as a callback URL.
 | `PLATFORM_OIDC_AUDIENCE` | the base URL | audience build tokens must carry |
 | `PLATFORM_BUILD_TIMEOUT` | `60m` | builds still running after this are marked failed |
 | `PLATFORM_AGENT_TOKEN` | | shared secret agents authenticate with; agents are refused without it |
+| `PLATFORM_GRAFANA_URL` | | Grafana inside the network, e.g. `http://grafana:3000/grafana`; proxied at `/grafana` with single sign-on |
+| `PLATFORM_GRAFANA_TOKEN` | | Grafana service-account token (Editor) the platform writes dashboards with |
 | `PLATFORM_DEPLOY_TIMEOUT` | `30m` | deployments an agent stopped reporting on are failed after this |
 
 Never run production with the default secrets key.
