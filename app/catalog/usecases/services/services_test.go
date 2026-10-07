@@ -71,10 +71,15 @@ type published struct{ events []events.Event }
 
 func (p *published) Publish(_ context.Context, e events.Event) { p.events = append(p.events, e) }
 
+func withWorkflow(svc entities.Service) entities.Service {
+	svc.BuildWorkflow = entities.DefaultBuildWorkflow
+	return svc
+}
+
 func setup(existing ...entities.Service) (*store, *checks, *published, services.ServicesUsecase) {
 	s, c, p := &store{bySlug: map[string]entities.Service{}}, &checks{}, &published{}
 	for _, svc := range existing {
-		s.bySlug[svc.Slug] = svc
+		s.bySlug[svc.Slug] = withWorkflow(svc)
 	}
 	return s, c, p, services.NewServicesUsecase(s, teamIDs{"places": "t1", "reviews": "t2"}, c, p)
 }

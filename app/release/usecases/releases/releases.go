@@ -1,0 +1,92 @@
+package releases
+
+import (
+	"context"
+	"time"
+
+	"github.com/adrianozp/platform/app/authz"
+	"github.com/adrianozp/platform/app/release/entities"
+	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/config"
+	"github.com/adrianozp/platform/pkg/events"
+)
+
+type Store interface {
+	Create(ctx context.Context, rel entities.Release) (entities.Release, error)
+	Transition(ctx context.Context, rel entities.Release, from entities.Status) error
+	FindByID(ctx context.Context, id string) (entities.Release, error)
+	ListByService(ctx context.Context, serviceID string, limit int) ([]entities.Release, error)
+	Unfinished(ctx context.Context, createdBefore time.Time) ([]entities.Release, error)
+}
+
+type ServiceLookup interface {
+	FindService(ctx context.Context, slug string) (entities.ServiceRef, error)
+	FindServiceByID(ctx context.Context, id string) (entities.ServiceRef, error)
+	ServicesForRepository(ctx context.Context, repository string) ([]entities.ServiceRef, error)
+}
+
+type Builder interface {
+	Dispatch(ctx context.Context, request entities.BuildRequest) error
+}
+
+type DigestResolver interface {
+	Resolve(ctx context.Context, image, tag string) (string, error)
+}
+
+type Authorizer interface {
+	Can(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) error
+}
+
+type Publisher interface {
+	Publish(ctx context.Context, event events.Event)
+}
+
+var errNotYours = apperror.Forbidden("this build belongs to another repository")
+
+type ReleasesUsecase struct {
+	store       Store
+	services    ServiceLookup
+	builder     Builder
+	resolver    DigestResolver
+	authz       Authorizer
+	publisher   Publisher
+	platformURL string
+	timeout     time.Duration
+}
+
+func NewReleasesUsecase(cfg config.Config, store Store, services ServiceLookup, builder Builder, resolver DigestResolver, authz Authorizer, publisher Publisher) ReleasesUsecase {
+	return ReleasesUsecase{
+		store: store, services: services, builder: builder, resolver: resolver, authz: authz,
+		publisher: publisher, platformURL: cfg.BaseURL, timeout: cfg.Build.Timeout,
+	}
+}
+
+func (u ReleasesUsecase) List(ctx context.Context, serviceSlug string, limit int) ([]entities.Release, error) {
+	service, err := u.services.FindService(ctx, serviceSlug)
+	if err != nil {
+		return nil, err
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	return u.store.ListByService(ctx, service.ID, limit)
+}
+
+func (u ReleasesUsecase) Get(ctx context.Context, id string) (entities.Release, error) {
+	return u.store.FindByID(ctx, id)
+}
+
+func (u ReleasesUsecase) publish(ctx context.Context, a actor.Actor, action string, service entities.ServiceRef, rel entities.Release) {
+	details := map[string]any{"release": rel.Number, "status": string(rel.Status)}
+	if rel.GitRef != "" {
+		details["ref"] = rel.GitRef
+	}
+	if rel.Failure != "" {
+		details["failure"] = rel.Failure
+	}
+	u.publisher.Publish(ctx, events.Event{
+		ActorID: a.UserID, ActorLogin: a.Login, Action: action, TargetKind: events.TargetRelease,
+		TargetID: service.ID, TargetName: service.Slug, TeamID: service.OwnerTeamID, Details: details,
+	})
+}

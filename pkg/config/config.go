@@ -20,6 +20,17 @@ type Config struct {
 	Secrets        Secrets  `mapstructure:"secrets"`
 	AllowedDomains []string `mapstructure:"allowed_domains" default:"[\"localhost\"]" validate:"min=1"`
 	Session        Session  `mapstructure:"session"`
+	OIDC           OIDC     `mapstructure:"oidc"`
+	Build          Build    `mapstructure:"build"`
+}
+
+type OIDC struct {
+	Issuer   string `mapstructure:"issuer" default:"https://token.actions.githubusercontent.com" validate:"required,url"`
+	Audience string `mapstructure:"audience"`
+}
+
+type Build struct {
+	Timeout time.Duration `mapstructure:"timeout" default:"60m" validate:"gt=0"`
 }
 
 type HTTP struct {
@@ -32,10 +43,13 @@ type DB struct {
 }
 
 type GitHub struct {
-	ClientID     string `mapstructure:"client_id"`
-	ClientSecret string `mapstructure:"client_secret"`
-	OAuthURL     string `mapstructure:"oauth_url" default:"https://github.com" validate:"required,url"`
-	APIURL       string `mapstructure:"api_url" default:"https://api.github.com" validate:"required,url"`
+	ClientID      string `mapstructure:"client_id"`
+	ClientSecret  string `mapstructure:"client_secret"`
+	OAuthURL      string `mapstructure:"oauth_url" default:"https://github.com" validate:"required,url"`
+	APIURL        string `mapstructure:"api_url" default:"https://api.github.com" validate:"required,url"`
+	AppID         int64  `mapstructure:"app_id"`
+	AppPrivateKey string `mapstructure:"app_private_key"`
+	WebhookSecret string `mapstructure:"webhook_secret"`
 }
 
 type Secrets struct {
@@ -64,6 +78,13 @@ func LoadConfig() (Config, error) {
 	return config, nil
 }
 
+func (c Config) OIDCAudience() string {
+	if c.OIDC.Audience != "" {
+		return c.OIDC.Audience
+	}
+	return c.BaseURL
+}
+
 func (c Config) SecureCookies() bool {
 	return strings.HasPrefix(c.BaseURL, "https://")
 }
@@ -83,6 +104,8 @@ var envKeys = []string{
 	"github.client_id", "github.client_secret", "github.oauth_url", "github.api_url",
 	"admins", "secrets.key", "secrets.key_id", "allowed_domains",
 	"session.ttl", "session.renew_within",
+	"github.app_id", "github.app_private_key", "github.webhook_secret",
+	"oidc.issuer", "oidc.audience", "build.timeout",
 }
 
 func bindEnvVars() {

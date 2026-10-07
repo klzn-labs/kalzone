@@ -45,6 +45,7 @@ type rule struct {
 var matrix = []rule{
 	{authz.CreateService, "", []string{"member", "maintainer", "admin"}},
 	{authz.EditService, "", []string{"member", "maintainer", "admin"}},
+	{authz.CreateRelease, "", []string{"member", "maintainer", "admin"}},
 	{authz.EditConfig, "dev", []string{"member", "maintainer", "admin"}},
 	{authz.EditConfig, "prod", []string{"maintainer", "admin"}},
 	{authz.Deploy, "dev", []string{"member", "maintainer", "admin"}},

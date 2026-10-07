@@ -1,0 +1,135 @@
+package releases_test
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/adrianozp/platform/app/authz"
+	"github.com/adrianozp/platform/app/release/entities"
+	"github.com/adrianozp/platform/app/release/usecases/releases"
+	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/config"
+	"github.com/adrianozp/platform/pkg/events"
+)
+
+type store struct{ byID map[string]entities.Release }
+
+func (s *store) Create(_ context.Context, rel entities.Release) (entities.Release, error) {
+	rel.Number = len(s.byID) + 1
+	s.byID[rel.ID] = rel
+	return rel, nil
+}
+
+func (s *store) Transition(_ context.Context, rel entities.Release, from entities.Status) error {
+	if s.byID[rel.ID].Status != from {
+		return apperror.Conflict("changed")
+	}
+	s.byID[rel.ID] = rel
+	return nil
+}
+
+func (s *store) FindByID(_ context.Context, id string) (entities.Release, error) {
+	rel, ok := s.byID[id]
+	if !ok {
+		return entities.Release{}, apperror.NotFound("release not found")
+	}
+	return rel, nil
+}
+
+func (s *store) ListByService(context.Context, string, int) ([]entities.Release, error) {
+	return nil, nil
+}
+
+func (s *store) Unfinished(_ context.Context, before time.Time) ([]entities.Release, error) {
+	result := []entities.Release{}
+	for _, rel := range s.byID {
+		if !rel.Final() && rel.CreatedAt.Before(before) {
+			result = append(result, rel)
+		}
+	}
+	return result, nil
+}
+
+var api = entities.ServiceRef{ID: "s1", Slug: "api", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/api", BuildWorkflow: "platform-build.yml", AutoBuild: true}
+var web = entities.ServiceRef{ID: "s2", Slug: "web", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/web", BuildWorkflow: "platform-build.yml"}
+var bare = entities.ServiceRef{ID: "s3", Slug: "bare", OwnerTeamID: "t1", BuildWorkflow: "platform-build.yml"}
+
+type services struct{}
+
+func (services) FindService(_ context.Context, slug string) (entities.ServiceRef, error) {
+	return byKey(func(s entities.ServiceRef) bool { return s.Slug == slug })
+}
+
+func (services) FindServiceByID(_ context.Context, id string) (entities.ServiceRef, error) {
+	return byKey(func(s entities.ServiceRef) bool { return s.ID == id })
+}
+
+func (services) ServicesForRepository(_ context.Context, repo string) ([]entities.ServiceRef, error) {
+	return []entities.ServiceRef{api, web}, nil
+}
+
+func byKey(match func(entities.ServiceRef) bool) (entities.ServiceRef, error) {
+	for _, s := range []entities.ServiceRef{api, web, bare} {
+		if match(s) {
+			return s, nil
+		}
+	}
+	return entities.ServiceRef{}, apperror.NotFound("service not found")
+}
+
+type builder struct {
+	requests []entities.BuildRequest
+	err      error
+}
+
+func (b *builder) Dispatch(_ context.Context, r entities.BuildRequest) error {
+	b.requests = append(b.requests, r)
+	return b.err
+}
+
+type resolver struct{}
+
+func (resolver) Resolve(_ context.Context, image, tag string) (string, error) {
+	if tag == "missing" {
+		return "", apperror.NotFound("tag not found")
+	}
+	return "sha256:" + digestHex, nil
+}
+
+const digestHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+type allow struct{ deny bool }
+
+func (a allow) Can(context.Context, actor.Actor, authz.Action, authz.Resource) error {
+	if a.deny {
+		return apperror.Forbidden("no")
+	}
+	return nil
+}
+
+type published struct{ actions []string }
+
+func (p *published) Publish(_ context.Context, e events.Event) {
+	p.actions = append(p.actions, e.Action)
+}
+
+type fixture struct {
+	store   *store
+	builder *builder
+	events  *published
+	usecase releases.ReleasesUsecase
+}
+
+func newFixture(t *testing.T, deny bool) fixture {
+	t.Helper()
+	f := fixture{store: &store{byID: map[string]entities.Release{}}, builder: &builder{}, events: &published{}}
+	cfg := config.Config{BaseURL: "https://platform.test", Build: config.Build{Timeout: time.Hour}}
+	f.usecase = releases.NewReleasesUsecase(cfg, f.store, services{}, f.builder, resolver{}, allow{deny}, f.events)
+	return f
+}
+
+var ana = actor.Actor{UserID: "ana", Login: "ana"}
+var errBoom = errors.New("422 workflow not found")
