@@ -14,13 +14,16 @@ type ServiceDTO struct {
 	OwnerTeamID     string    `json:"owner_team_id"`
 	GitHubRepo      string    `json:"github_repo"`
 	ImageRepository string    `json:"image_repository"`
+	AutoBuild       bool      `json:"auto_build"`
+	BuildWorkflow   string    `json:"build_workflow"`
 	CreatedAt       time.Time `json:"created_at"`
 }
 
 func ToDTO(s entities.Service) ServiceDTO {
 	return ServiceDTO{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
-		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, CreatedAt: s.CreatedAt,
+		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, BuildWorkflow: s.BuildWorkflow,
+		CreatedAt: s.CreatedAt,
 	}
 }
 
@@ -45,10 +48,15 @@ type updateDTO struct {
 	Description     *string `json:"description"`
 	GitHubRepo      *string `json:"github_repo"`
 	ImageRepository *string `json:"image_repository"`
+	AutoBuild       *bool   `json:"auto_build"`
+	BuildWorkflow   *string `json:"build_workflow"`
 }
 
 func (d updateDTO) toEntity() entities.ServiceChanges {
-	return entities.ServiceChanges{Name: d.Name, Description: d.Description, GitHubRepo: d.GitHubRepo, ImageRepository: d.ImageRepository}
+	return entities.ServiceChanges{
+		Name: d.Name, Description: d.Description, GitHubRepo: d.GitHubRepo, ImageRepository: d.ImageRepository,
+		AutoBuild: d.AutoBuild, BuildWorkflow: d.BuildWorkflow,
+	}
 }
 
 type transferDTO struct {

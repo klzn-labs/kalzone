@@ -1,0 +1,88 @@
+name: Platform build
+
+on:
+  workflow_call:
+    inputs:
+      release_id:
+        type: string
+        required: true
+      image:
+        type: string
+        required: true
+      platform_url:
+        type: string
+        required: true
+      context:
+        type: string
+        default: .
+      dockerfile:
+        type: string
+        default: Dockerfile
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_URL: ${{ inputs.platform_url }}/api/v1/releases/${{ inputs.release_id }}
+      AUDIENCE: ${{ inputs.platform_url }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write the report helper
+        run: |
+          cat > "$RUNNER_TEMP/report.sh" <<'SH'
+          set -euo pipefail
+          token=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE" | jq -r .value)
+          echo "::add-mask::$token"
+          curl -fsS -X POST "$RELEASE_URL/$1" -H "Authorization: Bearer $token" \
+            -H "Content-Type: application/json" -d "$2"
+          SH
+
+      - name: Tell the platform the build started
+        run: |
+          bash "$RUNNER_TEMP/report.sh" started "$(jq -nc --arg run "$RUN_URL" '{run_url: $run}')"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Choose the tag
+        id: tag
+        run: echo "tag=${GITHUB_SHA::12}-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.context }}/${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ inputs.image }}:${{ steps.tag.outputs.tag }}
+          build-args: VERSION=${{ github.sha }}
+
+      - name: Report the digest
+        run: |
+          body=$(jq -nc --arg digest "${{ steps.build.outputs.digest }}" --arg commit "$GITHUB_SHA" \
+            --arg tag "${{ steps.tag.outputs.tag }}" --arg run "$RUN_URL" \
+            '{digest: $digest, commit_sha: $commit, tag: $tag, run_url: $run}')
+          bash "$RUNNER_TEMP/report.sh" built "$body"
+
+      - name: Report the failure
+        if: failure()
+        run: |
+          body=$(jq -nc --arg run "$RUN_URL" '{failure: "the build job failed, see the workflow run", run_url: $run}')
+          bash "$RUNNER_TEMP/report.sh" failed "$body" || true

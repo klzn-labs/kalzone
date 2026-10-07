@@ -199,6 +199,16 @@ p { margin: 0; }
 .badge-dev { background: var(--dev-soft); color: var(--dev); }
 .badge-prod { background: var(--prod-soft); color: var(--prod); }
 .badge-outline { background: transparent; border: 1px solid var(--border-strong); color: var(--muted); }
+.badge-pulse .dot { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.code { margin: 0; padding: 16px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); font-family: var(--mono); font-size: 12.5px; line-height: 1.6; overflow-x: auto; color: var(--text-2); }
+.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; }
+.switch input { appearance: none; width: 36px; height: 20px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border-strong); position: relative; cursor: pointer; transition: background 0.15s ease; margin: 0; }
+.switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-sm); transition: transform 0.15s ease; }
+.switch input:checked { background: var(--accent); border-color: var(--accent); }
+.switch input:checked::after { transform: translateX(16px); }
+.ref { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 12.5px; }
+.ref svg { width: 13px; height: 13px; color: var(--muted); }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
 
 .avatar {
@@ -383,6 +393,7 @@ details.disclosure:not([open]) > summary .open-only { display: none; }
 .nowrap { white-space: nowrap; }
 .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .row.small svg { width: 14px; height: 14px; }
+a.small svg, .small a svg { width: 12px; height: 12px; vertical-align: -1px; }
 .spacer { flex: 1; }
 .mt-0 { margin-top: 0 !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

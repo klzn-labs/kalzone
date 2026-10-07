@@ -16,8 +16,10 @@ type User struct {
 
 type Server struct {
 	*httptest.Server
-	mu     sync.Mutex
-	byCode map[string]User
+	mu           sync.Mutex
+	byCode       map[string]User
+	dispatches   []Dispatch
+	tokensIssued int
 }
 
 func New() *Server {
@@ -25,6 +27,7 @@ func New() *Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /login/oauth/access_token", s.token)
 	mux.HandleFunc("GET /user", s.user)
+	s.routeApp(mux)
 	s.Server = httptest.NewServer(mux)
 	return s
 }

@@ -18,6 +18,8 @@ var statuses = map[apperror.Code]int{
 	apperror.CodeLastMaintainer:   http.StatusConflict,
 	apperror.CodeSignInFailed:     http.StatusUnauthorized,
 	apperror.CodeInvalidCSRFToken: http.StatusForbidden,
+	apperror.CodeUpstream:         http.StatusBadGateway,
+	apperror.CodeNotConfigured:    http.StatusServiceUnavailable,
 }
 
 var errInternal = apperror.New(apperror.CodeInternal, "internal error")

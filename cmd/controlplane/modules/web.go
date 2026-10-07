@@ -8,6 +8,7 @@ import (
 	"github.com/adrianozp/platform/app/catalog/usecases/services"
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
 	"github.com/adrianozp/platform/app/identity/usecases/users"
+	"github.com/adrianozp/platform/app/release/usecases/releases"
 	"github.com/adrianozp/platform/app/team/usecases/members"
 	"github.com/adrianozp/platform/app/team/usecases/source"
 	"github.com/adrianozp/platform/app/team/usecases/teams"
@@ -17,6 +18,7 @@ import (
 	"github.com/adrianozp/platform/app/web/handlers/login"
 	overviewPage "github.com/adrianozp/platform/app/web/handlers/overview"
 	peoplePage "github.com/adrianozp/platform/app/web/handlers/people"
+	releasesPage "github.com/adrianozp/platform/app/web/handlers/releases"
 	servicePage "github.com/adrianozp/platform/app/web/handlers/service"
 	servicesPage "github.com/adrianozp/platform/app/web/handlers/services"
 	teamPage "github.com/adrianozp/platform/app/web/handlers/team"
@@ -31,6 +33,7 @@ func Web() fx.Option {
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
+			releasesPage.NewReleasesHandler,
 		),
 		viewInjections(),
 		pageInjections(),
@@ -71,6 +74,8 @@ func catalogPageInjections() fx.Option {
 		func(u query.QueryUsecase) servicePage.Events { return u },
 		func(u services.ServicesUsecase) environmentPage.Services { return u },
 		func(u configs.ConfigUsecase) environmentPage.Configs { return u },
+		func(u services.ServicesUsecase) releasesPage.Services { return u },
+		func(u releases.ReleasesUsecase) releasesPage.Releases { return u },
 	)
 }
 
@@ -100,5 +105,6 @@ func pageRoutes() fx.Option {
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
+		releasesPage.RegisterReleasesRoutes,
 	)
 }

@@ -33,6 +33,10 @@ var phrasings = map[string]phrasing{
 	"service.transferred": {"moved", serviceLink, transferDetail},
 	"service.deleted":     {"deleted service", nil, nil},
 	"config.revised":      {"changed the config of", configLink, revisionDetail},
+	"release.requested":   {"started a build of", releasesLink, releaseDetail},
+	"release.built":       {"finished a build of", releasesLink, releaseDetail},
+	"release.failed":      {"reported a failed build of", releasesLink, releaseDetail},
+	"release.registered":  {"registered an image for", releasesLink, releaseDetail},
 	"user.admin_granted":  {"made an admin:", nil, nil},
 	"user.admin_revoked":  {"removed admin rights from", nil, nil},
 }
@@ -65,6 +69,12 @@ func teamLink(e audit.Event) string    { return "/teams/" + e.TargetName }
 func serviceLink(e audit.Event) string { return "/services/" + e.TargetName }
 func configLink(e audit.Event) string {
 	return "/services/" + e.TargetName + "/env/" + e.Environment
+}
+
+func releasesLink(e audit.Event) string { return "/services/" + e.TargetName + "/releases" }
+
+func releaseDetail(e audit.Event) string {
+	return fmt.Sprintf("r%v", e.Details["release"])
 }
 
 func memberDetail(e audit.Event) string {
