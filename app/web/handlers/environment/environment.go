@@ -62,6 +62,17 @@ type data struct {
 	History   []RevisionView
 	CanEdit   bool
 	Deploy    DeployView
+	Grafana   GrafanaView
+}
+
+type GrafanaView struct {
+	Enabled bool
+	UID     string
+	Env     string
+}
+
+type Grafana interface {
+	Enabled() bool
 }
 
 type EnvironmentHandler struct {
@@ -71,10 +82,14 @@ type EnvironmentHandler struct {
 	configs     Configs
 	deployments Deployments
 	releases    Releases
+	grafana     Grafana
 }
 
-func NewEnvironmentHandler(renderer *web.Renderer, views web.Views, services Services, configs Configs, deployments Deployments, releases Releases) EnvironmentHandler {
-	return EnvironmentHandler{renderer: renderer, views: views, services: services, configs: configs, deployments: deployments, releases: releases}
+func NewEnvironmentHandler(renderer *web.Renderer, views web.Views, services Services, configs Configs, deployments Deployments, releases Releases, grafana Grafana) EnvironmentHandler {
+	return EnvironmentHandler{
+		renderer: renderer, views: views, services: services, configs: configs,
+		deployments: deployments, releases: releases, grafana: grafana,
+	}
 }
 
 func (h EnvironmentHandler) Show(c *gin.Context) {
@@ -104,6 +119,7 @@ func (h EnvironmentHandler) build(ctx context.Context, a actor.Actor, serviceSlu
 	}
 	d.CanEdit = h.views.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: d.Service.OwnerTeamID, Environment: envSlug})
 	d.Deploy, err = h.deployView(ctx, a, d)
+	d.Grafana = GrafanaView{Enabled: h.grafana.Enabled(), UID: "platform-" + d.Service.Slug, Env: envSlug}
 	return d, err
 }
 

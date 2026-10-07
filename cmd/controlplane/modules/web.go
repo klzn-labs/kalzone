@@ -10,6 +10,7 @@ import (
 	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
 	"github.com/adrianozp/platform/app/identity/usecases/users"
+	"github.com/adrianozp/platform/app/observe/repositories/grafana"
 	"github.com/adrianozp/platform/app/release/usecases/releases"
 	"github.com/adrianozp/platform/app/team/usecases/members"
 	"github.com/adrianozp/platform/app/team/usecases/source"
@@ -81,6 +82,7 @@ func catalogPageInjections() fx.Option {
 		func(u configs.ConfigUsecase) environmentPage.Configs { return u },
 		func(u deployments.DeploymentsUsecase) environmentPage.Deployments { return u },
 		func(u releases.ReleasesUsecase) environmentPage.Releases { return u },
+		func(c grafana.Client) environmentPage.Grafana { return c },
 		func(u services.ServicesUsecase) releasesPage.Services { return u },
 		func(u releases.ReleasesUsecase) releasesPage.Releases { return u },
 	)

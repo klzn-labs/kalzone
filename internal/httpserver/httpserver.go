@@ -51,7 +51,7 @@ func securityHeaders() gin.HandlerFunc {
 		h := c.Writer.Header()
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "same-origin")
-		h.Set("X-Frame-Options", "DENY")
+		h.Set("X-Frame-Options", "SAMEORIGIN")
 		c.Next()
 	}
 }

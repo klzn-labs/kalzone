@@ -102,3 +102,20 @@ func Test_FormsWithoutTheCSRFTokenAreRefused(t *testing.T) {
 
 	require.Equal(t, http.StatusForbidden, resp.Status)
 }
+
+func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
+	s, p := setupPlaces(t)
+
+	anonymous := s.Anonymous(t).Do(t, http.MethodGet, "/grafana/api/user", nil)
+	spoofed := s.Raw(t, http.MethodGet, "/grafana/api/user", nil, map[string]string{"X-WEBAUTH-USER": "root"})
+	member := p.bob.Do(t, http.MethodGet, "/grafana/api/user", nil)
+	admin := p.root.Do(t, http.MethodGet, "/grafana/api/user", nil)
+	page := p.bob.Do(t, http.MethodGet, "/services/places-api/env/dev", nil)
+
+	require.Equal(t, http.StatusSeeOther, anonymous.Status)
+	require.Contains(t, spoofed.Body, "Continue with GitHub")
+	require.JSONEq(t, `{"path":"/grafana/api/user","user":"bob","role":"Viewer"}`, member.Body)
+	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":"Admin"}`, admin.Body)
+	require.True(t, s.Grafana.Dashboards()["platform-places-api"])
+	require.Contains(t, page.Body, "/grafana/d-solo/platform-places-api?orgId=1&panelId=1&var-env=dev")
+}

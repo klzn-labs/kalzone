@@ -1,0 +1,59 @@
+package proxy
+
+import (
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strings"
+
+	"github.com/adrianozp/platform/internal/httpserver"
+	"github.com/adrianozp/platform/internal/requestctx"
+	"github.com/adrianozp/platform/pkg/config"
+	"github.com/gin-gonic/gin"
+)
+
+const Prefix = "/grafana"
+
+type GrafanaProxy struct {
+	target *url.URL
+}
+
+func NewGrafanaProxy(cfg config.Config) (GrafanaProxy, error) {
+	if cfg.Grafana.URL == "" {
+		return GrafanaProxy{}, nil
+	}
+	target, err := url.Parse(cfg.Grafana.URL)
+	return GrafanaProxy{target: target}, err
+}
+
+func (p GrafanaProxy) Serve(c *gin.Context) {
+	if p.target == nil {
+		c.String(http.StatusNotFound, "observability is not connected")
+		return
+	}
+	viewer := requestctx.ViewerFrom(c)
+	proxy := &httputil.ReverseProxy{Rewrite: func(r *httputil.ProxyRequest) {
+		r.Out.URL.Scheme, r.Out.URL.Host, r.Out.Host = p.target.Scheme, p.target.Host, p.target.Host
+		identify(r.Out.Header, viewer)
+	}}
+	proxy.ServeHTTP(c.Writer, c.Request)
+}
+
+func identify(h http.Header, viewer requestctx.Viewer) {
+	for name := range h {
+		if strings.HasPrefix(strings.ToLower(name), "x-webauth-") {
+			h.Del(name)
+		}
+	}
+	role := "Viewer"
+	if viewer.Actor.Admin {
+		role = "Admin"
+	}
+	h.Set("X-WEBAUTH-USER", viewer.Actor.Login)
+	h.Set("X-WEBAUTH-NAME", viewer.Name)
+	h.Set("X-WEBAUTH-ROLE", role)
+}
+
+func RegisterProxyRoutes(session httpserver.Session, p GrafanaProxy) {
+	session.Any(Prefix+"/*path", p.Serve)
+}

@@ -92,6 +92,7 @@
 <div class="split">
   <div class="stack">
     {{template "deploy-panel" dict "Data" $d "CSRF" $csrf}}
+    {{template "observability" $d.Grafana}}
     <div class="card">
       <div class="card-header">
         <div><h2>Runtime</h2><p>{{if $d.Revision.Number}}Config c{{$d.Revision.Number}} · saved {{ago $d.Revision.CreatedAt}}{{else}}Defaults · nothing saved yet{{end}}</p></div>
@@ -228,3 +229,22 @@
   </div>
 </div>
 {{end}}
+
+{{define "observability"}}
+<div class="card">
+  <div class="card-header"><div><h2>Observability</h2><p>Live from Prometheus and Loki, last 6 hours</p></div>
+    {{if .Enabled}}<div class="actions"><a class="btn btn-sm" href="/grafana/d/{{.UID}}?var-env={{.Env}}" target="_blank" rel="noopener">{{icon "activity"}}Dashboard {{icon "external"}}</a></div>{{end}}</div>
+  {{if .Enabled}}
+  <div class="panels">
+    {{$uid := .UID}}{{$env := .Env}}
+    {{range $panel := (list 1 2 3 4)}}{{template "panel" dict "UID" $uid "Env" $env "Panel" $panel "Class" ""}}{{end}}
+    {{template "panel" dict "UID" $uid "Env" $env "Panel" 6 "Class" "wide"}}
+  </div>
+  {{else}}{{template "empty" dict "Icon" "activity" "Title" "Observability isn't connected" "Text" "Set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN to embed dashboards here." "Href" "" "Action" ""}}{{end}}
+</div>
+{{end}}
+
+{{define "panel"}}<div class="panel {{.Class}}">
+  <iframe class="theme-light" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=light"></iframe>
+  <iframe class="theme-dark" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=dark"></iframe>
+</div>{{end}}
