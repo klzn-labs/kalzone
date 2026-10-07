@@ -26,7 +26,7 @@ func (u ServicesUsecase) Create(ctx context.Context, a actor.Actor, n entities.N
 	if err := u.store.Create(ctx, s); err != nil {
 		return entities.Service{}, err
 	}
-	u.publisher.Publish(ctx, serviceEvent(a, "service.created", s, nil))
+	u.publisher.Publish(ctx, serviceEvent(a, "service.created", s, map[string]any{"name": s.Name}))
 	return s, nil
 }
 
@@ -50,7 +50,7 @@ func (u ServicesUsecase) Update(ctx context.Context, a actor.Actor, slug string,
 	if err := u.store.Update(ctx, updated); err != nil {
 		return entities.Service{}, err
 	}
-	u.publisher.Publish(ctx, serviceEvent(a, "service.updated", updated, nil))
+	u.publisher.Publish(ctx, serviceEvent(a, "service.updated", updated, map[string]any{"name": updated.Name}))
 	return updated, nil
 }
 
