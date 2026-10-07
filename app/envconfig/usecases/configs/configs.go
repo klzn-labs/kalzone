@@ -15,6 +15,7 @@ type Store interface {
 	History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Revision, error)
 	Insert(ctx context.Context, rev entities.Revision) error
 	HostTaken(ctx context.Context, host, serviceID, environment string) (bool, error)
+	ByNumber(ctx context.Context, serviceID, environment string, number int) (entities.Revision, error)
 	InsertSecretVersion(ctx context.Context, v entities.SecretVersion) error
 	SecretVersions(ctx context.Context, ids []string) ([]entities.SecretVersion, error)
 }
@@ -29,6 +30,7 @@ type EnvironmentLookup interface {
 
 type Sealer interface {
 	Seal(plaintext, additionalData []byte) (ciphertext, nonce []byte, keyID string, err error)
+	Open(ciphertext, nonce, additionalData []byte, keyID string) ([]byte, error)
 }
 
 type Authorizer interface {

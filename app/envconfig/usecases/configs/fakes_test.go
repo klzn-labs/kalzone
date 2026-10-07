@@ -37,6 +37,15 @@ func (s *store) Insert(_ context.Context, rev entities.Revision) error {
 	return nil
 }
 
+func (s *store) ByNumber(_ context.Context, serviceID, env string, number int) (entities.Revision, error) {
+	for _, r := range s.revisions {
+		if r.ServiceID == serviceID && r.Environment == env && r.Number == number {
+			return r, nil
+		}
+	}
+	return entities.Revision{}, apperror.NotFound("config revision not found")
+}
+
 func (s *store) HostTaken(_ context.Context, host, _, _ string) (bool, error) {
 	return host == s.takenHost, nil
 }
@@ -82,7 +91,14 @@ type sealer struct{ additionalData [][]byte }
 
 func (s *sealer) Seal(plaintext, additionalData []byte) ([]byte, []byte, string, error) {
 	s.additionalData = append(s.additionalData, additionalData)
-	return append([]byte("sealed:"), plaintext...), []byte("nonce"), "k1", nil
+	return append(append([]byte{}, additionalData...), plaintext...), []byte("nonce"), "k1", nil
+}
+
+func (s *sealer) Open(ciphertext, _, additionalData []byte, _ string) ([]byte, error) {
+	if len(ciphertext) < len(additionalData) || string(ciphertext[:len(additionalData)]) != string(additionalData) {
+		return nil, apperror.Invalid("bound to another row")
+	}
+	return ciphertext[len(additionalData):], nil
 }
 
 type checks struct {
