@@ -37,6 +37,7 @@ var phrasings = map[string]phrasing{
 	"release.built":       {"finished a build of", releasesLink, releaseDetail},
 	"release.failed":      {"reported a failed build of", releasesLink, releaseDetail},
 	"release.registered":  {"registered an image for", releasesLink, releaseDetail},
+	"release.shared":      {"shared a build with", releasesLink, releaseDetail},
 	"deploy.requested":    {"asked to deploy", configLink, deployDetail},
 	"deploy.succeeded":    {"finished deploying", configLink, deployDetail},
 	"deploy.failed":       {"reported a failed deploy of", configLink, deployDetail},
