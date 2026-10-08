@@ -11,6 +11,8 @@ import (
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
 	"github.com/adrianozp/platform/app/identity/usecases/users"
 	"github.com/adrianozp/platform/app/observe/repositories/grafana"
+	queueCatalog "github.com/adrianozp/platform/app/queue/repositories/catalog"
+	"github.com/adrianozp/platform/app/queue/usecases/queues"
 	"github.com/adrianozp/platform/app/release/usecases/releases"
 	"github.com/adrianozp/platform/app/team/usecases/members"
 	"github.com/adrianozp/platform/app/team/usecases/source"
@@ -22,6 +24,7 @@ import (
 	"github.com/adrianozp/platform/app/web/handlers/login"
 	overviewPage "github.com/adrianozp/platform/app/web/handlers/overview"
 	peoplePage "github.com/adrianozp/platform/app/web/handlers/people"
+	queuesPage "github.com/adrianozp/platform/app/web/handlers/queues"
 	releasesPage "github.com/adrianozp/platform/app/web/handlers/releases"
 	servicePage "github.com/adrianozp/platform/app/web/handlers/service"
 	servicesPage "github.com/adrianozp/platform/app/web/handlers/services"
@@ -37,7 +40,7 @@ func Web() fx.Option {
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
-			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler,
+			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler,
 		),
 		viewInjections(),
 		pageInjections(),
@@ -52,6 +55,8 @@ func viewInjections() fx.Option {
 		func(u configs.ConfigUsecase) web.ConfigReader { return u },
 		func(u deployments.DeploymentsUsecase) web.LiveReader { return u },
 		func(u agents.AgentsUsecase) agentsPage.Agents { return u },
+		func(u queues.QueuesUsecase) queuesPage.Queues { return u },
+		func(l queueCatalog.Lookup) queuesPage.ServiceNames { return l },
 		func(u environments.EnvironmentsUsecase) web.EnvironmentLister { return u },
 		func(u users.UsersUsecase) web.UserFinder { return u },
 		func(p authz.Policy) web.Authorizer { return p },
@@ -114,6 +119,6 @@ func pageRoutes() fx.Option {
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
-		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes,
+		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes,
 	)
 }

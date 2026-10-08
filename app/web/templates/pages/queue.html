@@ -1,0 +1,107 @@
+{{define "content"}}{{$d := .Data}}{{$q := $d.Row.Queue}}{{$base := printf "/queues/%s/%s" $q.Environment $q.Name}}{{$csrf := .Viewer.CSRFToken}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/queues">Queues</a></div>
+    <h1>{{$q.Name}}</h1>
+    <div class="row" style="margin-top:6px">
+      {{template "env-badge" $q.Environment}}
+      <span class="badge {{$d.Row.Badge}}"><span class="dot"></span>{{$d.Row.State}}</span>
+      <span class="muted small">delivers to <span class="mono">{{$d.Row.Consumer}}{{$q.Settings.Path}}</span> · version {{$q.Version}}</span>
+    </div>
+  </div>
+  <div class="actions">
+    <form method="post" action="{{$base}}/{{if $q.Paused}}resume{{else}}pause{{end}}" hx-post="{{$base}}/{{if $q.Paused}}resume{{else}}pause{{end}}" hx-target="find .form-error">{{template "csrf" $csrf}}<div class="form-error"></div><button class="btn">{{if $q.Paused}}{{icon "play"}}Resume delivery{{else}}{{icon "pause"}}Pause delivery{{end}}</button></form>
+    <a class="btn" href="{{$base}}?tab=settings&amp;edit=1">{{icon "edit"}}Edit settings</a>
+  </div>
+</div>
+
+<div class="grid stat-strip">
+  <div class="card stat"><div class="stat-label">Waiting</div><div class="stat-value">{{if $d.Row.Fresh}}{{$d.Row.Stats.Depth}}{{else}}—{{end}}</div></div>
+  <div class="card stat"><div class="stat-label">In flight</div><div class="stat-value">{{if $d.Row.Fresh}}{{$d.Row.Stats.InFlight}}{{else}}—{{end}}</div><div class="stat-hint">of {{$q.Settings.MaxInFlight}} allowed</div></div>
+  <div class="card stat"><div class="stat-label">Oldest message</div><div class="stat-value">{{if and $d.Row.Fresh $d.Row.Stats.OldestAgeSeconds}}{{printf "%.0fs" $d.Row.Stats.OldestAgeSeconds}}{{else}}—{{end}}</div></div>
+  <div class="card stat"><div class="stat-label">Dead letters</div><div class="stat-value">{{if $d.Row.Fresh}}{{$d.Row.Stats.DeadLetters}}{{else}}—{{end}}</div></div>
+</div>
+{{if not $d.Row.Fresh}}<p class="muted small" style="margin:10px 0 0">No data: the queue gateway has not reported this queue in the last minute.</p>{{end}}
+
+<nav class="tabs" style="margin-top:24px">
+  <a class="tab {{if eq $d.Tab "dead"}}active{{end}}" href="{{$base}}">{{icon "alert"}}Dead letters</a>
+  <a class="tab {{if eq $d.Tab "settings"}}active{{end}}" href="{{$base}}?tab=settings">{{icon "settings"}}Settings</a>
+  <a class="tab {{if eq $d.Tab "activity"}}active{{end}}" href="{{$base}}?tab=activity">{{icon "history"}}Activity</a>
+</nav>
+{{if eq $d.Tab "dead"}}{{template "queue-dead" dict "Row" $d.Row "Base" $base "CSRF" $csrf}}
+{{else if eq $d.Tab "settings"}}{{template "queue-settings" dict "Queue" $q "Row" $d.Row "Base" $base "CSRF" $csrf "Edit" $d.Edit}}
+{{else}}{{template "queue-activity" $d.Versions}}{{end}}
+{{end}}
+
+{{define "queue-dead"}}
+<div class="card">
+  <div class="card-header">
+    <div><h2>Dead letters</h2><p>Messages the consumer refused for good or that failed every attempt</p></div>
+    <div class="actions">
+      <form method="post" action="{{.Base}}/dead/replay-all" hx-post="{{.Base}}/dead/replay-all" hx-target="find .form-error">{{template "csrf" .CSRF}}<div class="form-error"></div><button class="btn btn-sm">{{icon "play"}}Replay all</button></form>
+      <form method="post" action="{{.Base}}/dead/purge" hx-post="{{.Base}}/dead/purge" hx-target="find .form-error">{{template "csrf" .CSRF}}<div class="form-error"></div><button class="btn btn-sm btn-danger">{{icon "trash"}}Purge</button></form>
+    </div>
+  </div>
+  {{if .Row.Stats.NewestDead}}
+  <ul class="timeline">{{range .Row.Stats.NewestDead}}
+    <li>
+      <div class="what">
+        <div class="line"><b class="mono">{{.ID}}</b> <span class="badge badge-danger">{{.LastStatus}} after {{.Attempts}} attempt{{if ne .Attempts 1}}s{{end}}</span></div>
+        {{if .LastError}}<div class="small muted" style="margin-top:4px">{{.LastError}}</div>{{end}}
+        <pre class="code" style="margin-top:8px;white-space:pre-wrap;word-break:break-all">{{.BodyPreview}}</pre>
+        <form style="margin-top:8px" method="post" action="{{$.Base}}/dead/{{.ID}}/replay" hx-post="{{$.Base}}/dead/{{.ID}}/replay" hx-target="find .form-error">{{template "csrf" $.CSRF}}<div class="form-error"></div><button class="btn btn-sm">Replay</button></form>
+      </div>
+      <time class="when" datetime="{{iso .PublishedAt}}" title="{{date .PublishedAt}}">{{ago .PublishedAt}}</time>
+    </li>
+  {{end}}</ul>
+  {{else}}{{template "empty" dict "Icon" "alert" "Title" "No dead letters" "Text" "Messages land here when the consumer refuses them for good or every attempt fails."}}{{end}}
+</div>
+{{end}}
+
+{{define "queue-settings"}}{{$s := .Queue.Settings}}
+<div class="card">
+  <div class="card-header"><div><h2>Settings</h2><p>Version {{.Queue.Version}}; every change saves a new version</p></div></div>
+  <div class="card-body">
+    <dl class="kv">
+      <div><dt>Consumer</dt><dd>{{.Row.Consumer}} → {{$s.Path}}</dd></div>
+      <div><dt>Publishers</dt><dd {{if not .Row.Publishers}}class="empty"{{end}}>{{if .Row.Publishers}}{{.Row.Publishers}}{{else}}consumer only{{end}}</dd></div>
+      <div><dt>Rate</dt><dd>{{$s.RatePerSecond}} / s, {{$s.MaxInFlight}} in flight</dd></div>
+      <div><dt>Retries</dt><dd>{{$s.MaxAttempts}} attempts, {{$s.Backoff.Kind}} {{span $s.Backoff.Initial}} → {{span $s.Backoff.Max}}</dd></div>
+      <div><dt>Timeout</dt><dd>{{span $s.DeliveryTimeout}}</dd></div>
+      <div><dt>Retention</dt><dd>{{span $s.Retention}}</dd></div>
+    </dl>
+    <details class="disclosure" style="margin-top:16px" {{if .Edit}}open{{end}}><summary class="btn btn-sm">{{icon "settings"}}Change settings</summary>
+      <form class="inline-panel" method="post" action="{{.Base}}/settings" hx-post="{{.Base}}/settings" hx-target="find .form-error">
+        {{template "csrf" .CSRF}}<div class="form-error"></div>
+        <input type="hidden" name="version" value="{{.Queue.Version}}">
+        <div class="field"><label for="publishers">Publishers</label><input id="publishers" name="publishers" type="text" class="mono" value="{{.Row.Publishers}}"></div>
+        {{template "queue-settings-fields" $s}}
+        <div class="field"><label for="message">Why the change? <span class="muted">(optional)</span></label><input id="message" name="message" type="text" maxlength="255"></div>
+        <div class="form-actions"><button class="btn btn-primary">Save as version {{add .Queue.Version 1}}</button></div>
+      </form>
+    </details>
+    <details class="disclosure" style="margin-top:12px"><summary class="btn btn-sm btn-danger">{{icon "trash"}}Delete queue</summary>
+      <form class="inline-panel" method="post" action="{{.Base}}/delete" hx-post="{{.Base}}/delete" hx-target="find .form-error">
+        {{template "csrf" .CSRF}}<div class="form-error"></div>
+        <label class="switch"><input type="checkbox" name="force">Delete even if messages are still waiting (they are lost)</label>
+        <div class="form-actions"><button class="btn btn-danger">Delete {{.Queue.Name}}</button></div>
+      </form>
+    </details>
+  </div>
+</div>
+{{end}}
+
+{{define "queue-activity"}}
+<div class="card">
+  <div class="card-header"><div><h2>Activity</h2><p>Every settings change is a new, immutable version</p></div></div>
+  {{range .}}
+  <div class="revision">
+    <div class="revision-head">
+      <span class="revision-number">v{{.Number}}</span>
+      <span class="msg">{{if .Message}}{{.Message}}{{else}}<span class="muted">No message</span>{{end}}</span>
+    </div>
+    <div class="row small muted" style="margin-top:6px"><span title="{{date .CreatedAt}}">{{ago .CreatedAt}}</span> · {{.Settings.RatePerSecond}} / s, {{.Settings.MaxInFlight}} in flight, {{.Settings.MaxAttempts}} attempts</div>
+  </div>
+  {{else}}<div class="card-body muted">No changes yet.</div>{{end}}
+</div>
+{{end}}
