@@ -179,6 +179,8 @@ p { margin: 0; }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-cards { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.stat-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.table-scroll { overflow-x: auto; }
 .split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
 
 .stat { padding: 18px 20px; }
@@ -301,6 +303,10 @@ p { margin: 0; }
 .field label { font-weight: 600; font-size: 13px; }
 .field .hint { color: var(--muted); font-size: 12px; }
 .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.form-row .field + .field { margin-top: 0; }
+.form-row + .form-row, .field + .form-row, .form-row + .field { margin-top: 16px; }
+.form-note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+.form-note + .field { margin-top: 16px; }
 .form-inline { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
 .form-inline .field { flex: 1; min-width: 160px; }
 .form-inline .field + .field { margin-top: 0; }
@@ -411,6 +417,7 @@ a.small svg, .small a svg { width: 12px; height: 12px; vertical-align: -1px; }
 
 @media (max-width: 960px) {
   .split, .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); }
+  .stat-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kv { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 

@@ -1,0 +1,40 @@
+{{define "content"}}{{$d := .Data}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Workspace</div>
+    <h1>Queues</h1>
+    <p class="lead">Work queues the platform runs for your services: it takes publishes, delivers each message to the consumer with retries and a rate limit, and keeps what fails as dead letters.</p>
+  </div>
+  <div class="actions"><a class="btn btn-primary" href="/queues/new">{{icon "plus"}}Create queue</a></div>
+</div>
+
+<div class="filters">
+  <div class="segmented">
+    <a href="/queues" class="{{if not $d.Environment}}active{{end}}">All</a>
+    <a href="/queues?environment=dev" class="{{if eq $d.Environment "dev"}}active{{end}}">dev</a>
+    <a href="/queues?environment=prod" class="{{if eq $d.Environment "prod"}}active{{end}}">prod</a>
+  </div>
+</div>
+
+<div class="card">
+  {{if $d.Rows}}
+  <div class="table-scroll"><table class="table">
+    <thead><tr><th>Queue</th><th>Env</th><th>Consumer</th><th class="right">Waiting</th><th class="right">Delivered / min</th><th class="right">Oldest</th><th class="right">Dead letters</th><th>State</th></tr></thead>
+    <tbody>
+    {{range $d.Rows}}
+      <tr>
+        <td><a class="mono" href="/queues/{{.Queue.Environment}}/{{.Queue.Name}}"><b>{{.Queue.Name}}</b></a></td>
+        <td>{{template "env-badge" .Queue.Environment}}</td>
+        <td class="mono">{{.Consumer}}</td>
+        <td class="right">{{if .Fresh}}{{.Stats.Depth}}{{else}}—{{end}}</td>
+        <td class="right">{{if .Fresh}}{{printf "%.0f" .Stats.DeliveredPerMinute}}{{else}}—{{end}}</td>
+        <td class="right">{{if and .Fresh .Stats.OldestAgeSeconds}}{{printf "%.0fs" .Stats.OldestAgeSeconds}}{{else}}—{{end}}</td>
+        <td class="right">{{if .Fresh}}{{.Stats.DeadLetters}}{{else}}—{{end}}</td>
+        <td><span class="badge {{.Badge}}"><span class="dot"></span>{{.State}}</span></td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}{{template "empty" dict "Icon" "layers" "Title" "No queues yet" "Text" "Create a queue to let services hand work to each other with retries and a rate limit." "Href" "/queues/new" "Action" "Create queue"}}{{end}}
+</div>
+{{end}}

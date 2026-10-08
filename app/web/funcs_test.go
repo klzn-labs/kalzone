@@ -26,6 +26,14 @@ func Test_Initials(t *testing.T) {
 	require.Equal(t, "?", web.Initials(""))
 }
 
+func Test_Span_DropsZeroTails(t *testing.T) {
+	require.Equal(t, "168h", web.Span(168*time.Hour))
+	require.Equal(t, "1m", web.Span(time.Minute))
+	require.Equal(t, "1m30s", web.Span(90*time.Second))
+	require.Equal(t, "2h5m", web.Span(2*time.Hour+5*time.Minute))
+	require.Equal(t, "500ms", web.Span(500*time.Millisecond))
+}
+
 func Test_RendererParsesEveryPage(t *testing.T) {
 	_, err := web.NewRenderer()
 

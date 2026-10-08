@@ -27,6 +27,7 @@ func funcs() template.FuncMap {
 		"deref":    deref,
 		"list":     func(values ...int) []int { return values },
 		"digestOf": digestOf,
+		"span":     Span,
 	}
 }
 
@@ -105,4 +106,15 @@ func deref(t *time.Time) time.Time {
 func digestOf(ref string) string {
 	_, digest, _ := strings.Cut(ref, "@")
 	return digest
+}
+
+func Span(d time.Duration) string {
+	text := d.String()
+	if strings.HasSuffix(text, "m0s") {
+		text = strings.TrimSuffix(text, "0s")
+	}
+	if strings.HasSuffix(text, "h0m") {
+		text = strings.TrimSuffix(text, "0m")
+	}
+	return text
 }

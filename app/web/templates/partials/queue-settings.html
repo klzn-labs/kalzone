@@ -1,0 +1,19 @@
+{{define "queue-settings-fields"}}
+<div class="form-row">
+  <div class="field"><label for="path">Path on the consumer</label><input id="path" name="path" type="text" class="mono" value="{{.Path}}" required></div>
+  <div class="field"><label for="rate_per_second">Rate (per second)</label><input id="rate_per_second" name="rate_per_second" type="number" step="0.1" min="0.1" max="1000" value="{{.RatePerSecond}}" required></div>
+  <div class="field"><label for="max_in_flight">In flight</label><input id="max_in_flight" name="max_in_flight" type="number" min="1" max="100" value="{{.MaxInFlight}}" required></div>
+</div>
+<div class="form-row">
+  <div class="field"><label for="max_attempts">Attempts</label><input id="max_attempts" name="max_attempts" type="number" min="1" max="50" value="{{.MaxAttempts}}" required></div>
+  <div class="field"><label for="backoff_kind">Backoff</label><select id="backoff_kind" name="backoff_kind"><option value="exponential" {{if eq .Backoff.Kind "exponential"}}selected{{end}}>exponential</option><option value="fixed" {{if eq .Backoff.Kind "fixed"}}selected{{end}}>fixed</option></select></div>
+  <div class="field"><label for="backoff_initial">First wait</label><input id="backoff_initial" name="backoff_initial" type="text" class="mono" value="{{span .Backoff.Initial}}" required></div>
+  <div class="field"><label for="backoff_max">Longest wait</label><input id="backoff_max" name="backoff_max" type="text" class="mono" value="{{span .Backoff.Max}}" required></div>
+</div>
+<div class="form-row">
+  <div class="field"><label for="delivery_timeout">Delivery timeout</label><input id="delivery_timeout" name="delivery_timeout" type="text" class="mono" value="{{span .DeliveryTimeout}}" required></div>
+  <div class="field"><label for="retention">Keep messages for</label><input id="retention" name="retention" type="text" class="mono" value="{{span .Retention}}" required></div>
+  <div class="field"><label for="max_message_bytes">Largest message (bytes)</label><input id="max_message_bytes" name="max_message_bytes" type="number" min="1024" max="1048576" value="{{.MaxMessageBytes}}" required></div>
+</div>
+<p class="form-note">Durations look like 30s, 5m or 24h. Exponential retries start at the first wait and double up to the longest wait.</p>
+{{end}}
