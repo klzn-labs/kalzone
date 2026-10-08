@@ -21,6 +21,7 @@ func Options() fx.Option {
 		modules.EnvConfig(),
 		modules.Audit(),
 		modules.Release(),
+		modules.Queue(),
 		modules.Deploy(),
 		modules.Observe(),
 		modules.Web(),

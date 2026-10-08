@@ -40,6 +40,10 @@ type ConfigResolver interface {
 	ResolveConfig(ctx context.Context, serviceID, environment string, number int) (entities.ResolvedConfig, error)
 }
 
+type QueueAccess interface {
+	QueueAccess(ctx context.Context, serviceID, environment string) (env, secrets map[string]string, err error)
+}
+
 type Publisher interface {
 	Publish(ctx context.Context, event events.Event)
 }
@@ -48,12 +52,15 @@ type AgentsUsecase struct {
 	store     Store
 	services  ServiceLookup
 	configs   ConfigResolver
+	queues    QueueAccess
 	publisher Publisher
 	timeout   time.Duration
 }
 
-func NewAgentsUsecase(cfg config.Config, store Store, services ServiceLookup, configs ConfigResolver, publisher Publisher) AgentsUsecase {
-	return AgentsUsecase{store: store, services: services, configs: configs, publisher: publisher, timeout: cfg.Deploy.Timeout}
+func NewAgentsUsecase(cfg config.Config, store Store, services ServiceLookup, configs ConfigResolver, queues QueueAccess, publisher Publisher) AgentsUsecase {
+	return AgentsUsecase{
+		store: store, services: services, configs: configs, queues: queues, publisher: publisher, timeout: cfg.Deploy.Timeout,
+	}
 }
 
 func (u AgentsUsecase) Agents(ctx context.Context) ([]entities.Agent, error) {

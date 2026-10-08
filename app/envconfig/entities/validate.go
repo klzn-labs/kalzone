@@ -19,9 +19,14 @@ var (
 	hostPattern = regexp.MustCompile(`^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$|^localhost$`)
 )
 
+var reserved = map[string]bool{"PLATFORM_QUEUE_URL": true, "PLATFORM_QUEUE_TOKEN": true, "PLATFORM_QUEUE_SIGNING_KEY": true}
+
 func ValidateName(name string) error {
 	if !namePattern.MatchString(name) {
 		return apperror.Invalid(fmt.Sprintf("%q is not a valid name: use UPPER_SNAKE_CASE", name))
+	}
+	if reserved[name] {
+		return apperror.Invalid(fmt.Sprintf("%s is set by the platform", name))
 	}
 	return nil
 }

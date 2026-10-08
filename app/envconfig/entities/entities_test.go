@@ -27,6 +27,7 @@ func Test_Validate_Rules(t *testing.T) {
 
 	broken := map[string]func(r *entities.Revision){
 		"lowercase name":   func(r *entities.Revision) { r.Env["db_url"] = "x" },
+		"reserved name":    func(r *entities.Revision) { r.Env["PLATFORM_QUEUE_TOKEN"] = "x" },
 		"var is a secret":  func(r *entities.Revision) { r.Env["TOKEN"] = "x"; r.Secrets["TOKEN"] = "v1" },
 		"value too long":   func(r *entities.Revision) { r.Env["BIG"] = string(make([]byte, entities.MaxValueBytes+1)) },
 		"port":             func(r *entities.Revision) { r.Spec.Port = 0 },

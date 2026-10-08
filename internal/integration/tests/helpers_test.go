@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"net/url"
 	"testing"
 
@@ -23,4 +24,9 @@ func stateOf(t *testing.T, location string) string {
 func setupSuiteOnly(t *testing.T) *integration.Suite {
 	t.Helper()
 	return integration.NewSuite(t)
+}
+
+func decode(t *testing.T, body string, out any) {
+	t.Helper()
+	require.NoError(t, json.Unmarshal([]byte(body), out))
 }

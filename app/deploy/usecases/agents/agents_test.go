@@ -26,6 +26,13 @@ func (r resolver) ResolveConfig(_ context.Context, _, _ string, number int) (ent
 	return entities.ResolvedConfig{Number: number, Secrets: map[string]string{"TOKEN": "s3cr3t"}}, nil
 }
 
+type queueAccess struct{}
+
+func (queueAccess) QueueAccess(_ context.Context, serviceID, environment string) (map[string]string, map[string]string, error) {
+	return map[string]string{"PLATFORM_QUEUE_URL": "http://queued:8080"},
+		map[string]string{"PLATFORM_QUEUE_TOKEN": "token-" + serviceID + "-" + environment}, nil
+}
+
 type published struct{ actions []string }
 
 func (p *published) Publish(_ context.Context, e events.Event) {
@@ -35,7 +42,7 @@ func (p *published) Publish(_ context.Context, e events.Event) {
 func setup(fail bool) (*fakestore.Store, *published, agents.AgentsUsecase) {
 	store, p := fakestore.New(), &published{}
 	cfg := config.Config{Deploy: config.Deploy{Timeout: 30 * time.Minute}}
-	return store, p, agents.NewAgentsUsecase(cfg, store, fakestore.Services{}, resolver{fail}, p)
+	return store, p, agents.NewAgentsUsecase(cfg, store, fakestore.Services{}, resolver{fail}, queueAccess{}, p)
 }
 
 func pending(store *fakestore.Store, id, env string, status entities.Status) entities.Deployment {
@@ -61,6 +68,18 @@ func Test_Claim_HandsOutTheOldestPendingOnce(t *testing.T) {
 	require.Equal(t, "s3cr3t", w.Config.Secrets["TOKEN"])
 	require.Equal(t, entities.StatusInProgress, store.ByID["d1"].Status)
 	require.Equal(t, "vps-1", store.ByID["d1"].Agent)
+}
+
+func Test_Claim_AddsQueueAccessToTheWorkload(t *testing.T) {
+	store, _, usecase := setup(false)
+	pending(store, "d1", "dev", entities.StatusPending)
+
+	w, _, err := usecase.Claim(ctx, "vps-1")
+
+	require.NoError(t, err)
+	require.Equal(t, "http://queued:8080", w.Config.Env["PLATFORM_QUEUE_URL"])
+	require.Equal(t, "token-s1-dev", w.Config.Secrets["PLATFORM_QUEUE_TOKEN"])
+	require.Equal(t, "s3cr3t", w.Config.Secrets["TOKEN"])
 }
 
 func Test_Claim_FailsAWorkloadThatCannotBePrepared(t *testing.T) {
