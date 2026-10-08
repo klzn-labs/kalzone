@@ -77,6 +77,8 @@ as a callback URL.
 | `PLATFORM_GRAFANA_URL` | | Grafana inside the network, e.g. `http://grafana:3000/grafana`; proxied at `/grafana` with single sign-on |
 | `PLATFORM_GRAFANA_TOKEN` | | Grafana service-account token (Editor) the platform writes dashboards with |
 | `PLATFORM_DEPLOY_TIMEOUT` | `30m` | deployments an agent stopped reporting on are failed after this |
+| `PLATFORM_QUEUES_TOKEN` | | shared secret the queue gateway authenticates with; the gateway API answers 503 without it |
+| `PLATFORM_QUEUES_GATEWAY_URL` | `http://queued:8080` | gateway address handed to services as `PLATFORM_QUEUE_URL` |
 
 Never run production with the default secrets key.
 
@@ -98,6 +100,19 @@ Never run production with the default secrets key.
    `build_args: VITE_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}`.
 4. Build a ref from the Releases tab, or switch on auto-build to build every
    push to the default branch.
+
+## Queues
+
+Teams create work queues from the API (`/api/v1/queues`): one consumer service per
+queue and environment, a list of publisher services, and settings for rate limit,
+in-flight deliveries, attempts, backoff, delivery timeout, retention and message size.
+Each change is a numbered version in the audit log. A per-host gateway, `queued`,
+reads the queues from `/queued/v1/desired` and runs them; see
+`docs/superpowers/specs/2026-10-08-managed-queues-design.md`.
+
+Every deployed service receives `PLATFORM_QUEUE_URL`, `PLATFORM_QUEUE_TOKEN` (to
+publish) and `PLATFORM_QUEUE_SIGNING_KEY` (to verify deliveries). The platform sets
+them; the config API refuses those names.
 
 ## The agent
 

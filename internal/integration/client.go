@@ -139,3 +139,13 @@ func (s *Suite) Agent(t *testing.T, method, path string, body any) Response {
 		"Authorization": "Bearer " + AgentToken, "X-Agent-Name": "vps-1", "X-Agent-Version": "test", "Content-Type": "application/json",
 	})
 }
+
+func (s *Suite) Queued(t *testing.T, method, path string, body any) Response {
+	t.Helper()
+	raw, err := json.Marshal(body)
+	require.NoError(t, err)
+	if body == nil {
+		raw = nil
+	}
+	return s.Raw(t, method, path, raw, map[string]string{"Authorization": "Bearer " + QueuedToken, "Content-Type": "application/json"})
+}

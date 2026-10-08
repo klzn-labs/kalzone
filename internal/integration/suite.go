@@ -27,6 +27,7 @@ const (
 	Audience      = "http://platform.test"
 	WebhookSecret = "webhook-secret"
 	AgentToken    = "agent-token"
+	QueuedToken   = "queued-test-token"
 )
 
 type Suite struct {
@@ -73,6 +74,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Build.Timeout = time.Hour
 	cfg.Deploy.Timeout = time.Hour
 	cfg.Agent.Token = AgentToken
+	cfg.Queues = config.Queues{GatewayURL: "http://queued:8080", Token: QueuedToken}
 	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token"}
 	return cfg
 }

@@ -25,6 +25,12 @@ type Config struct {
 	Deploy         Deploy   `mapstructure:"deploy"`
 	Agent          Agent    `mapstructure:"agent"`
 	Grafana        Grafana  `mapstructure:"grafana"`
+	Queues         Queues   `mapstructure:"queues"`
+}
+
+type Queues struct {
+	GatewayURL string `mapstructure:"gateway_url" default:"http://queued:8080"`
+	Token      string `mapstructure:"token"`
 }
 
 type Grafana struct {
@@ -122,6 +128,7 @@ var envKeys = []string{
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
 	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token", "grafana.url", "grafana.token",
+	"queues.gateway_url", "queues.token",
 }
 
 func bindEnvVars() {

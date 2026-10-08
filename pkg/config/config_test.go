@@ -34,3 +34,13 @@ func Test_LoadConfig_DefaultsWork(t *testing.T) {
 	require.Equal(t, "https://github.com", cfg.GitHub.OAuthURL)
 	require.False(t, cfg.SecureCookies())
 }
+
+func Test_LoadConfig_ReadsTheQueueGatewaySettings(t *testing.T) {
+	t.Setenv("PLATFORM_QUEUES_TOKEN", "queued-token")
+
+	cfg, err := config.LoadConfig()
+
+	require.NoError(t, err)
+	require.Equal(t, "queued-token", cfg.Queues.Token)
+	require.Equal(t, "http://queued:8080", cfg.Queues.GatewayURL)
+}

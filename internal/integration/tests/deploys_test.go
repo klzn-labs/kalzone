@@ -63,6 +63,9 @@ func Test_ADeployIsClaimedRunAndBecomesLive(t *testing.T) {
 	require.Equal(t, "r1.c1", w.Version)
 	require.Equal(t, "docker.io/adrianozdp/places-api@"+digest, w.ImageRef)
 	require.Equal(t, secretValue, w.Secrets["DB_PASSWORD"])
+	require.Equal(t, "http://queued:8080", w.Env["PLATFORM_QUEUE_URL"])
+	require.Len(t, w.Secrets["PLATFORM_QUEUE_TOKEN"], 64)
+	require.Len(t, w.Secrets["PLATFORM_QUEUE_SIGNING_KEY"], 64)
 	var history struct {
 		Deployments []deploymentView `json:"deployments"`
 	}

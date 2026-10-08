@@ -9,13 +9,16 @@ import (
 	deployCatalog "github.com/adrianozp/platform/app/deploy/repositories/catalog"
 	deployConfig "github.com/adrianozp/platform/app/deploy/repositories/envconfig"
 	"github.com/adrianozp/platform/app/deploy/repositories/mysql"
+	deployQueue "github.com/adrianozp/platform/app/deploy/repositories/queue"
 	deployRelease "github.com/adrianozp/platform/app/deploy/repositories/release"
 	"github.com/adrianozp/platform/app/deploy/usecases/agents"
 	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
+	"github.com/adrianozp/platform/app/queue/usecases/credentials"
 	"github.com/adrianozp/platform/app/release/usecases/releases"
 	"github.com/adrianozp/platform/internal/eventbus"
 	"github.com/adrianozp/platform/internal/sweeper"
+	"github.com/adrianozp/platform/pkg/config"
 	"go.uber.org/fx"
 )
 
@@ -38,6 +41,10 @@ func deployAdapterInjections() fx.Option {
 		func(u environments.EnvironmentsUsecase) deployCatalog.EnvironmentFinder { return u },
 		func(u releases.ReleasesUsecase) deployRelease.ReleaseFinder { return u },
 		func(u configs.ConfigUsecase) deployConfig.Configs { return u },
+		func(u credentials.CredentialsUsecase) deployQueue.Credentials { return u },
+		func(c deployQueue.Credentials, cfg config.Config) deployQueue.Access {
+			return deployQueue.NewAccess(c, cfg.Queues.GatewayURL)
+		},
 	)
 }
 
@@ -51,6 +58,7 @@ func deployUsecaseInjections() fx.Option {
 		func(l deployRelease.Lookup) deployments.ReleaseLookup { return l },
 		func(s deployConfig.Source) deployments.ConfigSource { return s },
 		func(s deployConfig.Source) agents.ConfigResolver { return s },
+		func(a deployQueue.Access) agents.QueueAccess { return a },
 		func(p authz.Policy) deployments.Authorizer { return p },
 		func(b *eventbus.Bus) deployments.Publisher { return b },
 		func(b *eventbus.Bus) agents.Publisher { return b },

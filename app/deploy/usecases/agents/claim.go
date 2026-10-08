@@ -57,10 +57,35 @@ func (u AgentsUsecase) workload(ctx context.Context, d entities.Deployment) (ent
 		return entities.Workload{}, err
 	}
 	resolved, err := u.configs.ResolveConfig(ctx, d.ServiceID, d.Environment, d.ConfigRevision)
+	if err != nil {
+		return entities.Workload{}, err
+	}
+	resolved, err = u.withQueueAccess(ctx, resolved, d.ServiceID, d.Environment)
 	return entities.Workload{
 		Deployment: d, Name: entities.WorkloadName(service.Slug, d.Environment), Service: service.Slug,
 		Version: entities.VersionLabel(d), Config: resolved,
 	}, err
+}
+
+func (u AgentsUsecase) withQueueAccess(ctx context.Context, resolved entities.ResolvedConfig, serviceID, environment string) (entities.ResolvedConfig, error) {
+	env, secrets, err := u.queues.QueueAccess(ctx, serviceID, environment)
+	if err != nil {
+		return entities.ResolvedConfig{}, err
+	}
+	resolved.Env = merged(resolved.Env, env)
+	resolved.Secrets = merged(resolved.Secrets, secrets)
+	return resolved, nil
+}
+
+func merged(base, extra map[string]string) map[string]string {
+	result := make(map[string]string, len(base)+len(extra))
+	for k, v := range base {
+		result[k] = v
+	}
+	for k, v := range extra {
+		result[k] = v
+	}
+	return result
 }
 
 func (u AgentsUsecase) failClaimed(ctx context.Context, agent string, d entities.Deployment, reason string) {
