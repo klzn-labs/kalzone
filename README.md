@@ -93,6 +93,9 @@ Never run production with the default secrets key.
    [`build.yml`](.github/workflows/build.yml) here, which builds and pushes the
    image and reports the digest with the job's OIDC token. The repository needs
    `DOCKER_USERNAME` and `DOCKER_PASSWORD`; it never holds a platform secret.
+   The build always passes `VERSION=<commit>`; more Docker build args go in the
+   `build_args` input, one `NAME=value` per line, for example
+   `build_args: VITE_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}`.
 4. Build a ref from the Releases tab, or switch on auto-build to build every
    push to the default branch.
 
