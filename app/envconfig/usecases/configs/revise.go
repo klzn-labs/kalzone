@@ -15,6 +15,7 @@ import (
 var (
 	errHostNotAllowed = apperror.Invalid("host must be under one of the platform's domains")
 	errHostTaken      = apperror.Conflict("another service or environment already uses this host")
+	errInternalTaken  = apperror.Conflict("another service is already this environment's internal service")
 	errNoChanges      = apperror.Invalid("nothing changed")
 )
 
@@ -47,17 +48,34 @@ func (u ConfigUsecase) validate(ctx context.Context, t target, next entities.Rev
 	if err := next.Validate(); err != nil {
 		return err
 	}
-	if next.Spec.Host == "" {
+	if next.Spec.Internal {
+		return u.internalFree(ctx, t)
+	}
+	return u.hostsFree(ctx, t, next.Spec.Hosts())
+}
+
+func (u ConfigUsecase) hostsFree(ctx context.Context, t target, hosts []string) error {
+	if len(hosts) == 0 {
 		return nil
 	}
-	if !entities.HostAllowed(next.Spec.Host, u.allowedDomains) {
-		return errHostNotAllowed
+	for _, host := range hosts {
+		if !entities.HostAllowed(host, u.allowedDomains) {
+			return errHostNotAllowed
+		}
 	}
-	taken, err := u.store.HostTaken(ctx, next.Spec.Host, t.service.ID, t.environment)
+	taken, err := u.store.HostsTaken(ctx, hosts, t.service.ID, t.environment)
 	if err != nil || !taken {
 		return err
 	}
 	return errHostTaken
+}
+
+func (u ConfigUsecase) internalFree(ctx context.Context, t target) error {
+	taken, err := u.store.InternalTaken(ctx, t.service.ID, t.environment)
+	if err != nil || !taken {
+		return err
+	}
+	return errInternalTaken
 }
 
 func (u ConfigUsecase) commit(ctx context.Context, a actor.Actor, t target, current, next entities.Revision) (entities.Revision, error) {

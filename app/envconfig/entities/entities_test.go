@@ -36,6 +36,11 @@ func Test_Validate_Rules(t *testing.T) {
 		"memory too big":   func(r *entities.Revision) { r.Spec.MemoryMB = 8192 },
 		"cpu":              func(r *entities.Revision) { r.Spec.CPUMillis = 10 },
 		"replicas":         func(r *entities.Revision) { r.Spec.Replicas = 6 },
+		"alias, no host":   func(r *entities.Revision) { r.Spec.Aliases = []string{"www.kalz.one"} },
+		"bad alias":        func(r *entities.Revision) { r.Spec.Host, r.Spec.Aliases = "kalz.one", []string{"Not A Host"} },
+		"alias is host":    func(r *entities.Revision) { r.Spec.Host, r.Spec.Aliases = "kalz.one", []string{"kalz.one"} },
+		"too many aliases": func(r *entities.Revision) { r.Spec.Host, r.Spec.Aliases = "kalz.one", make([]string, 6) },
+		"internal, host":   func(r *entities.Revision) { r.Spec.Host, r.Spec.Internal = "kalz.one", true },
 	}
 	for name, breakIt := range broken {
 		r := entities.Initial("svc", "dev")

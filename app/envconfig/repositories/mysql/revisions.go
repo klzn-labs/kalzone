@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/adrianozp/platform/app/envconfig/entities"
@@ -76,11 +77,24 @@ func (r ConfigRepository) Insert(ctx context.Context, rev entities.Revision) err
 	return err
 }
 
-func (r ConfigRepository) HostTaken(ctx context.Context, host, serviceID, environment string) (bool, error) {
+func (r ConfigRepository) HostsTaken(ctx context.Context, hosts []string, serviceID, environment string) (bool, error) {
+	names, err := json.Marshal(hosts)
+	if err != nil {
+		return false, err
+	}
+	var count int64
+	err = r.db.WithContext(ctx).Model(&revision{}).
+		Where("host IN ? OR JSON_OVERLAPS(JSON_EXTRACT(spec, '$.aliases'), CAST(? AS JSON))", hosts, string(names)).
+		Where("NOT (service_id = ? AND environment = ?)", serviceID, environment).
+		Where(currentRevisionOfPair).Count(&count).Error
+	return count > 0, err
+}
+
+func (r ConfigRepository) InternalTaken(ctx context.Context, serviceID, environment string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&revision{}).
-		Where("host = ?", host).
-		Where("NOT (service_id = ? AND environment = ?)", serviceID, environment).
+		Where("environment = ? AND service_id <> ?", environment, serviceID).
+		Where("JSON_EXTRACT(spec, '$.internal') = CAST('true' AS JSON)").
 		Where(currentRevisionOfPair).Count(&count).Error
 	return count > 0, err
 }

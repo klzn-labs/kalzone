@@ -3,13 +3,15 @@ package entities
 import "time"
 
 type Spec struct {
-	Port       int    `json:"port"`
-	HealthPath string `json:"health_path"`
-	Host       string `json:"host"`
-	MemoryMB   int    `json:"memory_mb"`
-	CPUMillis  int    `json:"cpu_millis"`
-	Replicas   int    `json:"replicas"`
-	Command    string `json:"command,omitempty"`
+	Port       int      `json:"port"`
+	HealthPath string   `json:"health_path"`
+	Host       string   `json:"host"`
+	Aliases    []string `json:"aliases,omitempty"`
+	Internal   bool     `json:"internal,omitempty"`
+	MemoryMB   int      `json:"memory_mb"`
+	CPUMillis  int      `json:"cpu_millis"`
+	Replicas   int      `json:"replicas"`
+	Command    string   `json:"command,omitempty"`
 }
 
 func DefaultSpec() Spec {

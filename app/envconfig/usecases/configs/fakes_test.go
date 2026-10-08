@@ -2,6 +2,7 @@ package configs_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/adrianozp/platform/app/authz"
@@ -14,9 +15,10 @@ import (
 )
 
 type store struct {
-	revisions []entities.Revision
-	versions  []entities.SecretVersion
-	takenHost string
+	revisions     []entities.Revision
+	versions      []entities.SecretVersion
+	takenHost     string
+	internalTaken bool
 }
 
 func (s *store) Latest(_ context.Context, serviceID, env string) (entities.Revision, bool, error) {
@@ -46,8 +48,12 @@ func (s *store) ByNumber(_ context.Context, serviceID, env string, number int) (
 	return entities.Revision{}, apperror.NotFound("config revision not found")
 }
 
-func (s *store) HostTaken(_ context.Context, host, _, _ string) (bool, error) {
-	return host == s.takenHost, nil
+func (s *store) HostsTaken(_ context.Context, hosts []string, _, _ string) (bool, error) {
+	return slices.Contains(hosts, s.takenHost), nil
+}
+
+func (s *store) InternalTaken(context.Context, string, string) (bool, error) {
+	return s.internalTaken, nil
 }
 
 func (s *store) InsertSecretVersion(_ context.Context, v entities.SecretVersion) error {

@@ -78,6 +78,38 @@ func Test_Revise_HostRules(t *testing.T) {
 	require.NoError(t, free)
 }
 
+func Test_Revise_AliasRules(t *testing.T) {
+	f := newFixture(t)
+	f.store.takenHost = "taken.kalz.one"
+	withAlias := func(alias string) entities.ChangeSet {
+		spec := entities.DefaultSpec()
+		spec.Host, spec.Aliases = "web.kalz.one", []string{alias}
+		return entities.ChangeSet{Spec: &spec}
+	}
+
+	_, foreign := f.usecase.Revise(ctx, ana, "api", "dev", withAlias("www.example.com"))
+	_, taken := f.usecase.Revise(ctx, ana, "api", "dev", withAlias("taken.kalz.one"))
+	_, free := f.usecase.Revise(ctx, ana, "api", "dev", withAlias("www.kalz.one"))
+
+	require.ErrorIs(t, foreign, apperror.Invalid(""))
+	require.ErrorIs(t, taken, apperror.Conflict(""))
+	require.NoError(t, free)
+}
+
+func Test_Revise_AllowsOneInternalServicePerEnvironment(t *testing.T) {
+	f := newFixture(t)
+	internal := entities.DefaultSpec()
+	internal.Internal = true
+	f.store.internalTaken = true
+
+	_, taken := f.usecase.Revise(ctx, ana, "api", "dev", entities.ChangeSet{Spec: &internal})
+	f.store.internalTaken = false
+	_, free := f.usecase.Revise(ctx, ana, "api", "dev", entities.ChangeSet{Spec: &internal})
+
+	require.ErrorIs(t, taken, apperror.Conflict(""))
+	require.NoError(t, free)
+}
+
 func Test_Revise_RejectsNoOpAndInvalidChanges(t *testing.T) {
 	f := newFixture(t)
 

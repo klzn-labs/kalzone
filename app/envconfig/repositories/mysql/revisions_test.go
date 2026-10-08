@@ -55,7 +55,7 @@ func Test_Insert_SameNumberTwiceIsAConflict(t *testing.T) {
 	require.ErrorIs(t, err, apperror.Conflict(""))
 }
 
-func Test_HostTaken_OnlyCountsOtherPairsCurrentRevisions(t *testing.T) {
+func Test_HostsTaken_OnlyCountsOtherPairsCurrentRevisions(t *testing.T) {
 	repo := mysql.NewConfigRepository(testdb.Open(t))
 	require.NoError(t, repo.Insert(ctx, revision("r1", "a", "dev", 1, "old.kalz.one")))
 	require.NoError(t, repo.Insert(ctx, revision("r2", "a", "dev", 2, "new.kalz.one")))
@@ -63,13 +63,42 @@ func Test_HostTaken_OnlyCountsOtherPairsCurrentRevisions(t *testing.T) {
 
 	cases := map[string]bool{"old.kalz.one": false, "new.kalz.one": true, "b.kalz.one": true}
 	for host, want := range cases {
-		taken, err := repo.HostTaken(ctx, host, "c", "dev")
+		taken, err := repo.HostsTaken(ctx, []string{host}, "c", "dev")
 		require.NoError(t, err)
 		require.Equal(t, want, taken, host)
 	}
-	taken, err := repo.HostTaken(ctx, "new.kalz.one", "a", "dev")
+	taken, err := repo.HostsTaken(ctx, []string{"new.kalz.one"}, "a", "dev")
 	require.NoError(t, err)
 	require.False(t, taken)
+}
+
+func Test_HostsTaken_CountsOtherPairsAliases(t *testing.T) {
+	repo := mysql.NewConfigRepository(testdb.Open(t))
+	web := revision("r1", "web", "prod", 1, "kalz.one")
+	web.Spec.Aliases = []string{"www.kalz.one"}
+	require.NoError(t, repo.Insert(ctx, web))
+
+	takenByOther, err := repo.HostsTaken(ctx, []string{"new.kalz.one", "www.kalz.one"}, "c", "prod")
+	require.NoError(t, err)
+	ownAlias, err := repo.HostsTaken(ctx, []string{"www.kalz.one"}, "web", "prod")
+	require.NoError(t, err)
+
+	require.True(t, takenByOther)
+	require.False(t, ownAlias)
+}
+
+func Test_InternalTaken_OnlyCountsOtherServicesInTheEnvironment(t *testing.T) {
+	repo := mysql.NewConfigRepository(testdb.Open(t))
+	api := revision("r1", "api", "prod", 1, "")
+	api.Spec.Internal = true
+	require.NoError(t, repo.Insert(ctx, api))
+
+	cases := map[[2]string]bool{{"other", "prod"}: true, {"api", "prod"}: false, {"other", "dev"}: false}
+	for pair, want := range cases {
+		taken, err := repo.InternalTaken(ctx, pair[0], pair[1])
+		require.NoError(t, err)
+		require.Equal(t, want, taken, pair)
+	}
 }
 
 func Test_ByNumber(t *testing.T) {

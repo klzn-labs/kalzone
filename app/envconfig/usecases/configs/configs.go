@@ -14,7 +14,8 @@ type Store interface {
 	Latest(ctx context.Context, serviceID, environment string) (entities.Revision, bool, error)
 	History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Revision, error)
 	Insert(ctx context.Context, rev entities.Revision) error
-	HostTaken(ctx context.Context, host, serviceID, environment string) (bool, error)
+	HostsTaken(ctx context.Context, hosts []string, serviceID, environment string) (bool, error)
+	InternalTaken(ctx context.Context, serviceID, environment string) (bool, error)
 	ByNumber(ctx context.Context, serviceID, environment string, number int) (entities.Revision, error)
 	InsertSecretVersion(ctx context.Context, v entities.SecretVersion) error
 	SecretVersions(ctx context.Context, ids []string) ([]entities.SecretVersion, error)
