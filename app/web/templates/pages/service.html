@@ -44,7 +44,7 @@
             <div><dt>Variables</dt><dd>{{len .Revision.Env}}</dd></div>
             <div><dt>Secrets</dt><dd>{{len .Revision.Secrets}}</dd></div>
           </dl>
-          <div class="row small muted">{{icon "globe"}}{{if .Revision.Spec.Host}}<span class="mono">{{.Revision.Spec.Host}}</span>{{else}}no public host{{end}}</div>
+          <div class="row small muted">{{icon "globe"}}{{if .Revision.Spec.Internal}}internal{{else if .Revision.Spec.Host}}<span class="mono">{{join .Revision.Spec.Hosts ", "}}</span>{{else}}no public host{{end}}</div>
         {{else}}
           <p class="muted">Not configured yet. Defaults apply until someone saves a revision.</p>
         {{end}}

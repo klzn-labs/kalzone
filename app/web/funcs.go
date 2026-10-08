@@ -22,6 +22,7 @@ func funcs() template.FuncMap {
 		"add":      func(a, b int) int { return a + b },
 		"dict":     dict,
 		"upper":    strings.ToUpper,
+		"join":     strings.Join,
 		"short":    Short,
 		"deref":    deref,
 		"list":     func(values ...int) []int { return values },

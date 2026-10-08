@@ -64,9 +64,22 @@ func specFrom(c *gin.Context) (envconfig.Spec, error) {
 		}
 		numbers[field] = value
 	}
-	return envconfig.Spec{
-		Port: numbers["port"], HealthPath: strings.TrimSpace(c.PostForm("health_path")), Host: strings.ToLower(strings.TrimSpace(c.PostForm("host"))),
+	spec := envconfig.Spec{
+		Port: numbers["port"], HealthPath: strings.TrimSpace(c.PostForm("health_path")),
 		MemoryMB: numbers["memory_mb"], CPUMillis: numbers["cpu_millis"], Replicas: numbers["replicas"],
 		Command: strings.TrimSpace(c.PostForm("command")),
-	}, nil
+	}
+	spec.Host, spec.Aliases, spec.Internal = routeFrom(c)
+	return spec, nil
+}
+
+func routeFrom(c *gin.Context) (string, []string, bool) {
+	var aliases []string
+	for _, alias := range strings.Split(c.PostForm("aliases"), ",") {
+		if alias = strings.ToLower(strings.TrimSpace(alias)); alias != "" {
+			aliases = append(aliases, alias)
+		}
+	}
+	host := strings.ToLower(strings.TrimSpace(c.PostForm("host")))
+	return host, aliases, c.PostForm("internal") != ""
 }
