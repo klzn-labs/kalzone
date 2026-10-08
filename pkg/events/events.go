@@ -29,4 +29,5 @@ const (
 	TargetConfig     = "config"
 	TargetRelease    = "release"
 	TargetDeployment = "deployment"
+	TargetQueue      = "queue"
 )
