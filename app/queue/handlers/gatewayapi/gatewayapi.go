@@ -12,6 +12,7 @@ import (
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/adrianozp/platform/pkg/config"
+	"github.com/adrianozp/platform/pkg/queuedapi"
 	"github.com/gin-gonic/gin"
 )
 
@@ -56,13 +57,11 @@ func (h GatewayAPIHandler) Desired(c *gin.Context) {
 }
 
 func (h GatewayAPIHandler) Stats(c *gin.Context) {
-	var body struct {
-		Stats []entities.Stats `json:"stats"`
-	}
+	var body queuedapi.StatsReport
 	if !httperror.BindJSON(c, &body) {
 		return
 	}
-	reply(c, h.gateway.Report(c.Request.Context(), body.Stats))
+	reply(c, h.gateway.Report(c.Request.Context(), toEntityStats(body)))
 }
 
 func (h GatewayAPIHandler) Done(c *gin.Context) {
@@ -78,8 +77,7 @@ func reply(c *gin.Context, err error) {
 }
 
 func RegisterGatewayAPIRoutes(public httpserver.Public, h GatewayAPIHandler) {
-	group := public.Group("/queued/v1", h.authenticate)
-	group.GET("/desired", h.Desired)
-	group.POST("/stats", h.Stats)
-	group.POST("/commands/:id/done", h.Done)
+	public.GET(queuedapi.DesiredPath, h.authenticate, h.Desired)
+	public.POST(queuedapi.StatsPath, h.authenticate, h.Stats)
+	public.POST(queuedapi.DonePath(":id"), h.authenticate, h.Done)
 }
