@@ -55,6 +55,7 @@ func (s *store) Unfinished(_ context.Context, before time.Time) ([]entities.Rele
 
 var api = entities.ServiceRef{ID: "s1", Slug: "api", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/api", BuildWorkflow: "platform-build.yml", AutoBuild: true}
 var web = entities.ServiceRef{ID: "s2", Slug: "web", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/web", BuildWorkflow: "platform-build.yml"}
+var worker = entities.ServiceRef{ID: "s4", Slug: "worker", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/api", BuildWorkflow: "platform-build.yml", AutoBuild: true}
 var bare = entities.ServiceRef{ID: "s3", Slug: "bare", OwnerTeamID: "t1", BuildWorkflow: "platform-build.yml"}
 
 type services struct{}
@@ -68,11 +69,11 @@ func (services) FindServiceByID(_ context.Context, id string) (entities.ServiceR
 }
 
 func (services) ServicesForRepository(_ context.Context, repo string) ([]entities.ServiceRef, error) {
-	return []entities.ServiceRef{api, web}, nil
+	return []entities.ServiceRef{api, web, worker}, nil
 }
 
 func byKey(match func(entities.ServiceRef) bool) (entities.ServiceRef, error) {
-	for _, s := range []entities.ServiceRef{api, web, bare} {
+	for _, s := range []entities.ServiceRef{api, web, worker, bare} {
 		if match(s) {
 			return s, nil
 		}

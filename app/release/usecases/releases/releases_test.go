@@ -74,6 +74,25 @@ func Test_Built_FinishesTheReleaseForTheRightRepositoryOnly(t *testing.T) {
 	require.ErrorIs(t, again, apperror.Conflict(""))
 }
 
+func Test_Built_SharesTheImageWithServicesBuiltFromIt(t *testing.T) {
+	f := newFixture(t, false)
+	rel, _ := f.usecase.Request(ctx, ana, "api", "main")
+	report := entities.BuildReport{Digest: "sha256:" + digestHex, CommitSHA: sha, Tag: "r1", RunURL: "https://github.com/o/api/actions/runs/1"}
+
+	_, err := f.usecase.Built(ctx, entities.BuildCaller{Repository: "o/api"}, rel.ID, report)
+
+	require.NoError(t, err)
+	shared := releasesOf(f.store, worker.ID)
+	require.Len(t, shared, 1)
+	require.Equal(t, entities.SourceShared, shared[0].Source)
+	require.Equal(t, entities.StatusBuilt, shared[0].Status)
+	require.Equal(t, "docker.io/o/api@sha256:"+digestHex, shared[0].Reference())
+	require.Equal(t, sha, shared[0].CommitSHA)
+	require.Equal(t, "main", shared[0].GitRef)
+	require.Empty(t, releasesOf(f.store, web.ID))
+	require.Equal(t, []string{"release.requested", "release.built", "release.shared"}, f.events.actions)
+}
+
 func Test_Built_RejectsMalformedReports(t *testing.T) {
 	f := newFixture(t, false)
 	rel, _ := f.usecase.Request(ctx, ana, "api", "main")
@@ -119,7 +138,8 @@ func Test_OnPush_BuildsOnlyAutoBuildServicesOnTheDefaultBranch(t *testing.T) {
 	none, _ := f.usecase.OnPush(ctx, feature)
 
 	require.NoError(t, err)
-	require.Len(t, started, 1)
+	require.Len(t, started, 1, "api and worker share an image, so it is built once")
+	require.Len(t, f.builder.requests, 1)
 	require.Equal(t, entities.TriggerPush, started[0].Trigger)
 	require.Equal(t, sha, f.builder.requests[0].Ref)
 	require.Empty(t, none)
@@ -152,4 +172,14 @@ func Test_Sweep_TimesOutOldUnfinishedBuilds(t *testing.T) {
 	require.Equal(t, 1, swept)
 	require.Equal(t, "timed out after 1h0m0s", f.store.byID[old.ID].Failure)
 	require.Equal(t, entities.StatusBuilding, f.store.byID[fresh.ID].Status)
+}
+
+func releasesOf(s *store, serviceID string) []entities.Release {
+	result := []entities.Release{}
+	for _, rel := range s.byID {
+		if rel.ServiceID == serviceID {
+			result = append(result, rel)
+		}
+	}
+	return result
 }

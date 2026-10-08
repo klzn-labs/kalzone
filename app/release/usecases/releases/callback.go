@@ -43,6 +43,7 @@ func (u ReleasesUsecase) Built(ctx context.Context, caller entities.BuildCaller,
 		return entities.Release{}, err
 	}
 	u.publish(ctx, GitHubActor, "release.built", p.service, rel)
+	u.share(ctx, p.service, rel)
 	return rel, nil
 }
 
