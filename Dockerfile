@@ -5,12 +5,20 @@ RUN go mod download
 COPY . .
 ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w" -o /out/controlplane ./cmd/controlplane && \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w -X main.Version=${VERSION}" -o /out/agent ./cmd/agent
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w -X main.Version=${VERSION}" -o /out/agent ./cmd/agent && \
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w -X main.Version=${VERSION}" -o /out/queued ./cmd/queued
 
 FROM alpine:3.22 AS agent
 RUN apk add --no-cache ca-certificates docker-cli docker-cli-compose
 COPY --from=builder /out/agent /usr/local/bin/agent
 ENTRYPOINT ["agent"]
+
+FROM alpine:3.22 AS queued
+RUN apk add --no-cache ca-certificates && adduser -D -H -u 10002 queued
+COPY --from=builder /out/queued /usr/local/bin/queued
+USER queued
+EXPOSE 8080 9090
+ENTRYPOINT ["queued"]
 
 FROM alpine:3.22 AS controlplane
 RUN apk add --no-cache ca-certificates && adduser -D -H -u 10001 platform
