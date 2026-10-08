@@ -31,7 +31,8 @@ func setup(t *testing.T) (deployctl.Runtime, string) {
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "docker"), []byte(fakeDocker), 0o755))
 	runtime := deployctl.Runtime{
 		Root: root, Deployctl: filepath.Join(bin, "deployctl"), Docker: filepath.Join(bin, "docker"),
-		RunURL: func(w agentapi.Workload) string { return "https://platform/" + w.Name },
+		RunURL:              func(w agentapi.Workload) string { return "https://platform/" + w.Name },
+		InternalEntrypoints: map[string]string{"dev": "backend-dev"},
 	}
 	return runtime, bin
 }
@@ -84,6 +85,35 @@ func Test_Apply_AServiceWithoutHostIsAWorker(t *testing.T) {
 	require.Contains(t, service, "command: ./worker")
 	require.NotContains(t, service, "rule:")
 	require.ErrorContains(t, err, "needs a command")
+}
+
+func Test_Apply_RoutesEveryAlias(t *testing.T) {
+	runtime, _ := setup(t)
+	w := workload("kalz.one", "")
+	w.Spec.Aliases = []string{"www.kalz.one"}
+
+	require.NoError(t, runtime.Apply(context.Background(), w, &bytes.Buffer{}))
+
+	service := read(t, filepath.Join(runtime.Root, "stack", "deploy", "api-dev.yml"))
+	require.Contains(t, service, "rule: Host(`kalz.one`) || Host(`www.kalz.one`)")
+}
+
+func Test_Apply_AnInternalServiceTakesItsEnvironmentsEntrypoint(t *testing.T) {
+	runtime, _ := setup(t)
+	w := workload("", "")
+	w.Spec.Internal = true
+	unmapped := w
+	unmapped.Environment = "prod"
+
+	require.NoError(t, runtime.Apply(context.Background(), w, &bytes.Buffer{}))
+	err := runtime.Apply(context.Background(), unmapped, &bytes.Buffer{})
+
+	service := read(t, filepath.Join(runtime.Root, "stack", "deploy", "api-dev.yml"))
+	require.Contains(t, service, "entrypoint: backend-dev")
+	require.Contains(t, service, "rule: PathPrefix(`/`)")
+	require.Contains(t, service, "rollout:")
+	require.NotContains(t, service, "tls:")
+	require.ErrorContains(t, err, "no internal entrypoint for prod")
 }
 
 func Test_Apply_ReportsAFailedRollout(t *testing.T) {

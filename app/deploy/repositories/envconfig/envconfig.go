@@ -33,7 +33,7 @@ func (s Source) ResolveConfig(ctx context.Context, serviceID, environment string
 	return entities.ResolvedConfig{
 		Number: resolved.Revision.Number, Env: resolved.Revision.Env, Secrets: resolved.Secrets,
 		Spec: entities.RuntimeSpec{
-			Port: spec.Port, HealthPath: spec.HealthPath, Host: spec.Host, MemoryMB: spec.MemoryMB,
+			Port: spec.Port, HealthPath: spec.HealthPath, Host: spec.Host, Aliases: spec.Aliases, Internal: spec.Internal, MemoryMB: spec.MemoryMB,
 			CPUMillis: spec.CPUMillis, Replicas: spec.Replicas, Command: spec.Command,
 		},
 	}, nil

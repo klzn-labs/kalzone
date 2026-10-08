@@ -20,12 +20,14 @@ type Runtime struct {
 	Deployctl string
 	Docker    string
 	RunURL    func(w agentapi.Workload) string
+
+	InternalEntrypoints map[string]string
 }
 
 func New(cfg agent.Config) Runtime {
 	base := strings.TrimRight(cfg.PlatformURL, "/")
 	return Runtime{
-		Root: cfg.Root, Deployctl: cfg.Deployctl, Docker: cfg.Docker,
+		Root: cfg.Root, Deployctl: cfg.Deployctl, Docker: cfg.Docker, InternalEntrypoints: cfg.InternalEntrypoints,
 		RunURL: func(w agentapi.Workload) string { return base + "/services/" + w.Service + "/env/" + w.Environment },
 	}
 }

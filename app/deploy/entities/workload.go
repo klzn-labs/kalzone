@@ -24,6 +24,8 @@ type RuntimeSpec struct {
 	Port       int
 	HealthPath string
 	Host       string
+	Aliases    []string
+	Internal   bool
 	MemoryMB   int
 	CPUMillis  int
 	Replicas   int
