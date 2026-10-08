@@ -44,17 +44,40 @@ var defaultLimits = limits{
 	MinRequests: 30, MaxErrorRatio: 0.01, ErrorFactor: 2, MaxP95: "1s", LatencyFactor: 1.5, LatencySlack: "250ms",
 }
 
-func serviceDefinition(w agentapi.Workload) (serviceFile, error) {
+func serviceDefinition(w agentapi.Workload, internalEntrypoints map[string]string) (serviceFile, error) {
 	s := serviceFile{
 		Name: w.Name, Port: w.Spec.Port, HealthPath: w.Spec.HealthPath, MemLimit: fmt.Sprintf("%dm", w.Spec.MemoryMB),
 	}
-	if w.Spec.Host == "" {
+	switch {
+	case w.Spec.Internal:
+		return asInternal(s, internalEntrypoints[w.Environment], w.Environment)
+	case w.Spec.Host == "":
 		return asWorker(s, w.Spec.Command)
 	}
-	s.Entrypoint, s.Rule, s.TLS = "websecure", "Host(`"+w.Spec.Host+"`)", true
+	s.Entrypoint, s.Rule, s.TLS = "websecure", hostRule(append([]string{w.Spec.Host}, w.Spec.Aliases...)), true
+	return withRollout(s), nil
+}
+
+func hostRule(hosts []string) string {
+	rules := make([]string, 0, len(hosts))
+	for _, host := range hosts {
+		rules = append(rules, "Host(`"+host+"`)")
+	}
+	return strings.Join(rules, " || ")
+}
+
+func asInternal(s serviceFile, entrypoint, environment string) (serviceFile, error) {
+	if entrypoint == "" {
+		return serviceFile{}, fmt.Errorf("%s is internal, but this agent has no internal entrypoint for %s", s.Name, environment)
+	}
+	s.Entrypoint, s.Rule = entrypoint, "PathPrefix(`/`)"
+	return withRollout(s), nil
+}
+
+func withRollout(s serviceFile) serviceFile {
 	s.Rollout = &rollout{Steps: []int{10, 50, 100}, Bake: "1m", Poll: "15s"}
 	s.Limits = &defaultLimits
-	return s, nil
+	return s
 }
 
 func asWorker(s serviceFile, command string) (serviceFile, error) {
@@ -66,7 +89,7 @@ func asWorker(s serviceFile, command string) (serviceFile, error) {
 }
 
 func (r Runtime) writeFiles(w agentapi.Workload) error {
-	def, err := serviceDefinition(w)
+	def, err := serviceDefinition(w, r.InternalEntrypoints)
 	if err != nil {
 		return err
 	}
