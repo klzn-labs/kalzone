@@ -23,10 +23,7 @@ func (u ReleasesUsecase) OnPush(ctx context.Context, push entities.PushEvent) ([
 		return nil, err
 	}
 	started := []entities.Release{}
-	for _, service := range services {
-		if !service.AutoBuild {
-			continue
-		}
+	for _, service := range oneAutoBuildPerImage(services) {
 		rel, err := u.build(ctx, GitHubActor, service, push.After, entities.TriggerPush)
 		if err != nil {
 			log.Printf("auto-build of %s at %s did not start: %v", service.Slug, push.After, err)
@@ -34,6 +31,19 @@ func (u ReleasesUsecase) OnPush(ctx context.Context, push entities.PushEvent) ([
 		started = append(started, rel)
 	}
 	return started, nil
+}
+
+func oneAutoBuildPerImage(services []entities.ServiceRef) []entities.ServiceRef {
+	seen := map[string]bool{}
+	result := []entities.ServiceRef{}
+	for _, service := range services {
+		if !service.AutoBuild || seen[service.ImageRepository] {
+			continue
+		}
+		seen[service.ImageRepository] = true
+		result = append(result, service)
+	}
+	return result
 }
 
 func (u ReleasesUsecase) OnWorkflowRun(ctx context.Context, run entities.WorkflowRunEvent) error {

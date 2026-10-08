@@ -16,6 +16,7 @@ type Source string
 const (
 	SourceBuild      Source = "build"
 	SourceRegistered Source = "registered"
+	SourceShared     Source = "shared"
 )
 
 type Trigger string
@@ -49,11 +50,22 @@ func (r Release) Final() bool {
 	return r.Status == StatusBuilt || r.Status == StatusFailed
 }
 
+func (r Release) SharedWith(service ServiceRef, id string, at time.Time) Release {
+	shared := r
+	shared.ID, shared.ServiceID, shared.Number, shared.Source = id, service.ID, 0, SourceShared
+	shared.CreatedAt, shared.FinishedAt = at, &at
+	return shared
+}
+
 func (r Release) Reference() string {
 	if r.Digest == "" {
 		return ""
 	}
 	return r.Image + "@" + r.Digest
+}
+
+func (s ServiceRef) SharesImageWith(other ServiceRef) bool {
+	return s.ID != other.ID && s.GitHubRepo == other.GitHubRepo && s.ImageRepository == other.ImageRepository
 }
 
 type ServiceRef struct {
