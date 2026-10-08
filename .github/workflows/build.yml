@@ -18,6 +18,9 @@ on:
       dockerfile:
         type: string
         default: Dockerfile
+      build_args:
+        type: string
+        default: ""
     secrets:
       DOCKER_USERNAME:
         required: true
@@ -72,7 +75,9 @@ jobs:
           file: ${{ inputs.context }}/${{ inputs.dockerfile }}
           push: true
           tags: ${{ inputs.image }}:${{ steps.tag.outputs.tag }}
-          build-args: VERSION=${{ github.sha }}
+          build-args: |
+            VERSION=${{ github.sha }}
+            ${{ inputs.build_args }}
 
       - name: Report the digest
         run: |
