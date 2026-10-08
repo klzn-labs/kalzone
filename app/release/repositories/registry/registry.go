@@ -107,7 +107,10 @@ func (r Resolver) token(ctx context.Context, challenge string) (string, error) {
 		AccessToken string `json:"access_token"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
-	return body.Token + body.AccessToken, err
+	if body.Token != "" {
+		return body.Token, err
+	}
+	return body.AccessToken, err
 }
 
 func split(image string) (string, string) {

@@ -12,13 +12,13 @@ import (
 
 const digest = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
 
-func fakeRegistry(t *testing.T) *httptest.Server {
+func fakeRegistry(t *testing.T, tokenBody string) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
 	mux.HandleFunc("GET /token", func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, "repository:library/grafana:pull", r.URL.Query().Get("scope"))
-		w.Write([]byte(`{"token":"anon"}`))
+		w.Write([]byte(tokenBody))
 	})
 	mux.HandleFunc("HEAD /v2/library/grafana/manifests/{tag}", manifest(server))
 	t.Cleanup(server.Close)
@@ -41,7 +41,7 @@ func manifest(server *httptest.Server) http.HandlerFunc {
 }
 
 func Test_Resolve_FollowsTheBearerChallenge(t *testing.T) {
-	r := WithBaseURL(fakeRegistry(t).URL)
+	r := WithBaseURL(fakeRegistry(t, `{"token":"anon"}`).URL)
 
 	got, err := r.Resolve(context.Background(), "grafana", "11.2.0")
 	_, missing := r.Resolve(context.Background(), "docker.io/grafana", "nope")
@@ -49,6 +49,18 @@ func Test_Resolve_FollowsTheBearerChallenge(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, digest, got)
 	require.ErrorIs(t, missing, apperror.NotFound(""))
+}
+
+func Test_Resolve_AcceptsEitherTokenField(t *testing.T) {
+	bodies := []string{`{"token":"anon","access_token":"anon"}`, `{"access_token":"anon"}`}
+	for _, body := range bodies {
+		r := WithBaseURL(fakeRegistry(t, body).URL)
+
+		got, err := r.Resolve(context.Background(), "grafana", "11.2.0")
+
+		require.NoError(t, err, body)
+		require.Equal(t, digest, got, body)
+	}
 }
 
 func Test_Split(t *testing.T) {
