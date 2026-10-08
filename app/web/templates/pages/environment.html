@@ -105,7 +105,7 @@
           <div><dt>Replicas</dt><dd>{{$d.Revision.Spec.Replicas}}</dd></div>
           <div><dt>Memory</dt><dd>{{$d.Revision.Spec.MemoryMB}} MB</dd></div>
           <div><dt>CPU</dt><dd>{{$d.Revision.Spec.CPUMillis}}m</dd></div>
-          <div><dt>Public host</dt>{{if $d.Revision.Spec.Host}}<dd>{{$d.Revision.Spec.Host}}</dd>{{else}}<dd class="empty">none{{if $d.Revision.Spec.Command}} · runs {{$d.Revision.Spec.Command}}{{end}}</dd>{{end}}</div>
+          <div><dt>Route</dt>{{if $d.Revision.Spec.Internal}}<dd>internal · this environment's host-local entrypoint</dd>{{else if $d.Revision.Spec.Host}}<dd>{{join $d.Revision.Spec.Hosts ", "}}</dd>{{else}}<dd class="empty">none{{if $d.Revision.Spec.Command}} · runs {{$d.Revision.Spec.Command}}{{end}}</dd>{{end}}</div>
         </dl>
         {{if $d.CanEdit}}
         <details class="disclosure" style="margin-top:16px">
@@ -123,7 +123,9 @@
               <div class="field"><label>CPU (millicores)</label><input name="cpu_millis" type="number" min="50" max="4000" step="50" value="{{$d.Revision.Spec.CPUMillis}}" required></div>
               <div class="field"><label>Public host</label><input name="host" type="text" class="mono" value="{{$d.Revision.Spec.Host}}" placeholder="api.kalz.one"></div>
             </div>
-            <div class="field"><label>Command <span class="muted">(needed without a public host)</span></label><input name="command" type="text" class="mono" value="{{$d.Revision.Spec.Command}}" placeholder="./worker"></div>
+            <div class="field"><label>Aliases <span class="muted">(more public hosts, comma-separated)</span></label><input name="aliases" type="text" class="mono" value="{{join $d.Revision.Spec.Aliases ", "}}" placeholder="www.kalz.one"></div>
+            <label class="switch"><input type="checkbox" name="internal" {{if $d.Revision.Spec.Internal}}checked{{end}}>Internal: reachable only from inside the host, on this environment's internal entrypoint (no public host)</label>
+            <div class="field"><label>Command <span class="muted">(needed for a worker: no public host, not internal)</span></label><input name="command" type="text" class="mono" value="{{$d.Revision.Spec.Command}}" placeholder="./worker"></div>
             <div class="field"><label>Why the change? <span class="muted">(optional)</span></label><input name="message" type="text" maxlength="255" placeholder="More memory for the import job"></div>
             <div class="form-actions"><button class="btn btn-primary">Save as new revision</button></div>
           </form>
