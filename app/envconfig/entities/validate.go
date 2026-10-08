@@ -11,6 +11,7 @@ import (
 const (
 	MaxValueBytes  = 4096
 	MaxSecretBytes = 8192
+	MaxAliases     = 5
 )
 
 var (
@@ -68,7 +69,31 @@ func (s Spec) Validate() error {
 			return apperror.Invalid(c.message)
 		}
 	}
+	return s.validateRoute()
+}
+
+func (s Spec) validateRoute() error {
+	switch {
+	case s.Internal && s.Host != "":
+		return apperror.Invalid("an internal service has no public host")
+	case len(s.Aliases) > 0 && s.Host == "":
+		return apperror.Invalid("aliases need a host")
+	case len(s.Aliases) > MaxAliases:
+		return apperror.Invalid(fmt.Sprintf("at most %d aliases", MaxAliases))
+	}
+	for _, alias := range s.Aliases {
+		if alias == s.Host || !hostPattern.MatchString(alias) {
+			return apperror.Invalid(fmt.Sprintf("%q is not a valid alias: use a lowercase domain other than the host", alias))
+		}
+	}
 	return nil
+}
+
+func (s Spec) Hosts() []string {
+	if s.Host == "" {
+		return nil
+	}
+	return append([]string{s.Host}, s.Aliases...)
 }
 
 func HostAllowed(host string, domains []string) bool {

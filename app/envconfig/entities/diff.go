@@ -3,6 +3,7 @@ package entities
 import (
 	"sort"
 	"strconv"
+	"strings"
 )
 
 type ChangeKind string
@@ -32,6 +33,9 @@ func diffSpec(before, after Spec) []Change {
 		{"port", strconv.Itoa(before.Port), strconv.Itoa(after.Port)},
 		{"health_path", before.HealthPath, after.HealthPath},
 		{"host", before.Host, after.Host},
+		{"aliases", strings.Join(before.Aliases, ","), strings.Join(after.Aliases, ",")},
+		{"internal", strconv.FormatBool(before.Internal), strconv.FormatBool(after.Internal)},
+		{"command", before.Command, after.Command},
 		{"memory_mb", strconv.Itoa(before.MemoryMB), strconv.Itoa(after.MemoryMB)},
 		{"cpu_millis", strconv.Itoa(before.CPUMillis), strconv.Itoa(after.CPUMillis)},
 		{"replicas", strconv.Itoa(before.Replicas), strconv.Itoa(after.Replicas)},
