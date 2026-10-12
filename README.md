@@ -11,6 +11,7 @@ API on the same usecases. Design documents live in `docs/superpowers/specs`.
 
 - GitHub sign-in (GitHub App user OAuth), server-side sessions, CSRF protection
 - Access tokens for agents and scripts: Bearer tokens owned by a person, limited by scopes and teams
+- Approvals: an agent's change to a protected environment waits as a request until a human approves it
 - Teams with `member` and `maintainer` roles, platform admins
 - Service catalog, fixed `dev` and `prod` environments (`prod` is protected)
 - Config per service and environment as immutable, numbered revisions
@@ -80,6 +81,7 @@ as a callback URL.
 | `PLATFORM_DEPLOY_TIMEOUT` | `30m` | deployments an agent stopped reporting on are failed after this |
 | `PLATFORM_QUEUES_TOKEN` | | shared secret the queue gateway authenticates with; the gateway API answers 503 without it |
 | `PLATFORM_QUEUES_GATEWAY_URL` | `http://queued:8080` | gateway address handed to services as `PLATFORM_QUEUE_URL` |
+| `PLATFORM_APPROVALS_WEBHOOK_URL` | | Discord webhook told about every new change request; empty sends nothing |
 
 Never run production with the default secrets key.
 
@@ -100,8 +102,8 @@ explicitly. Revoking a token frees its name; a token made by another token never
 outlives it. Tokens expire after 1 to 365 days (90 by default) and are shown
 once; only a hash is stored.
 
-On a protected environment (`prod`) a token needs `protected`, and then gets
-`err_approval_required` unless a platform admin gave it bypass from the website.
+On a protected environment (`prod`) a token needs `protected`, and then its change
+waits for approval (see Approvals) unless a platform admin gave it bypass from the website.
 Tokens are refused on website pages and need no CSRF header. Every change made
 with a token shows in the audit log as "person via token".
 
@@ -111,6 +113,32 @@ with a token shows in the audit log as "person via token".
 | `GET /api/v1/tokens` | your tokens (`?all=true` for admins in the browser) |
 | `POST /api/v1/tokens` | `{"name","scopes","teams","expires_in_days","bypass"}` → the token, once |
 | `DELETE /api/v1/tokens/:id` | revoke |
+
+## Approvals
+
+A token with `protected` but without bypass does not change a protected environment
+directly. Config revisions, secrets, deploys, promotions, rollbacks, config
+applications and queue create, update and delete answer `202`:
+
+```json
+{"kind": "change_request", "id": "…", "status": "pending", "summary": "deploy release #14 to prod",
+ "approve_url": "https://platform.kalz.one/requests/…", "poll": "/api/v1/requests/…", "expires_at": "…"}
+```
+
+A maintainer of the service's team or an admin, the token's owner included, opens
+**Requests** in the browser, sees the change against what runs now, and approves or
+rejects it. Approval runs the change as the token, re-applied on the current state; it
+fails with `err_stale` for config and deploy changes only when the same config key
+changed or another deployment went live in the meantime, and a queue update fails with
+`err_conflict` when it finds the queue changed since the request. A newer request for the same thing cancels the older one,
+and requests expire after 24 hours. Promote pins the release that was live when asked.
+Queue pause, resume and dead-letter commands still answer `err_approval_required`.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/requests/:id` | `status` (`pending`, `approved`, `executed`, `failed`, `rejected`, `cancelled`, `expired`), `result`, `reason`, `error` |
+| `GET /api/v1/requests?status=pending` | the newest 100 in the token's teams |
+| `POST /api/v1/requests/:id/cancel` | withdraw your own request |
 
 ## Builds and releases
 
