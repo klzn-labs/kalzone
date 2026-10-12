@@ -71,7 +71,7 @@ func adminChanged(a actor.Actor, user entities.User) events.Event {
 		action = "user.admin_granted"
 	}
 	return events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action,
 		TargetKind: events.TargetUser, TargetID: user.ID, TargetName: user.Login,
 	}
 }

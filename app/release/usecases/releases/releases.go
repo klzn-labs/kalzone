@@ -86,7 +86,7 @@ func (u ReleasesUsecase) publish(ctx context.Context, a actor.Actor, action stri
 		details["failure"] = rel.Failure
 	}
 	u.publisher.Publish(ctx, events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action, TargetKind: events.TargetRelease,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action, TargetKind: events.TargetRelease,
 		TargetID: service.ID, TargetName: service.Slug, TeamID: service.OwnerTeamID, Details: details,
 	})
 }

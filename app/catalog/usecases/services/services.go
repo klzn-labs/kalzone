@@ -54,7 +54,7 @@ func (u ServicesUsecase) GetByID(ctx context.Context, id string) (entities.Servi
 
 func serviceEvent(a actor.Actor, action string, s entities.Service, details map[string]any) events.Event {
 	return events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action,
 		TargetKind: events.TargetService, TargetID: s.ID, TargetName: s.Slug, TeamID: s.OwnerTeamID,
 		Details: details,
 	}

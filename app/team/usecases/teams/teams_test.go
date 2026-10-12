@@ -86,3 +86,19 @@ func Test_Delete_RefusesWhileTheTeamOwnsServices(t *testing.T) {
 	require.NoError(t, idle.Delete(ctx, admin, "places"))
 	require.Empty(t, s.bySlug)
 }
+
+type asked struct{ resources []authz.Resource }
+
+func (a *asked) Can(_ context.Context, _ actor.Actor, _ authz.Action, r authz.Resource) error {
+	a.resources = append(a.resources, r)
+	return nil
+}
+
+func Test_Delete_IsCheckedAgainstTheTeamBeingDeleted(t *testing.T) {
+	s := &store{bySlug: map[string]entities.Team{"reviews": {ID: "t2", Slug: "reviews"}}}
+	checks := &asked{}
+
+	require.NoError(t, teams.NewTeamsUsecase(s, services(0), checks, &published{}).Delete(ctx, admin, "reviews"))
+
+	require.Equal(t, []authz.Resource{{TeamID: "t2"}}, checks.resources)
+}

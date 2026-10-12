@@ -9,6 +9,8 @@ type Event struct {
 	At          time.Time
 	ActorID     string
 	ActorLogin  string
+	TokenID     string
+	TokenName   string
 	Action      string
 	TargetKind  string
 	TargetID    string
@@ -30,4 +32,5 @@ const (
 	TargetRelease    = "release"
 	TargetDeployment = "deployment"
 	TargetQueue      = "queue"
+	TargetToken      = "token"
 )

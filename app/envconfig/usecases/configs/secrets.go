@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/app/envconfig/entities"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
@@ -17,7 +18,7 @@ func (u ConfigUsecase) SetSecret(ctx context.Context, a actor.Actor, serviceSlug
 	if err := validateSecret(name, value); err != nil {
 		return entities.Revision{}, err
 	}
-	t, current, err := u.editable(ctx, a, serviceSlug, environment)
+	t, current, err := u.editable(ctx, a, authz.EditSecrets, serviceSlug, environment)
 	if err != nil {
 		return entities.Revision{}, err
 	}
@@ -35,7 +36,7 @@ func (u ConfigUsecase) SetSecret(ctx context.Context, a actor.Actor, serviceSlug
 }
 
 func (u ConfigUsecase) UnsetSecret(ctx context.Context, a actor.Actor, serviceSlug, environment, name string) (entities.Revision, error) {
-	t, current, err := u.editable(ctx, a, serviceSlug, environment)
+	t, current, err := u.editable(ctx, a, authz.EditSecrets, serviceSlug, environment)
 	if err != nil {
 		return entities.Revision{}, err
 	}

@@ -32,7 +32,7 @@ func NewResolver(teams TeamFinder, services ServiceFinder, users UserFinder) Res
 }
 
 func (r Resolver) Resolve(ctx context.Context, q entities.Query) (entities.Filter, error) {
-	filter := entities.Filter{Environment: q.Environment, Before: q.Before, Limit: q.Limit}
+	filter := entities.Filter{Environment: q.Environment, TokenID: q.Token, Before: q.Before, Limit: q.Limit}
 	var err error
 	if filter.TeamID, err = resolveIf(ctx, q.Team, r.teamID); err != nil {
 		return entities.Filter{}, err

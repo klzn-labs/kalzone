@@ -8,6 +8,7 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/events"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,9 +24,14 @@ func (p protection) IsProtected(_ context.Context, env string) (bool, error) {
 	return p[env], nil
 }
 
+type recorder struct{ events []events.Event }
+
+func (r *recorder) Publish(_ context.Context, e events.Event) { r.events = append(r.events, e) }
+
 var policy = authz.NewPolicy(
 	roles{"places/member": "member", "places/maintainer": "maintainer"},
 	protection{"dev": false, "prod": true},
+	&recorder{},
 )
 
 var people = map[string]actor.Actor{
@@ -48,6 +54,10 @@ var matrix = []rule{
 	{authz.CreateRelease, "", []string{"member", "maintainer", "admin"}},
 	{authz.EditConfig, "dev", []string{"member", "maintainer", "admin"}},
 	{authz.EditConfig, "prod", []string{"maintainer", "admin"}},
+	{authz.EditSecrets, "dev", []string{"member", "maintainer", "admin"}},
+	{authz.EditSecrets, "prod", []string{"maintainer", "admin"}},
+	{authz.EditQueue, "dev", []string{"member", "maintainer", "admin"}},
+	{authz.EditQueue, "prod", []string{"maintainer", "admin"}},
 	{authz.Deploy, "dev", []string{"member", "maintainer", "admin"}},
 	{authz.Deploy, "prod", []string{"maintainer", "admin"}},
 	{authz.DeleteService, "", []string{"maintainer", "admin"}},

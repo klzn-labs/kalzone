@@ -81,7 +81,7 @@ func (u AgentsUsecase) publish(ctx context.Context, a actor.Actor, action string
 		details["message"] = detail
 	}
 	u.publisher.Publish(ctx, events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action, TargetKind: events.TargetDeployment,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action, TargetKind: events.TargetDeployment,
 		TargetID: service.ID, TargetName: service.Slug, TeamID: service.OwnerTeamID, Environment: d.Environment, Details: details,
 	})
 }

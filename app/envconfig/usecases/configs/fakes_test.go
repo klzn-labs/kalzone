@@ -134,9 +134,15 @@ type fixture struct {
 
 func newFixture(t *testing.T) fixture {
 	t.Helper()
-	f := fixture{store: &store{}, sealer: &sealer{}, checks: &checks{}, events: &published{}}
+	return newFixtureAuthorizedBy(t, &checks{})
+}
+
+func newFixtureAuthorizedBy(t *testing.T, authorizer configs.Authorizer) fixture {
+	t.Helper()
+	f := fixture{store: &store{}, sealer: &sealer{}, events: &published{}}
+	f.checks, _ = authorizer.(*checks)
 	cfg := config.Config{AllowedDomains: []string{"kalz.one"}}
-	f.usecase = configs.NewConfigUsecase(cfg, f.store, services{}, environments{}, f.sealer, f.checks, f.events)
+	f.usecase = configs.NewConfigUsecase(cfg, f.store, services{}, environments{}, f.sealer, authorizer, f.events)
 	return f
 }
 

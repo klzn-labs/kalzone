@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/adrianozp/platform/pkg/scope"
 )
@@ -58,4 +59,26 @@ func NewTokenSecret() (TokenSecret, error) {
 
 func LooksLikeToken(raw string) bool {
 	return strings.HasPrefix(raw, TokenPrefix) && len(raw) == len(TokenPrefix)+tokenBodyLength
+}
+
+func (t AccessToken) Check(now time.Time) error {
+	if t.RevokedAt != nil {
+		return ErrTokenRevoked
+	}
+	if !now.Before(t.ExpiresAt) {
+		return ErrTokenExpired
+	}
+	return nil
+}
+
+type TokenAuthenticated struct {
+	User  User
+	Token AccessToken
+}
+
+func (t TokenAuthenticated) Actor() actor.Actor {
+	return actor.Actor{UserID: t.User.ID, Login: t.User.Login, Admin: t.User.Admin, Token: actor.Token{
+		ID: t.Token.ID, Name: t.Token.Name, Prefix: t.Token.Prefix, Scopes: t.Token.Scopes,
+		TeamIDs: t.Token.TeamIDs, Bypass: t.Token.Bypass, ExpiresAt: t.Token.ExpiresAt,
+	}}
 }
