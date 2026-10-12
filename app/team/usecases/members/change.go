@@ -72,7 +72,7 @@ func (u MembersUsecase) resolve(ctx context.Context, a actor.Actor, teamSlug, lo
 
 func (u MembersUsecase) guardLastMaintainer(ctx context.Context, a actor.Actor, t target, newRole entities.Role) error {
 	losesMaintainer := t.exists && t.current.Role == entities.RoleMaintainer && newRole != entities.RoleMaintainer
-	if a.Admin || !losesMaintainer {
+	if a.SessionAdmin() || !losesMaintainer {
 		return nil
 	}
 	count, err := u.store.CountMaintainers(ctx, t.team.ID)
@@ -87,7 +87,7 @@ func (u MembersUsecase) guardLastMaintainer(ctx context.Context, a actor.Actor, 
 
 func memberEvent(a actor.Actor, action string, t target, role string) events.Event {
 	return events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action,
 		TargetKind: events.TargetTeam, TargetID: t.team.ID, TargetName: t.team.Slug, TeamID: t.team.ID,
 		Details: map[string]any{"login": t.user.Login, "role": role},
 	}

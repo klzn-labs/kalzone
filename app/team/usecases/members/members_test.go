@@ -157,3 +157,12 @@ func Test_List_ResolvesUsers(t *testing.T) {
 	require.Equal(t, "mia", list[0].User.Login)
 	require.Equal(t, entities.RoleMaintainer, list[0].Role)
 }
+
+func Test_AnAdminsTokenCannotRemoveTheLastMaintainer(t *testing.T) {
+	_, _, usecase := setup(map[string]entities.Role{"mia": entities.RoleMaintainer}, nil)
+	adminToken := actor.Actor{UserID: "root", Login: "root", Admin: true, Token: actor.Token{ID: "tk1"}}
+
+	err := usecase.Remove(ctx, adminToken, "places", "mia")
+
+	require.ErrorIs(t, err, apperror.New(apperror.CodeLastMaintainer, ""))
+}

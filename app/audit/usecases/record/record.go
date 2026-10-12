@@ -22,7 +22,7 @@ func NewRecordUsecase(store EventStore) RecordUsecase {
 
 func (u RecordUsecase) Handle(ctx context.Context, e events.Event) error {
 	return u.store.Insert(ctx, entities.Event{
-		ID: uuid.NewUUID(), At: e.At, ActorID: e.ActorID, ActorLogin: e.ActorLogin, Action: e.Action,
+		ID: uuid.NewUUID(), At: e.At, ActorID: e.ActorID, ActorLogin: e.ActorLogin, TokenID: e.TokenID, TokenName: e.TokenName, Action: e.Action,
 		TargetKind: e.TargetKind, TargetID: e.TargetID, TargetName: e.TargetName,
 		TeamID: e.TeamID, Environment: e.Environment, Details: e.Details,
 	})

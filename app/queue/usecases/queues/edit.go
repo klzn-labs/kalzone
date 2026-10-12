@@ -35,7 +35,7 @@ func (u QueuesUsecase) Create(ctx context.Context, a actor.Actor, d Draft) (enti
 	if err != nil {
 		return entities.Queue{}, err
 	}
-	if err := u.authz.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: consumer.OwnerTeamID, Environment: d.Environment}); err != nil {
+	if err := u.authz.Can(ctx, a, authz.EditQueue, authz.Resource{TeamID: consumer.OwnerTeamID, Environment: d.Environment}); err != nil {
 		return entities.Queue{}, err
 	}
 	q, err := u.newQueue(ctx, d, consumer)

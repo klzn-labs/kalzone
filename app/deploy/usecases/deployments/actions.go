@@ -85,15 +85,15 @@ func (u DeploymentsUsecase) Rollback(ctx context.Context, a actor.Actor, deploym
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	if target.Status != entities.StatusSucceeded {
-		return entities.Deployment{}, errNotSucceeded
-	}
 	service, err := u.services.FindServiceByID(ctx, target.ServiceID)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
 	if _, err := u.authorize(ctx, a, service.Slug, target.Environment); err != nil {
 		return entities.Deployment{}, err
+	}
+	if target.Status != entities.StatusSucceeded {
+		return entities.Deployment{}, errNotSucceeded
 	}
 	rel := entities.ReleaseRef{ID: target.ReleaseID, ServiceID: service.ID, Number: target.ReleaseNumber, Built: true, Reference: target.ImageRef}
 	return u.schedule(ctx, plan{a, service, target.Environment, rel, target.ConfigRevision, entities.StrategyBlueGreen, entities.TriggerRollback})

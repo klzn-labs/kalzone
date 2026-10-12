@@ -63,11 +63,11 @@ func (u TeamsUsecase) Create(ctx context.Context, a actor.Actor, teamSlug, name 
 }
 
 func (u TeamsUsecase) Delete(ctx context.Context, a actor.Actor, teamSlug string) error {
-	if err := u.authz.Can(ctx, a, authz.ManageTeams, authz.Resource{}); err != nil {
-		return err
-	}
 	team, err := u.store.FindBySlug(ctx, teamSlug)
 	if err != nil {
+		return err
+	}
+	if err := u.authz.Can(ctx, a, authz.ManageTeams, authz.Resource{TeamID: team.ID}); err != nil {
 		return err
 	}
 	if err := u.ensureNoServices(ctx, team.ID); err != nil {
@@ -115,7 +115,7 @@ func validate(teamSlug, name string) error {
 
 func teamEvent(a actor.Actor, action string, team entities.Team) events.Event {
 	return events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action,
 		TargetKind: events.TargetTeam, TargetID: team.ID, TargetName: team.Slug, TeamID: team.ID,
 	}
 }

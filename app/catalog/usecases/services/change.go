@@ -55,11 +55,7 @@ func (u ServicesUsecase) Update(ctx context.Context, a actor.Actor, slug string,
 }
 
 func (u ServicesUsecase) Transfer(ctx context.Context, a actor.Actor, slug, teamSlug string) (entities.Service, error) {
-	s, err := u.authorized(ctx, a, slug, authz.TransferService)
-	if err != nil {
-		return entities.Service{}, err
-	}
-	teamID, err := u.teams.IDBySlug(ctx, teamSlug)
+	s, teamID, err := u.transferable(ctx, a, slug, teamSlug)
 	if err != nil {
 		return entities.Service{}, err
 	}
@@ -70,6 +66,19 @@ func (u ServicesUsecase) Transfer(ctx context.Context, a actor.Actor, slug, team
 	}
 	u.publisher.Publish(ctx, serviceEvent(a, "service.transferred", s, map[string]any{"from_team_id": previous, "to_team": teamSlug}))
 	return s, nil
+}
+
+func (u ServicesUsecase) transferable(ctx context.Context, a actor.Actor, slug, teamSlug string) (entities.Service, string, error) {
+	s, err := u.store.FindBySlug(ctx, slug)
+	if err != nil {
+		return entities.Service{}, "", err
+	}
+	teamID, err := u.teams.IDBySlug(ctx, teamSlug)
+	if err != nil {
+		return entities.Service{}, "", err
+	}
+	resource := authz.Resource{TeamID: s.OwnerTeamID, DestinationTeamID: teamID}
+	return s, teamID, u.authz.Can(ctx, a, authz.TransferService, resource)
 }
 
 func (u ServicesUsecase) Delete(ctx context.Context, a actor.Actor, slug string) error {

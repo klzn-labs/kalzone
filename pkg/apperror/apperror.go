@@ -19,11 +19,16 @@ const (
 	CodeTokenInvalid     Code = "err_token_invalid"
 	CodeTokenExpired     Code = "err_token_expired"
 	CodeTokenRevoked     Code = "err_token_revoked"
+	CodeMissingScope     Code = "err_missing_scope"
+	CodeTeamNotGranted   Code = "err_team_not_granted"
+	CodeApprovalRequired Code = "err_approval_required"
 )
 
 type AppError struct {
-	Code    Code   `json:"code"`
-	Message string `json:"message"`
+	Code          Code   `json:"code"`
+	Message       string `json:"message"`
+	RequiredScope string `json:"required_scope,omitempty"`
+	Team          string `json:"team,omitempty"`
 }
 
 func New(code Code, message string) *AppError {
@@ -56,6 +61,14 @@ func Conflict(message string) *AppError {
 
 func Forbidden(message string) *AppError {
 	return New(CodeForbidden, message)
+}
+
+func MissingScope(scopeName string) *AppError {
+	return &AppError{Code: CodeMissingScope, Message: "this token lacks " + scopeName, RequiredScope: scopeName}
+}
+
+func TeamNotGranted(teamID string) *AppError {
+	return &AppError{Code: CodeTeamNotGranted, Message: "this token is not granted team " + teamID, Team: teamID}
 }
 
 func CodeOf(err error) Code {

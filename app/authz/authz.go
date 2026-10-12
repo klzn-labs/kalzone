@@ -5,6 +5,7 @@ import (
 
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/events"
 )
 
 type Action string
@@ -15,11 +16,14 @@ const (
 	DeleteService   Action = "service.delete"
 	TransferService Action = "service.transfer"
 	EditConfig      Action = "config.edit"
+	EditSecrets     Action = "secrets.edit"
+	EditQueue       Action = "queue.edit"
 	CreateRelease   Action = "release.create"
 	Deploy          Action = "deploy"
 	ManageMembers   Action = "team.members"
 	ManageTeams     Action = "teams.manage"
 	ManageAdmins    Action = "admins.manage"
+	ManageTokens    Action = "tokens.manage"
 )
 
 type Role string
@@ -31,8 +35,9 @@ const (
 )
 
 type Resource struct {
-	TeamID      string
-	Environment string
+	TeamID            string
+	DestinationTeamID string
+	Environment       string
 }
 
 type MembershipReader interface {
@@ -48,20 +53,35 @@ var (
 	errForbidden       = apperror.Forbidden("you are not allowed to do this")
 )
 
+type Publisher interface {
+	Publish(ctx context.Context, event events.Event)
+}
+
 type Policy struct {
 	memberships  MembershipReader
 	environments ProtectionReader
+	publisher    Publisher
 }
 
-func NewPolicy(memberships MembershipReader, environments ProtectionReader) Policy {
-	return Policy{memberships: memberships, environments: environments}
+func NewPolicy(memberships MembershipReader, environments ProtectionReader, publisher Publisher) Policy {
+	return Policy{memberships: memberships, environments: environments, publisher: publisher}
 }
 
 func (p Policy) Can(ctx context.Context, a actor.Actor, action Action, r Resource) error {
 	if !a.SignedIn() {
 		return errUnauthenticated
 	}
-	if a.Admin {
+	if err := p.ownerCan(ctx, a, action, r); err != nil {
+		return err
+	}
+	if !a.ViaToken() {
+		return nil
+	}
+	return p.tokenCan(ctx, a, action, r)
+}
+
+func (p Policy) ownerCan(ctx context.Context, a actor.Actor, action Action, r Resource) error {
+	if a.Admin || action == ManageTokens {
 		return nil
 	}
 	required, err := p.requiredRole(ctx, action, r)
@@ -77,7 +97,7 @@ func (p Policy) requiredRole(ctx context.Context, action Action, r Resource) (Ro
 		return RoleMember, nil
 	case DeleteService, TransferService, ManageMembers:
 		return RoleMaintainer, nil
-	case EditConfig, Deploy:
+	case EditConfig, EditSecrets, EditQueue, Deploy:
 		return p.roleForEnvironment(ctx, r.Environment)
 	}
 	return RoleNone, nil

@@ -1,0 +1,80 @@
+package authz
+
+import (
+	"context"
+
+	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/events"
+	"github.com/adrianozp/platform/pkg/scope"
+)
+
+var scopeOf = map[Action]scope.Scope{
+	CreateService: scope.Services, EditService: scope.Services, EditQueue: scope.Services,
+	DeleteService: scope.ServicesAdmin, TransferService: scope.ServicesAdmin,
+	CreateRelease: scope.Builds, EditConfig: scope.Config, EditSecrets: scope.Secrets, Deploy: scope.Deploy,
+	ManageMembers: scope.TeamsAdmin, ManageTeams: scope.TeamsAdmin, ManageTokens: scope.TokensAdmin,
+}
+
+var protectable = map[Action]bool{EditConfig: true, EditSecrets: true, EditQueue: true, Deploy: true}
+
+var (
+	errNeverForTokens   = apperror.Forbidden("no token can do this, sign in to the website")
+	errApprovalRequired = apperror.New(apperror.CodeApprovalRequired, "changes to a protected environment need a human's approval")
+)
+
+func (p Policy) tokenCan(ctx context.Context, a actor.Actor, action Action, r Resource) error {
+	needed, allowed := scopeOf[action]
+	if !allowed {
+		return errNeverForTokens
+	}
+	if !a.Token.Has(needed) {
+		return apperror.MissingScope(string(needed))
+	}
+	if err := teamsGranted(a, r.TeamID, r.DestinationTeamID); err != nil {
+		return err
+	}
+	if !protectable[action] {
+		return nil
+	}
+	return p.protectedRule(ctx, a, action, r)
+}
+
+func teamsGranted(a actor.Actor, teamIDs ...string) error {
+	for _, teamID := range teamIDs {
+		if teamID != "" && !a.Sees(teamID) {
+			return apperror.TeamNotGranted(teamID)
+		}
+	}
+	return nil
+}
+
+func (p Policy) protectedRule(ctx context.Context, a actor.Actor, action Action, r Resource) error {
+	protected, err := p.environments.IsProtected(ctx, r.Environment)
+	if err != nil || !protected {
+		return err
+	}
+	if !a.Token.Has(scope.Protected) {
+		return apperror.MissingScope(string(scope.Protected))
+	}
+	if !a.Token.Bypass {
+		return errApprovalRequired
+	}
+	p.publisher.Publish(ctx, bypassEvent(a, action, r))
+	return nil
+}
+
+func bypassEvent(a actor.Actor, action Action, r Resource) events.Event {
+	return events.Event{
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name,
+		Action: "token.bypass_used", TargetKind: events.TargetToken, TargetID: a.Token.ID, TargetName: a.Token.Name,
+		TeamID: r.TeamID, Environment: r.Environment, Details: map[string]any{"action": string(action)},
+	}
+}
+
+func CanRead(a actor.Actor) error {
+	if a.ViaToken() && !a.Token.Has(scope.Read) {
+		return apperror.MissingScope(string(scope.Read))
+	}
+	return nil
+}

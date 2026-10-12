@@ -106,12 +106,12 @@ func (u QueuesUsecase) editable(ctx context.Context, a actor.Actor, environment,
 	if err != nil {
 		return entities.Queue{}, err
 	}
-	return q, u.authz.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: q.TeamID, Environment: q.Environment})
+	return q, u.authz.Can(ctx, a, authz.EditQueue, authz.Resource{TeamID: q.TeamID, Environment: q.Environment})
 }
 
 func (u QueuesUsecase) publish(ctx context.Context, a actor.Actor, action string, q entities.Queue, details map[string]any) {
 	u.publisher.Publish(ctx, events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action, TargetKind: events.TargetQueue,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action, TargetKind: events.TargetQueue,
 		TargetID: q.ID, TargetName: q.Name, TeamID: q.TeamID, Environment: q.Environment, Details: details,
 	})
 }

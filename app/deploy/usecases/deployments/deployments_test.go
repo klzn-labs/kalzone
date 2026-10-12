@@ -166,3 +166,14 @@ func Test_ApplyConfig_RedeploysTheLiveReleaseWithNewConfig(t *testing.T) {
 	require.Equal(t, 4, applied.ConfigRevision)
 	require.ErrorIs(t, again, apperror.Invalid(""))
 }
+
+func Test_Rollback_AuthorizesBeforeRevealingTheDeploymentStatus(t *testing.T) {
+	store, usecase := setup("prod")
+	pending, _ := usecase.Deploy(ctx, ana, deployments.Request{Service: "api", Environment: "dev", ReleaseID: "r1"})
+	pending.Environment = "prod"
+	store.ByID[pending.ID] = pending
+
+	_, err := usecase.Rollback(ctx, ana, pending.ID)
+
+	require.ErrorIs(t, err, apperror.Forbidden(""))
+}

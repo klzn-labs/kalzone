@@ -112,13 +112,13 @@ func Test_Create_RejectsInvalidInputUnknownTeamAndDenial(t *testing.T) {
 	require.ErrorIs(t, forbidden, apperror.Forbidden(""))
 }
 
-func Test_Transfer_IsCheckedAgainstTheCurrentOwner(t *testing.T) {
+func Test_Transfer_IsCheckedAgainstTheCurrentOwnerAndTheDestination(t *testing.T) {
 	s, c, p, usecase := setup(entities.Service{ID: "s1", Slug: "api", Name: "API", OwnerTeamID: "t1"})
 
 	_, err := usecase.Transfer(ctx, ana, "api", "reviews")
 
 	require.NoError(t, err)
-	require.Equal(t, authz.Resource{TeamID: "t1"}, c.asked[0])
+	require.Equal(t, []authz.Resource{{TeamID: "t1", DestinationTeamID: "t2"}}, c.asked)
 	require.Equal(t, authz.TransferService, c.actions[0])
 	require.Equal(t, "t2", s.bySlug["api"].OwnerTeamID)
 	require.Equal(t, "service.transferred", p.events[0].Action)

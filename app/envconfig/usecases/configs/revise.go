@@ -20,7 +20,7 @@ var (
 )
 
 func (u ConfigUsecase) Revise(ctx context.Context, a actor.Actor, serviceSlug, environment string, cs entities.ChangeSet) (entities.Revision, error) {
-	t, current, err := u.editable(ctx, a, serviceSlug, environment)
+	t, current, err := u.editable(ctx, a, authz.EditConfig, serviceSlug, environment)
 	if err != nil {
 		return entities.Revision{}, err
 	}
@@ -31,13 +31,13 @@ func (u ConfigUsecase) Revise(ctx context.Context, a actor.Actor, serviceSlug, e
 	return u.commit(ctx, a, t, current, next)
 }
 
-func (u ConfigUsecase) editable(ctx context.Context, a actor.Actor, serviceSlug, environment string) (target, entities.Revision, error) {
+func (u ConfigUsecase) editable(ctx context.Context, a actor.Actor, action authz.Action, serviceSlug, environment string) (target, entities.Revision, error) {
 	t, err := u.resolve(ctx, serviceSlug, environment)
 	if err != nil {
 		return target{}, entities.Revision{}, err
 	}
 	resource := authz.Resource{TeamID: t.service.OwnerTeamID, Environment: environment}
-	if err := u.authz.Can(ctx, a, authz.EditConfig, resource); err != nil {
+	if err := u.authz.Can(ctx, a, action, resource); err != nil {
 		return target{}, entities.Revision{}, err
 	}
 	current, err := u.current(ctx, t)
@@ -93,7 +93,7 @@ func (u ConfigUsecase) commit(ctx context.Context, a actor.Actor, t target, curr
 
 func revisedEvent(a actor.Actor, t target, rev entities.Revision, changes []entities.Change) events.Event {
 	return events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: "config.revised",
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: "config.revised",
 		TargetKind: events.TargetConfig, TargetID: t.service.ID, TargetName: t.service.Slug,
 		TeamID: t.service.OwnerTeamID, Environment: t.environment,
 		Details: map[string]any{"revision": rev.Number, "changed": entities.ChangedKeys(changes), "message": rev.Message},

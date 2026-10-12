@@ -91,7 +91,7 @@ func (u DeploymentsUsecase) Get(ctx context.Context, id string) (entities.Deploy
 
 func publish(ctx context.Context, p Publisher, a actor.Actor, action string, service entities.ServiceRef, d entities.Deployment) {
 	p.Publish(ctx, events.Event{
-		ActorID: a.UserID, ActorLogin: a.Login, Action: action, TargetKind: events.TargetDeployment,
+		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action, TargetKind: events.TargetDeployment,
 		TargetID: service.ID, TargetName: service.Slug, TeamID: service.OwnerTeamID, Environment: d.Environment,
 		Details: map[string]any{"deployment": d.Number, "release": d.ReleaseNumber, "config": d.ConfigRevision, "trigger": string(d.Trigger)},
 	})
