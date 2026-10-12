@@ -12,20 +12,25 @@ import (
 )
 
 type Config struct {
-	HTTP           HTTP     `mapstructure:"http"`
-	BaseURL        string   `mapstructure:"base_url" default:"http://localhost:8080" validate:"required,url"`
-	DB             DB       `mapstructure:"db"`
-	GitHub         GitHub   `mapstructure:"github"`
-	Admins         []string `mapstructure:"admins"`
-	Secrets        Secrets  `mapstructure:"secrets"`
-	AllowedDomains []string `mapstructure:"allowed_domains" default:"[\"localhost\"]" validate:"min=1"`
-	Session        Session  `mapstructure:"session"`
-	OIDC           OIDC     `mapstructure:"oidc"`
-	Build          Build    `mapstructure:"build"`
-	Deploy         Deploy   `mapstructure:"deploy"`
-	Agent          Agent    `mapstructure:"agent"`
-	Grafana        Grafana  `mapstructure:"grafana"`
-	Queues         Queues   `mapstructure:"queues"`
+	HTTP           HTTP      `mapstructure:"http"`
+	BaseURL        string    `mapstructure:"base_url" default:"http://localhost:8080" validate:"required,url"`
+	DB             DB        `mapstructure:"db"`
+	GitHub         GitHub    `mapstructure:"github"`
+	Admins         []string  `mapstructure:"admins"`
+	Secrets        Secrets   `mapstructure:"secrets"`
+	AllowedDomains []string  `mapstructure:"allowed_domains" default:"[\"localhost\"]" validate:"min=1"`
+	Session        Session   `mapstructure:"session"`
+	OIDC           OIDC      `mapstructure:"oidc"`
+	Build          Build     `mapstructure:"build"`
+	Deploy         Deploy    `mapstructure:"deploy"`
+	Agent          Agent     `mapstructure:"agent"`
+	Grafana        Grafana   `mapstructure:"grafana"`
+	Queues         Queues    `mapstructure:"queues"`
+	Approvals      Approvals `mapstructure:"approvals"`
+}
+
+type Approvals struct {
+	WebhookURL string `mapstructure:"webhook_url" validate:"omitempty,url"`
 }
 
 type Queues struct {
@@ -128,7 +133,7 @@ var envKeys = []string{
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
 	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token", "grafana.url", "grafana.token",
-	"queues.gateway_url", "queues.token",
+	"queues.gateway_url", "queues.token", "approvals.webhook_url",
 }
 
 func bindEnvVars() {

@@ -23,6 +23,7 @@ func Options() fx.Option {
 		modules.Release(),
 		modules.Queue(),
 		modules.Deploy(),
+		modules.Approvals(),
 		modules.Observe(),
 		modules.Web(),
 	)

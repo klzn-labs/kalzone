@@ -1,0 +1,35 @@
+{{define "content"}}{{$d := .Data}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Workspace</div>
+    <h1>Requests</h1>
+    <p class="lead">Changes that agents asked to make on protected environments. A maintainer of the owning team or an admin approves or rejects each one in the browser. Unanswered requests expire after 24 hours.</p>
+  </div>
+</div>
+
+<h2>Waiting</h2>
+<div class="card" style="margin:12px 0 24px">
+  {{if $d.Pending}}{{template "request-table" $d.Pending}}{{else}}{{template "empty" dict "Icon" "shield" "Title" "Nothing is waiting" "Text" "When an agent asks to change a protected environment, the request shows up here."}}{{end}}
+</div>
+
+<h2>Recent</h2>
+<div class="card" style="margin-top:12px">
+  {{if $d.Recent}}{{template "request-table" $d.Recent}}{{else}}<div class="card-body muted">No decided requests yet.</div>{{end}}
+</div>
+{{end}}
+
+{{define "request-table"}}
+<div class="table-scroll"><table class="table">
+  <thead><tr><th>Change</th><th>Service</th><th>Env</th><th>Asked by</th><th>When</th><th>Status</th></tr></thead>
+  <tbody>{{range .}}
+    <tr>
+      <td><a href="/requests/{{.ID}}"><b>{{.Summary}}</b></a></td>
+      <td class="mono">{{.ServiceSlug}}</td>
+      <td>{{template "env-badge" .Environment}}</td>
+      <td>@{{.RequesterLogin}} <span class="muted">via {{.TokenName}}</span></td>
+      <td class="muted nowrap" title="{{date .CreatedAt}}">{{ago .CreatedAt}}</td>
+      <td>{{template "request-status" .Status}}</td>
+    </tr>{{end}}
+  </tbody>
+</table></div>
+{{end}}

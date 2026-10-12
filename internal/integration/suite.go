@@ -21,6 +21,7 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/fx/fxtest"
+	"gorm.io/gorm"
 )
 
 const (
@@ -37,6 +38,7 @@ type Suite struct {
 	Registry *fakeregistry.Registry
 	Grafana  *fakegrafana.Grafana
 	Engine   *gin.Engine
+	db       *gorm.DB
 	nextID   int64
 }
 
@@ -50,7 +52,7 @@ func NewSuite(t *testing.T) *Suite {
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
 		fx.Decorate(func(config.Config) config.Config { return testConfig(t, s) }),
 		fx.Decorate(func(registry.Resolver) registry.Resolver { return registry.WithBaseURL(s.Registry.URL) }),
-		fx.Populate(&s.Engine),
+		fx.Populate(&s.Engine, &s.db),
 	)
 	app.RequireStart()
 	s.Server = httptest.NewServer(s.Engine)
@@ -65,6 +67,7 @@ func (s *Suite) close(app *fxtest.App) {
 	s.Registry.Close()
 	s.Grafana.Close()
 	app.RequireStop()
+	testdb.Close(s.db)
 }
 
 func testConfig(t *testing.T, s *Suite) config.Config {

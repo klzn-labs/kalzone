@@ -49,6 +49,14 @@ var phrasings = map[string]phrasing{
 	"token.created":       {"created access token", tokensLink, nil},
 	"token.revoked":       {"revoked access token", tokensLink, nil},
 	"token.bypass_used":   {"skipped approval with", nil, bypassDetail},
+	"request.created":     {"asked for approval on", requestLink, requestDetail},
+	"request.approved":    {"approved a request on", requestLink, requestDetail},
+	"request.rejected":    {"rejected a request on", requestLink, requestDetail},
+	"request.cancelled":   {"cancelled a request on", requestLink, requestDetail},
+	"request.superseded":  {"replaced a request on", requestLink, requestDetail},
+	"request.expired":     {"expired a request on", requestLink, requestDetail},
+	"request.executed":    {"ran an approved change on", requestLink, requestDetail},
+	"request.failed":      {"could not run an approved change on", requestLink, requestDetail},
 }
 
 func ActivityFrom(events []audit.Event) []Activity {
@@ -76,6 +84,12 @@ func activityOf(e audit.Event) Activity {
 }
 
 func tokensLink(audit.Event) string { return "/tokens" }
+
+func requestLink(e audit.Event) string { return "/requests/" + e.TargetID }
+
+func requestDetail(e audit.Event) string {
+	return fmt.Sprint(e.Details["summary"])
+}
 
 func bypassDetail(e audit.Event) string {
 	return fmt.Sprintf("%v on %s", e.Details["action"], e.Environment)
