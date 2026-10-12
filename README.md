@@ -10,6 +10,7 @@ API on the same usecases. Design documents live in `docs/superpowers/specs`.
 ## What is in the core
 
 - GitHub sign-in (GitHub App user OAuth), server-side sessions, CSRF protection
+- Access tokens for agents and scripts: Bearer tokens owned by a person, limited by scopes and teams
 - Teams with `member` and `maintainer` roles, platform admins
 - Service catalog, fixed `dev` and `prod` environments (`prod` is protected)
 - Config per service and environment as immutable, numbered revisions
@@ -81,6 +82,35 @@ as a callback URL.
 | `PLATFORM_QUEUES_GATEWAY_URL` | `http://queued:8080` | gateway address handed to services as `PLATFORM_QUEUE_URL` |
 
 Never run production with the default secrets key.
+
+## Access tokens
+
+Agents call the API with a token instead of a browser session. Create one under
+**Access tokens** (key icon next to your name) or with the API:
+
+```
+curl -H "Authorization: Bearer $PLATFORM_TOKEN" https://platform.kalz.one/api/v1/whoami
+```
+
+A token acts for the person who made it and can do at most what that person, its
+scopes and its teams all allow. Scopes: `read`, `logs` (log endpoints come later;
+`read` does not include it), `services`, `services:admin`, `builds`, `config`,
+`secrets`, `deploy`, `protected`, `teams:admin`, `tokens:admin`. Teams are listed
+explicitly. Revoking a token frees its name; a token made by another token never
+outlives it. Tokens expire after 1 to 365 days (90 by default) and are shown
+once; only a hash is stored.
+
+On a protected environment (`prod`) a token needs `protected`, and then gets
+`err_approval_required` unless a platform admin gave it bypass from the website.
+Tokens are refused on website pages and need no CSRF header. Every change made
+with a token shows in the audit log as "person via token".
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/whoami` | owner, scopes, teams, bypass and expiry of the calling token |
+| `GET /api/v1/tokens` | your tokens (`?all=true` for admins in the browser) |
+| `POST /api/v1/tokens` | `{"name","scopes","teams","expires_in_days","bypass"}` → the token, once |
+| `DELETE /api/v1/tokens/:id` | revoke |
 
 ## Builds and releases
 
