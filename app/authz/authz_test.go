@@ -31,7 +31,6 @@ func (r *recorder) Publish(_ context.Context, e events.Event) { r.events = appen
 var policy = authz.NewPolicy(
 	roles{"places/member": "member", "places/maintainer": "maintainer"},
 	protection{"dev": false, "prod": true},
-	&recorder{},
 )
 
 var people = map[string]actor.Actor{
@@ -65,6 +64,7 @@ var matrix = []rule{
 	{authz.ManageMembers, "", []string{"maintainer", "admin"}},
 	{authz.ManageTeams, "", []string{"admin"}},
 	{authz.ManageAdmins, "", []string{"admin"}},
+	{authz.ApproveRequest, "", []string{"maintainer", "admin"}},
 }
 
 func Test_Policy_Matrix(t *testing.T) {

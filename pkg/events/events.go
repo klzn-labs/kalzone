@@ -3,6 +3,8 @@ package events
 import (
 	"context"
 	"time"
+
+	"github.com/adrianozp/platform/pkg/actor"
 )
 
 type Event struct {
@@ -33,4 +35,16 @@ const (
 	TargetDeployment = "deployment"
 	TargetQueue      = "queue"
 	TargetToken      = "token"
+	TargetRequest    = "request"
 )
+
+func WithApproval(a actor.Actor, details map[string]any) map[string]any {
+	if !a.Approved() {
+		return details
+	}
+	if details == nil {
+		details = map[string]any{}
+	}
+	details["request_id"], details["approved_by"] = a.Approval.RequestID, a.Approval.ApproverLogin
+	return details
+}

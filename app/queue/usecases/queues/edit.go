@@ -8,6 +8,7 @@ import (
 	"github.com/adrianozp/platform/app/queue/entities"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/clock"
 	"github.com/adrianozp/platform/pkg/uuid"
 )
@@ -35,17 +36,25 @@ func (u QueuesUsecase) Create(ctx context.Context, a actor.Actor, d Draft) (enti
 	if err != nil {
 		return entities.Queue{}, err
 	}
-	if err := u.authz.Can(ctx, a, authz.EditQueue, authz.Resource{TeamID: consumer.OwnerTeamID, Environment: d.Environment}); err != nil {
+	gate, err := u.authz.Gate(ctx, a, authz.EditQueue, authz.Resource{TeamID: consumer.OwnerTeamID, Environment: d.Environment})
+	if err != nil {
 		return entities.Queue{}, err
 	}
 	q, err := u.newQueue(ctx, d, consumer)
 	if err != nil {
 		return entities.Queue{}, err
 	}
-	if err := u.store.Create(ctx, q, versionOf(a, q, d.Message)); err != nil {
+	if gate == authz.NeedsApproval {
+		return entities.Queue{}, u.propose(ctx, a, q, Proposal{Kind: approval.KindQueueCreate, Draft: &d})
+	}
+	return u.create(ctx, a, gate, q, d.Message)
+}
+
+func (u QueuesUsecase) create(ctx context.Context, a actor.Actor, gate authz.Gate, q entities.Queue, message string) (entities.Queue, error) {
+	if err := u.store.Create(ctx, q, versionOf(a, q, message)); err != nil {
 		return entities.Queue{}, err
 	}
-	u.publish(ctx, a, "queue.created", q, map[string]any{"version": q.Version})
+	u.publish(ctx, a, gate, "queue.created", q, map[string]any{"version": q.Version})
 	return q, nil
 }
 
@@ -94,7 +103,7 @@ func (u QueuesUsecase) publisherIDs(ctx context.Context, consumer ServiceRef, sl
 }
 
 func (u QueuesUsecase) Update(ctx context.Context, a actor.Actor, environment, name string, c Change) (entities.Queue, error) {
-	q, err := u.editable(ctx, a, environment, name)
+	q, gate, err := u.editable(ctx, a, environment, name)
 	if err != nil {
 		return entities.Queue{}, err
 	}
@@ -102,10 +111,13 @@ func (u QueuesUsecase) Update(ctx context.Context, a actor.Actor, environment, n
 	if err != nil {
 		return entities.Queue{}, err
 	}
+	if gate == authz.NeedsApproval {
+		return entities.Queue{}, u.propose(ctx, a, q, Proposal{Kind: approval.KindQueueUpdate, Change: &c})
+	}
 	if err := u.store.InsertVersion(ctx, next, versionOf(a, next, c.Message)); err != nil {
 		return entities.Queue{}, err
 	}
-	u.publish(ctx, a, "queue.updated", next, map[string]any{"version": next.Version, "message": c.Message})
+	u.publish(ctx, a, gate, "queue.updated", next, map[string]any{"version": next.Version, "message": c.Message})
 	return next, nil
 }
 

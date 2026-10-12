@@ -11,6 +11,7 @@ import (
 	"github.com/adrianozp/platform/app/deploy/usecases/fakestore"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/events"
 	"github.com/stretchr/testify/require"
 )
@@ -41,13 +42,26 @@ func (environments) EnvironmentExists(_ context.Context, slug string) error {
 	return nil
 }
 
-type policy struct{ denyEnv string }
+type policy struct {
+	denyEnv string
+	gate    authz.Gate
+}
 
-func (p policy) Can(_ context.Context, _ actor.Actor, action authz.Action, r authz.Resource) error {
+func (p policy) Gate(_ context.Context, _ actor.Actor, action authz.Action, r authz.Resource) (authz.Gate, error) {
 	if action != authz.Deploy || r.Environment == p.denyEnv {
-		return apperror.Forbidden("no")
+		return "", apperror.Forbidden("no")
 	}
-	return nil
+	if p.gate == "" {
+		return authz.Open, nil
+	}
+	return p.gate, nil
+}
+
+type requests struct{ changes []approval.Change }
+
+func (r *requests) Submit(_ context.Context, _ actor.Actor, c approval.Change) (*approval.Pending, error) {
+	r.changes = append(r.changes, c)
+	return &approval.Pending{ID: "c1", Status: "pending"}, nil
 }
 
 type published struct{ actions []string }
@@ -65,7 +79,7 @@ var rels = releases{
 
 func setup(denyEnv string) (*fakestore.Store, deployments.DeploymentsUsecase) {
 	store := fakestore.New()
-	usecase := deployments.NewDeploymentsUsecase(store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{denyEnv}, &published{})
+	usecase := deployments.NewDeploymentsUsecase(store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{denyEnv: denyEnv}, &published{}, &requests{})
 	return store, usecase
 }
 

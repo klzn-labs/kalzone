@@ -10,6 +10,7 @@ import (
 	"github.com/adrianozp/platform/app/queue/usecases/queues"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/events"
 )
 
@@ -127,13 +128,26 @@ func (s stats) Latest(id string) (entities.Stats, bool) {
 	return st, ok
 }
 
-type policy struct{ deny bool }
+type policy struct {
+	deny bool
+	gate authz.Gate
+}
 
-func (p policy) Can(context.Context, actor.Actor, authz.Action, authz.Resource) error {
+func (p policy) Gate(context.Context, actor.Actor, authz.Action, authz.Resource) (authz.Gate, error) {
 	if p.deny {
-		return apperror.Forbidden("no")
+		return "", apperror.Forbidden("no")
 	}
-	return nil
+	if p.gate == "" {
+		return authz.Open, nil
+	}
+	return p.gate, nil
+}
+
+type requests struct{ changes []approval.Change }
+
+func (r *requests) Submit(_ context.Context, _ actor.Actor, c approval.Change) (*approval.Pending, error) {
+	r.changes = append(r.changes, c)
+	return &approval.Pending{ID: "c1", Status: "pending"}, nil
 }
 
 type recorder struct{ actions []string }
@@ -143,19 +157,27 @@ func (r *recorder) Publish(_ context.Context, e events.Event) {
 }
 
 type fixture struct {
-	usecase queues.QueuesUsecase
-	store   *store
-	stats   stats
-	events  *recorder
+	usecase  queues.QueuesUsecase
+	store    *store
+	stats    stats
+	events   *recorder
+	requests *requests
 }
 
 func newFixture(t *testing.T, deny bool) fixture {
 	t.Helper()
-	s := &store{queues: map[string]entities.Queue{}}
-	st := stats{}
-	r := &recorder{}
-	u := queues.NewQueuesUsecase(s, lookup{}, lookup{}, lookup{}, st, policy{deny: deny}, r)
-	return fixture{usecase: u, store: s, stats: st, events: r}
+	return fixtureWith(t, policy{deny: deny})
+}
+
+func fixtureWith(t *testing.T, p policy) fixture {
+	t.Helper()
+	f := fixture{store: &store{queues: map[string]entities.Queue{}}, stats: stats{}, events: &recorder{}, requests: &requests{}}
+	f.usecase = queues.NewQueuesUsecase(f.store, lookup{}, lookup{}, lookup{}, f.stats, p, f.events, f.requests)
+	return f
+}
+
+func (f fixture) as(gate authz.Gate) queues.QueuesUsecase {
+	return queues.NewQueuesUsecase(f.store, lookup{}, lookup{}, lookup{}, f.stats, policy{gate: gate}, f.events, f.requests)
 }
 
 func draft() queues.Draft {

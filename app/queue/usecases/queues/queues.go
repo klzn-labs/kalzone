@@ -6,6 +6,7 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/app/queue/entities"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/events"
 )
 
@@ -45,7 +46,11 @@ type StatsReader interface {
 }
 
 type Authorizer interface {
-	Can(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) error
+	Gate(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) (authz.Gate, error)
+}
+
+type Requests interface {
+	Submit(ctx context.Context, a actor.Actor, c approval.Change) (*approval.Pending, error)
 }
 
 type Publisher interface {
@@ -60,12 +65,13 @@ type QueuesUsecase struct {
 	stats        StatsReader
 	authz        Authorizer
 	publisher    Publisher
+	requests     Requests
 }
 
-func NewQueuesUsecase(store Store, services ServiceLookup, environments EnvironmentLookup, teams TeamLookup, stats StatsReader, authz Authorizer, publisher Publisher) QueuesUsecase {
+func NewQueuesUsecase(store Store, services ServiceLookup, environments EnvironmentLookup, teams TeamLookup, stats StatsReader, authz Authorizer, publisher Publisher, requests Requests) QueuesUsecase {
 	return QueuesUsecase{
 		store: store, services: services, environments: environments, teams: teams,
-		stats: stats, authz: authz, publisher: publisher,
+		stats: stats, authz: authz, publisher: publisher, requests: requests,
 	}
 }
 
@@ -101,17 +107,29 @@ func (u QueuesUsecase) Stats(ctx context.Context, environment, name string) (ent
 	return st, ok, nil
 }
 
-func (u QueuesUsecase) editable(ctx context.Context, a actor.Actor, environment, name string) (entities.Queue, error) {
+func (u QueuesUsecase) editable(ctx context.Context, a actor.Actor, environment, name string) (entities.Queue, authz.Gate, error) {
 	q, err := u.store.Get(ctx, environment, name)
 	if err != nil {
-		return entities.Queue{}, err
+		return entities.Queue{}, "", err
 	}
-	return q, u.authz.Can(ctx, a, authz.EditQueue, authz.Resource{TeamID: q.TeamID, Environment: q.Environment})
+	gate, err := u.authz.Gate(ctx, a, authz.EditQueue, resourceOf(q))
+	return q, gate, err
 }
 
-func (u QueuesUsecase) publish(ctx context.Context, a actor.Actor, action string, q entities.Queue, details map[string]any) {
+func (u QueuesUsecase) operable(ctx context.Context, a actor.Actor, environment, name string) (entities.Queue, authz.Gate, error) {
+	q, gate, err := u.editable(ctx, a, environment, name)
+	gate, err = authz.Direct(gate, err)
+	return q, gate, err
+}
+
+func resourceOf(q entities.Queue) authz.Resource {
+	return authz.Resource{TeamID: q.TeamID, Environment: q.Environment}
+}
+
+func (u QueuesUsecase) publish(ctx context.Context, a actor.Actor, gate authz.Gate, action string, q entities.Queue, details map[string]any) {
 	u.publisher.Publish(ctx, events.Event{
 		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action, TargetKind: events.TargetQueue,
-		TargetID: q.ID, TargetName: q.Name, TeamID: q.TeamID, Environment: q.Environment, Details: details,
+		TargetID: q.ID, TargetName: q.Name, TeamID: q.TeamID, Environment: q.Environment, Details: events.WithApproval(a, details),
 	})
+	authz.PublishBypass(ctx, u.publisher, gate, a, authz.EditQueue, resourceOf(q))
 }

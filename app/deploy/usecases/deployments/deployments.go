@@ -6,6 +6,7 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/app/deploy/entities"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/events"
 )
 
@@ -37,7 +38,11 @@ type EnvironmentLookup interface {
 }
 
 type Authorizer interface {
-	Can(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) error
+	Gate(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) (authz.Gate, error)
+}
+
+type Requests interface {
+	Submit(ctx context.Context, a actor.Actor, c approval.Change) (*approval.Pending, error)
 }
 
 type Publisher interface {
@@ -52,12 +57,13 @@ type DeploymentsUsecase struct {
 	environments EnvironmentLookup
 	authz        Authorizer
 	publisher    Publisher
+	requests     Requests
 }
 
-func NewDeploymentsUsecase(store Store, services ServiceLookup, releases ReleaseLookup, configs ConfigSource, environments EnvironmentLookup, authz Authorizer, publisher Publisher) DeploymentsUsecase {
+func NewDeploymentsUsecase(store Store, services ServiceLookup, releases ReleaseLookup, configs ConfigSource, environments EnvironmentLookup, authz Authorizer, publisher Publisher, requests Requests) DeploymentsUsecase {
 	return DeploymentsUsecase{
 		store: store, services: services, releases: releases, configs: configs,
-		environments: environments, authz: authz, publisher: publisher,
+		environments: environments, authz: authz, publisher: publisher, requests: requests,
 	}
 }
 
@@ -93,6 +99,6 @@ func publish(ctx context.Context, p Publisher, a actor.Actor, action string, ser
 	p.Publish(ctx, events.Event{
 		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: action, TargetKind: events.TargetDeployment,
 		TargetID: service.ID, TargetName: service.Slug, TeamID: service.OwnerTeamID, Environment: d.Environment,
-		Details: map[string]any{"deployment": d.Number, "release": d.ReleaseNumber, "config": d.ConfigRevision, "trigger": string(d.Trigger)},
+		Details: events.WithApproval(a, map[string]any{"deployment": d.Number, "release": d.ReleaseNumber, "config": d.ConfigRevision, "trigger": string(d.Trigger)}),
 	})
 }

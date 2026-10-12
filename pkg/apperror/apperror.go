@@ -22,6 +22,7 @@ const (
 	CodeMissingScope     Code = "err_missing_scope"
 	CodeTeamNotGranted   Code = "err_team_not_granted"
 	CodeApprovalRequired Code = "err_approval_required"
+	CodeStale            Code = "err_stale"
 )
 
 type AppError struct {
@@ -57,6 +58,10 @@ func NotFound(message string) *AppError {
 
 func Conflict(message string) *AppError {
 	return New(CodeConflict, message)
+}
+
+func Stale(message string) *AppError {
+	return New(CodeStale, message)
 }
 
 func Forbidden(message string) *AppError {

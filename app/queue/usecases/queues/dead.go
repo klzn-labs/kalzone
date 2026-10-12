@@ -20,13 +20,13 @@ func (u QueuesUsecase) PurgeDead(ctx context.Context, a actor.Actor, environment
 }
 
 func (u QueuesUsecase) deadCommand(ctx context.Context, a actor.Actor, environment, name, kind, argument, action string) error {
-	q, err := u.editable(ctx, a, environment, name)
+	q, gate, err := u.operable(ctx, a, environment, name)
 	if err != nil {
 		return err
 	}
 	if err := u.command(ctx, q, kind, argument); err != nil {
 		return err
 	}
-	u.publish(ctx, a, action, q, map[string]any{"message": argument})
+	u.publish(ctx, a, gate, action, q, map[string]any{"message": argument})
 	return nil
 }

@@ -56,3 +56,21 @@ func Test_Authenticate_TouchesAtMostOncePerMinute(t *testing.T) {
 	require.Equal(t, 3, f.store.touched)
 	require.Equal(t, "10.0.0.2", f.store.byID[issued.Token.ID].LastUsedIP)
 }
+
+func Test_ActorOf_RebuildsTheTokensActorWhileItIsValid(t *testing.T) {
+	f := newFixture()
+	issued, _ := f.usecase.Create(ctx, ana, draftOf("deploy", "protected"))
+	revoked, _ := f.usecase.Create(ctx, ana, lasting(1, entities.TokenDraft{Name: "gone", Scopes: []string{"read"}, Teams: []string{"places"}}))
+	require.NoError(t, f.usecase.Revoke(ctx, ana, revoked.Token.ID))
+
+	a, err := f.usecase.ActorOf(ctx, issued.Token.ID)
+	_, gone := f.usecase.ActorOf(ctx, revoked.Token.ID)
+	clock.WithTime(now.Add(91 * 24 * time.Hour))
+	_, late := f.usecase.ActorOf(ctx, issued.Token.ID)
+
+	require.NoError(t, err)
+	require.Equal(t, "u-ana", a.UserID)
+	require.Equal(t, issued.Token.ID, a.Token.ID)
+	require.ErrorIs(t, gone, entities.ErrTokenRevoked)
+	require.ErrorIs(t, late, entities.ErrTokenExpired)
+}

@@ -7,6 +7,7 @@ import (
 	"github.com/adrianozp/platform/app/envconfig/entities"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/clock"
 	"github.com/adrianozp/platform/pkg/events"
 	"github.com/adrianozp/platform/pkg/uuid"
@@ -19,29 +20,48 @@ var (
 	errNoChanges      = apperror.Invalid("nothing changed")
 )
 
-func (u ConfigUsecase) Revise(ctx context.Context, a actor.Actor, serviceSlug, environment string, cs entities.ChangeSet) (entities.Revision, error) {
-	t, current, err := u.editable(ctx, a, authz.EditConfig, serviceSlug, environment)
-	if err != nil {
-		return entities.Revision{}, err
-	}
-	next := cs.ApplyTo(current.Next())
-	if err := u.validate(ctx, t, next); err != nil {
-		return entities.Revision{}, err
-	}
-	return u.commit(ctx, a, t, current, next)
+type edit struct {
+	target
+	current entities.Revision
+	action  authz.Action
+	gate    authz.Gate
 }
 
-func (u ConfigUsecase) editable(ctx context.Context, a actor.Actor, action authz.Action, serviceSlug, environment string) (target, entities.Revision, error) {
+func (u ConfigUsecase) Revise(ctx context.Context, a actor.Actor, serviceSlug, environment string, cs entities.ChangeSet) (entities.Revision, error) {
+	e, err := u.editable(ctx, a, authz.EditConfig, serviceSlug, environment)
+	if err != nil {
+		return entities.Revision{}, err
+	}
+	cs.SetSecrets, cs.UnsetSecrets = nil, nil
+	return u.change(ctx, a, e, approval.KindConfigRevise, cs)
+}
+
+func (u ConfigUsecase) editable(ctx context.Context, a actor.Actor, action authz.Action, serviceSlug, environment string) (edit, error) {
 	t, err := u.resolve(ctx, serviceSlug, environment)
 	if err != nil {
-		return target{}, entities.Revision{}, err
+		return edit{}, err
 	}
-	resource := authz.Resource{TeamID: t.service.OwnerTeamID, Environment: environment}
-	if err := u.authz.Can(ctx, a, action, resource); err != nil {
-		return target{}, entities.Revision{}, err
+	gate, err := u.authz.Gate(ctx, a, action, t.resource())
+	if err != nil {
+		return edit{}, err
 	}
 	current, err := u.current(ctx, t)
-	return t, current, err
+	return edit{target: t, current: current, action: action, gate: gate}, err
+}
+
+func (u ConfigUsecase) change(ctx context.Context, a actor.Actor, e edit, kind string, cs entities.ChangeSet) (entities.Revision, error) {
+	next := cs.ApplyTo(e.current.Next())
+	if err := u.validate(ctx, e.target, next); err != nil {
+		return entities.Revision{}, err
+	}
+	changes := entities.Diff(e.current, next)
+	if len(changes) == 0 {
+		return entities.Revision{}, errNoChanges
+	}
+	if e.gate == authz.NeedsApproval {
+		return entities.Revision{}, u.propose(ctx, a, e, kind, cs, changes)
+	}
+	return u.commit(ctx, a, e, next, changes)
 }
 
 func (u ConfigUsecase) validate(ctx context.Context, t target, next entities.Revision) error {
@@ -78,16 +98,13 @@ func (u ConfigUsecase) internalFree(ctx context.Context, t target) error {
 	return errInternalTaken
 }
 
-func (u ConfigUsecase) commit(ctx context.Context, a actor.Actor, t target, current, next entities.Revision) (entities.Revision, error) {
-	changes := entities.Diff(current, next)
-	if len(changes) == 0 {
-		return entities.Revision{}, errNoChanges
-	}
+func (u ConfigUsecase) commit(ctx context.Context, a actor.Actor, e edit, next entities.Revision, changes []entities.Change) (entities.Revision, error) {
 	next.ID, next.AuthorID, next.CreatedAt = uuid.NewUUID(), a.UserID, clock.Now().UTC()
 	if err := u.store.Insert(ctx, next); err != nil {
 		return entities.Revision{}, err
 	}
-	u.publisher.Publish(ctx, revisedEvent(a, t, next, changes))
+	u.publisher.Publish(ctx, revisedEvent(a, e.target, next, changes))
+	authz.PublishBypass(ctx, u.publisher, e.gate, a, e.action, e.resource())
 	return next, nil
 }
 
@@ -96,6 +113,6 @@ func revisedEvent(a actor.Actor, t target, rev entities.Revision, changes []enti
 		ActorID: a.UserID, ActorLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name, Action: "config.revised",
 		TargetKind: events.TargetConfig, TargetID: t.service.ID, TargetName: t.service.Slug,
 		TeamID: t.service.OwnerTeamID, Environment: t.environment,
-		Details: map[string]any{"revision": rev.Number, "changed": entities.ChangedKeys(changes), "message": rev.Message},
+		Details: events.WithApproval(a, map[string]any{"revision": rev.Number, "changed": entities.ChangedKeys(changes), "message": rev.Message}),
 	}
 }

@@ -3,9 +3,11 @@ package queues
 import (
 	"context"
 
+	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/app/queue/entities"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/clock"
 	"github.com/adrianozp/platform/pkg/uuid"
 )
@@ -13,7 +15,7 @@ import (
 var errNotEmpty = apperror.Conflict("the queue still holds messages; empty it or delete with force")
 
 func (u QueuesUsecase) SetPaused(ctx context.Context, a actor.Actor, environment, name string, paused bool) (entities.Queue, error) {
-	q, err := u.editable(ctx, a, environment, name)
+	q, gate, err := u.operable(ctx, a, environment, name)
 	if err != nil {
 		return entities.Queue{}, err
 	}
@@ -21,22 +23,25 @@ func (u QueuesUsecase) SetPaused(ctx context.Context, a actor.Actor, environment
 		return entities.Queue{}, err
 	}
 	q.Paused = paused
-	u.publish(ctx, a, map[bool]string{true: "queue.paused", false: "queue.resumed"}[paused], q, nil)
+	u.publish(ctx, a, gate, map[bool]string{true: "queue.paused", false: "queue.resumed"}[paused], q, nil)
 	return q, nil
 }
 
 func (u QueuesUsecase) Delete(ctx context.Context, a actor.Actor, environment, name string, force bool) error {
-	q, err := u.editable(ctx, a, environment, name)
+	q, gate, err := u.editable(ctx, a, environment, name)
 	if err != nil {
 		return err
 	}
 	if !force && !u.knownEmpty(q.ID) {
 		return errNotEmpty
 	}
+	if gate == authz.NeedsApproval {
+		return u.propose(ctx, a, q, Proposal{Kind: approval.KindQueueDelete, Force: force})
+	}
 	if err := u.store.Delete(ctx, q.ID, newCommand(q, entities.CommandDelete, q.Environment+"/"+q.Name)); err != nil {
 		return err
 	}
-	u.publish(ctx, a, "queue.deleted", q, map[string]any{"forced": force})
+	u.publish(ctx, a, gate, "queue.deleted", q, map[string]any{"forced": force})
 	return nil
 }
 

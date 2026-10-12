@@ -2,6 +2,7 @@ package authz_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/adrianozp/platform/app/authz"
@@ -97,13 +98,66 @@ func asAppError(t *testing.T, err error) *apperror.AppError {
 	return appErr
 }
 
-func Test_Policy_BypassIsAuditedOnlyWhenUsed(t *testing.T) {
-	rec := &recorder{}
-	p := authz.NewPolicy(roles{"places/maintainer": "maintainer"}, protection{"dev": false, "prod": true}, rec)
-	a := via("maintainer", only(scope.Deploy, scope.Protected), places, true)
+func approvedBy(a actor.Actor, requestID string) actor.Actor {
+	a.Approval = actor.Approval{RequestID: requestID, ApproverID: "maintainer", ApproverLogin: "maintainer"}
+	return a
+}
 
-	require.NoError(t, p.Can(context.Background(), a, authz.Deploy, authz.Resource{TeamID: "places", Environment: "prod"}))
-	require.NoError(t, p.Can(context.Background(), a, authz.Deploy, authz.Resource{TeamID: "places", Environment: "dev"}))
+func Test_Policy_GateSaysHowAProtectedChangeMayRun(t *testing.T) {
+	ctx := context.Background()
+	prod := authz.Resource{TeamID: "places", Environment: "prod"}
+	asking := via("maintainer", only(scope.Deploy, scope.Protected), places, false)
+
+	needs, needsErr := policy.Gate(ctx, asking, authz.Deploy, prod)
+	bypassed, _ := policy.Gate(ctx, via("maintainer", only(scope.Deploy, scope.Protected), places, true), authz.Deploy, prod)
+	approved, _ := policy.Gate(ctx, approvedBy(asking, "c1"), authz.Deploy, prod)
+	dev, _ := policy.Gate(ctx, asking, authz.Deploy, authz.Resource{TeamID: "places", Environment: "dev"})
+	session, _ := policy.Gate(ctx, people["maintainer"], authz.Deploy, prod)
+
+	require.NoError(t, needsErr)
+	require.Equal(t, authz.NeedsApproval, needs)
+	require.Equal(t, authz.Bypassed, bypassed)
+	require.Equal(t, authz.Approved, approved)
+	require.Equal(t, authz.Open, dev)
+	require.Equal(t, authz.Open, session)
+}
+
+func Test_Policy_AnApprovalDoesNotReplaceTheProtectedScope(t *testing.T) {
+	a := approvedBy(via("maintainer", only(scope.Deploy), places, false), "c1")
+
+	_, err := policy.Gate(context.Background(), a, authz.Deploy, authz.Resource{TeamID: "places", Environment: "prod"})
+
+	requireCode(t, apperror.CodeMissingScope, err)
+}
+
+func Test_Policy_AnApprovalDoesNotReplaceTheOwnersRole(t *testing.T) {
+	a := approvedBy(via("member", only(scope.Deploy, scope.Protected), places, false), "c1")
+
+	_, err := policy.Gate(context.Background(), a, authz.Deploy, authz.Resource{TeamID: "places", Environment: "prod"})
+
+	requireCode(t, apperror.CodeForbidden, err)
+}
+
+func Test_Policy_OnlyABrowserSessionApproves(t *testing.T) {
+	ctx := context.Background()
+	team := authz.Resource{TeamID: "places"}
+
+	viaToken := policy.Can(ctx, via("maintainer", scope.All, places, true), authz.ApproveRequest, team)
+	member := policy.Can(ctx, people["member"], authz.ApproveRequest, team)
+
+	requireCode(t, apperror.CodeForbidden, viaToken)
+	requireCode(t, apperror.CodeForbidden, member)
+	require.NoError(t, policy.Can(ctx, people["maintainer"], authz.ApproveRequest, team))
+}
+
+func Test_PublishBypass_OnlyWhenTheGateWasBypassed(t *testing.T) {
+	rec := &recorder{}
+	a := via("maintainer", only(scope.Deploy, scope.Protected), places, true)
+	prod := authz.Resource{TeamID: "places", Environment: "prod"}
+
+	authz.PublishBypass(context.Background(), rec, authz.Open, a, authz.Deploy, prod)
+	authz.PublishBypass(context.Background(), rec, authz.Approved, a, authz.Deploy, prod)
+	authz.PublishBypass(context.Background(), rec, authz.Bypassed, a, authz.Deploy, prod)
 
 	require.Len(t, rec.events, 1)
 	require.Equal(t, "token.bypass_used", rec.events[0].Action)
@@ -147,4 +201,19 @@ func Test_Policy_SessionsTransferIntoAnyTeam(t *testing.T) {
 	err := policy.Can(context.Background(), people["maintainer"], authz.TransferService, authz.Resource{TeamID: "places", DestinationTeamID: "reviews"})
 
 	require.NoError(t, err)
+}
+
+type brokenProtection struct{}
+
+func (brokenProtection) IsProtected(context.Context, string) (bool, error) {
+	return false, errors.New("protection lookup failed")
+}
+
+func Test_Policy_AFailedProtectionLookupIsAnErrorNotOpen(t *testing.T) {
+	broken := authz.NewPolicy(roles{}, brokenProtection{})
+
+	gate, err := broken.Gate(context.Background(), via("admin", scope.All, places, false), authz.EditConfig, authz.Resource{TeamID: "places", Environment: "prod"})
+
+	require.Error(t, err)
+	require.NotEqual(t, authz.Open, gate)
 }

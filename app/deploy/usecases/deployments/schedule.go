@@ -20,6 +20,7 @@ var (
 
 type plan struct {
 	actor    actor.Actor
+	gate     authz.Gate
 	service  entities.ServiceRef
 	env      string
 	release  entities.ReleaseRef
@@ -28,16 +29,21 @@ type plan struct {
 	trigger  entities.Trigger
 }
 
-func (u DeploymentsUsecase) authorize(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.ServiceRef, error) {
+func (p plan) resource() authz.Resource {
+	return authz.Resource{TeamID: p.service.OwnerTeamID, Environment: p.env}
+}
+
+func (u DeploymentsUsecase) authorize(ctx context.Context, a actor.Actor, serviceSlug, environment string) (plan, error) {
 	service, err := u.services.FindService(ctx, serviceSlug)
 	if err != nil {
-		return entities.ServiceRef{}, err
+		return plan{}, err
 	}
 	if err := u.environments.EnvironmentExists(ctx, environment); err != nil {
-		return entities.ServiceRef{}, err
+		return plan{}, err
 	}
-	resource := authz.Resource{TeamID: service.OwnerTeamID, Environment: environment}
-	return service, u.authz.Can(ctx, a, authz.Deploy, resource)
+	p := plan{actor: a, service: service, env: environment}
+	p.gate, err = u.authz.Gate(ctx, a, authz.Deploy, p.resource())
+	return p, err
 }
 
 func (u DeploymentsUsecase) deployable(ctx context.Context, service entities.ServiceRef, releaseID string) (entities.ReleaseRef, error) {
@@ -54,6 +60,13 @@ func (u DeploymentsUsecase) deployable(ctx context.Context, service entities.Ser
 	return rel, nil
 }
 
+func (u DeploymentsUsecase) proceed(ctx context.Context, p plan, o Proposal) (entities.Deployment, error) {
+	if p.gate == authz.NeedsApproval {
+		return entities.Deployment{}, u.propose(ctx, p, o)
+	}
+	return u.schedule(ctx, p)
+}
+
 func (u DeploymentsUsecase) schedule(ctx context.Context, p plan) (entities.Deployment, error) {
 	if err := u.clearWay(ctx, p.service.ID, p.env); err != nil {
 		return entities.Deployment{}, err
@@ -68,6 +81,7 @@ func (u DeploymentsUsecase) schedule(ctx context.Context, p plan) (entities.Depl
 		return entities.Deployment{}, err
 	}
 	publish(ctx, u.publisher, p.actor, "deploy.requested", p.service, d)
+	authz.PublishBypass(ctx, u.publisher, p.gate, p.actor, authz.Deploy, p.resource())
 	return d, nil
 }
 

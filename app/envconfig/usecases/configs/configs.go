@@ -6,6 +6,7 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/app/envconfig/entities"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/config"
 	"github.com/adrianozp/platform/pkg/events"
 )
@@ -35,7 +36,11 @@ type Sealer interface {
 }
 
 type Authorizer interface {
-	Can(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) error
+	Gate(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) (authz.Gate, error)
+}
+
+type Requests interface {
+	Submit(ctx context.Context, a actor.Actor, c approval.Change) (*approval.Pending, error)
 }
 
 type Publisher interface {
@@ -49,19 +54,24 @@ type ConfigUsecase struct {
 	sealer         Sealer
 	authz          Authorizer
 	publisher      Publisher
+	requests       Requests
 	allowedDomains []string
 }
 
-func NewConfigUsecase(cfg config.Config, store Store, services ServiceLookup, environments EnvironmentLookup, sealer Sealer, authz Authorizer, publisher Publisher) ConfigUsecase {
+func NewConfigUsecase(cfg config.Config, store Store, services ServiceLookup, environments EnvironmentLookup, sealer Sealer, authz Authorizer, publisher Publisher, requests Requests) ConfigUsecase {
 	return ConfigUsecase{
 		store: store, services: services, environments: environments, sealer: sealer,
-		authz: authz, publisher: publisher, allowedDomains: cfg.AllowedDomains,
+		authz: authz, publisher: publisher, requests: requests, allowedDomains: cfg.AllowedDomains,
 	}
 }
 
 type target struct {
 	service     entities.ServiceRef
 	environment string
+}
+
+func (t target) resource() authz.Resource {
+	return authz.Resource{TeamID: t.service.OwnerTeamID, Environment: t.environment}
 }
 
 func (u ConfigUsecase) resolve(ctx context.Context, serviceSlug, environment string) (target, error) {

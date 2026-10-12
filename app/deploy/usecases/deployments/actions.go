@@ -6,6 +6,7 @@ import (
 	"github.com/adrianozp/platform/app/deploy/entities"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 )
 
 var (
@@ -27,57 +28,61 @@ func (u DeploymentsUsecase) Deploy(ctx context.Context, a actor.Actor, r Request
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	service, err := u.authorize(ctx, a, r.Service, r.Environment)
+	p, err := u.authorize(ctx, a, r.Service, r.Environment)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	rel, err := u.deployable(ctx, service, r.ReleaseID)
-	if err != nil {
+	if p.release, err = u.deployable(ctx, p.service, r.ReleaseID); err != nil {
 		return entities.Deployment{}, err
 	}
-	config, err := u.configs.CurrentNumber(ctx, service.Slug, r.Environment)
-	if err != nil {
+	if p.config, err = u.configs.CurrentNumber(ctx, p.service.Slug, p.env); err != nil {
 		return entities.Deployment{}, err
 	}
-	return u.schedule(ctx, plan{a, service, r.Environment, rel, config, strategy, entities.TriggerManual})
+	p.strategy, p.trigger = strategy, entities.TriggerManual
+	return u.proceed(ctx, p, Proposal{Kind: approval.KindDeploy, ReleaseID: p.release.ID, Strategy: string(strategy)})
 }
 
 func (u DeploymentsUsecase) ApplyConfig(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.Deployment, error) {
-	service, err := u.authorize(ctx, a, serviceSlug, environment)
+	p, err := u.authorize(ctx, a, serviceSlug, environment)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	live, rel, err := u.live(ctx, service, environment)
+	live, rel, err := u.live(ctx, p.service, environment)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	config, err := u.configs.CurrentNumber(ctx, service.Slug, environment)
+	config, err := u.configs.CurrentNumber(ctx, p.service.Slug, environment)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
 	if config == live.ConfigRevision {
 		return entities.Deployment{}, errConfigIsLive
 	}
-	return u.schedule(ctx, plan{a, service, environment, rel, config, live.Strategy, entities.TriggerConfig})
+	p.release, p.config, p.strategy, p.trigger = rel, config, live.Strategy, entities.TriggerConfig
+	return u.proceed(ctx, p, Proposal{Kind: approval.KindConfigApply})
 }
 
 func (u DeploymentsUsecase) Promote(ctx context.Context, a actor.Actor, serviceSlug, from, to string) (entities.Deployment, error) {
 	if from == to {
 		return entities.Deployment{}, errSameEnvironment
 	}
-	service, err := u.authorize(ctx, a, serviceSlug, to)
+	p, err := u.authorize(ctx, a, serviceSlug, to)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	_, rel, err := u.live(ctx, service, from)
+	if _, p.release, err = u.live(ctx, p.service, from); err != nil {
+		return entities.Deployment{}, err
+	}
+	return u.promote(ctx, p, from)
+}
+
+func (u DeploymentsUsecase) promote(ctx context.Context, p plan, from string) (entities.Deployment, error) {
+	config, err := u.configs.CurrentNumber(ctx, p.service.Slug, p.env)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	config, err := u.configs.CurrentNumber(ctx, service.Slug, to)
-	if err != nil {
-		return entities.Deployment{}, err
-	}
-	return u.schedule(ctx, plan{a, service, to, rel, config, entities.StrategyBlueGreen, entities.TriggerPromote})
+	p.config, p.strategy, p.trigger = config, entities.StrategyBlueGreen, entities.TriggerPromote
+	return u.proceed(ctx, p, Proposal{Kind: approval.KindPromote, ReleaseID: p.release.ID, From: from})
 }
 
 func (u DeploymentsUsecase) Rollback(ctx context.Context, a actor.Actor, deploymentID string) (entities.Deployment, error) {
@@ -89,14 +94,16 @@ func (u DeploymentsUsecase) Rollback(ctx context.Context, a actor.Actor, deploym
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	if _, err := u.authorize(ctx, a, service.Slug, target.Environment); err != nil {
+	p, err := u.authorize(ctx, a, service.Slug, target.Environment)
+	if err != nil {
 		return entities.Deployment{}, err
 	}
 	if target.Status != entities.StatusSucceeded {
 		return entities.Deployment{}, errNotSucceeded
 	}
-	rel := entities.ReleaseRef{ID: target.ReleaseID, ServiceID: service.ID, Number: target.ReleaseNumber, Built: true, Reference: target.ImageRef}
-	return u.schedule(ctx, plan{a, service, target.Environment, rel, target.ConfigRevision, entities.StrategyBlueGreen, entities.TriggerRollback})
+	p.release = entities.ReleaseRef{ID: target.ReleaseID, ServiceID: service.ID, Number: target.ReleaseNumber, Built: true, Reference: target.ImageRef}
+	p.config, p.strategy, p.trigger = target.ConfigRevision, entities.StrategyBlueGreen, entities.TriggerRollback
+	return u.proceed(ctx, p, Proposal{Kind: approval.KindRollback, DeploymentID: target.ID})
 }
 
 func (u DeploymentsUsecase) live(ctx context.Context, service entities.ServiceRef, environment string) (entities.Deployment, entities.ReleaseRef, error) {
