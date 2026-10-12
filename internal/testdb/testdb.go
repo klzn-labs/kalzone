@@ -17,7 +17,7 @@ import (
 
 const defaultDSN = "root:test@tcp(127.0.0.1:3306)/platform_test"
 
-var tables = []string{"users", "sessions", "teams", "memberships", "services", "config_revisions", "secret_versions", "audit_events", "releases", "deployments", "deployment_events", "agents", "queues", "queue_versions", "queue_publishers", "queue_credentials", "queue_commands", "access_tokens"}
+var tables = []string{"users", "sessions", "teams", "memberships", "services", "config_revisions", "secret_versions", "audit_events", "releases", "deployments", "deployment_events", "agents", "queues", "queue_versions", "queue_publishers", "queue_credentials", "queue_commands", "access_tokens", "change_requests"}
 
 var prepare sync.Once
 
@@ -38,8 +38,15 @@ func Open(t *testing.T) *gorm.DB {
 	prepare.Do(func() { require.NoError(t, createAndMigrate()) })
 	gdb, err := db.NewGormDB(Config())
 	require.NoError(t, err)
+	t.Cleanup(func() { Close(gdb) })
 	Truncate(t, gdb)
 	return gdb
+}
+
+func Close(gdb *gorm.DB) {
+	if sqlDB, err := gdb.DB(); err == nil {
+		_ = sqlDB.Close()
+	}
 }
 
 func Truncate(t *testing.T, gdb *gorm.DB) {
