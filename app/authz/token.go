@@ -23,21 +23,21 @@ var (
 	errApprovalRequired = apperror.New(apperror.CodeApprovalRequired, "changes to a protected environment need a human's approval")
 )
 
-func (p Policy) tokenCan(ctx context.Context, a actor.Actor, action Action, r Resource) error {
+func (p Policy) tokenGate(ctx context.Context, a actor.Actor, action Action, r Resource) (Gate, error) {
 	needed, allowed := scopeOf[action]
 	if !allowed {
-		return errNeverForTokens
+		return "", errNeverForTokens
 	}
 	if !a.Token.Has(needed) {
-		return apperror.MissingScope(string(needed))
+		return "", apperror.MissingScope(string(needed))
 	}
 	if err := teamsGranted(a, r.TeamID, r.DestinationTeamID); err != nil {
-		return err
+		return "", err
 	}
 	if !protectable[action] {
-		return nil
+		return Open, nil
 	}
-	return p.protectedRule(ctx, a, action, r)
+	return p.protectedRule(ctx, a, r)
 }
 
 func teamsGranted(a actor.Actor, teamIDs ...string) error {
@@ -49,19 +49,34 @@ func teamsGranted(a actor.Actor, teamIDs ...string) error {
 	return nil
 }
 
-func (p Policy) protectedRule(ctx context.Context, a actor.Actor, action Action, r Resource) error {
+func (p Policy) protectedRule(ctx context.Context, a actor.Actor, r Resource) (Gate, error) {
 	protected, err := p.environments.IsProtected(ctx, r.Environment)
-	if err != nil || !protected {
-		return err
+	if err != nil {
+		return "", err
+	}
+	if !protected {
+		return Open, nil
 	}
 	if !a.Token.Has(scope.Protected) {
-		return apperror.MissingScope(string(scope.Protected))
+		return "", apperror.MissingScope(string(scope.Protected))
 	}
-	if !a.Token.Bypass {
-		return errApprovalRequired
+	return protectedGate(a), nil
+}
+
+func protectedGate(a actor.Actor) Gate {
+	switch {
+	case a.Approved():
+		return Approved
+	case a.Token.Bypass:
+		return Bypassed
 	}
-	p.publisher.Publish(ctx, bypassEvent(a, action, r))
-	return nil
+	return NeedsApproval
+}
+
+func PublishBypass(ctx context.Context, p Publisher, g Gate, a actor.Actor, action Action, r Resource) {
+	if g == Bypassed {
+		p.Publish(ctx, bypassEvent(a, action, r))
+	}
 }
 
 func bypassEvent(a actor.Actor, action Action, r Resource) events.Event {

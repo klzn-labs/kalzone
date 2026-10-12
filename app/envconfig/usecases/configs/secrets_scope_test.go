@@ -7,7 +7,6 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/events"
 	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/stretchr/testify/require"
 )
@@ -25,10 +24,6 @@ type unprotected struct{}
 
 func (unprotected) IsProtected(context.Context, string) (bool, error) { return false, nil }
 
-type discard struct{}
-
-func (discard) Publish(context.Context, events.Event) {}
-
 func withToken(scopes ...scope.Scope) actor.Actor {
 	a := ana
 	a.Token = actor.Token{ID: "tok", Name: "agent", Scopes: scopes, TeamIDs: []string{"t1"}}
@@ -36,7 +31,7 @@ func withToken(scopes ...scope.Scope) actor.Actor {
 }
 
 func Test_Secrets_NeedTheSecretsScopeNotConfig(t *testing.T) {
-	f := newFixtureAuthorizedBy(t, authz.NewPolicy(memberOfOwnerTeam{}, unprotected{}, discard{}))
+	f := newFixtureAuthorizedBy(t, authz.NewPolicy(memberOfOwnerTeam{}, unprotected{}))
 	configOnly, secrets := withToken(scope.Config), withToken(scope.Secrets)
 
 	_, setRefused := f.usecase.SetSecret(ctx, configOnly, "api", "dev", "TOKEN", "x")

@@ -24,6 +24,16 @@ const (
 	ManageTeams     Action = "teams.manage"
 	ManageAdmins    Action = "admins.manage"
 	ManageTokens    Action = "tokens.manage"
+	ApproveRequest  Action = "request.approve"
+)
+
+type Gate string
+
+const (
+	Open          Gate = "open"
+	Bypassed      Gate = "bypassed"
+	Approved      Gate = "approved"
+	NeedsApproval Gate = "needs_approval"
 )
 
 type Role string
@@ -60,24 +70,35 @@ type Publisher interface {
 type Policy struct {
 	memberships  MembershipReader
 	environments ProtectionReader
-	publisher    Publisher
 }
 
-func NewPolicy(memberships MembershipReader, environments ProtectionReader, publisher Publisher) Policy {
-	return Policy{memberships: memberships, environments: environments, publisher: publisher}
+func NewPolicy(memberships MembershipReader, environments ProtectionReader) Policy {
+	return Policy{memberships: memberships, environments: environments}
 }
 
 func (p Policy) Can(ctx context.Context, a actor.Actor, action Action, r Resource) error {
+	_, err := Direct(p.Gate(ctx, a, action, r))
+	return err
+}
+
+func (p Policy) Gate(ctx context.Context, a actor.Actor, action Action, r Resource) (Gate, error) {
 	if !a.SignedIn() {
-		return errUnauthenticated
+		return "", errUnauthenticated
 	}
 	if err := p.ownerCan(ctx, a, action, r); err != nil {
-		return err
+		return "", err
 	}
 	if !a.ViaToken() {
-		return nil
+		return Open, nil
 	}
-	return p.tokenCan(ctx, a, action, r)
+	return p.tokenGate(ctx, a, action, r)
+}
+
+func Direct(g Gate, err error) (Gate, error) {
+	if err == nil && g == NeedsApproval {
+		return "", errApprovalRequired
+	}
+	return g, err
 }
 
 func (p Policy) ownerCan(ctx context.Context, a actor.Actor, action Action, r Resource) error {
@@ -95,7 +116,7 @@ func (p Policy) requiredRole(ctx context.Context, action Action, r Resource) (Ro
 	switch action {
 	case CreateService, EditService, CreateRelease:
 		return RoleMember, nil
-	case DeleteService, TransferService, ManageMembers:
+	case DeleteService, TransferService, ManageMembers, ApproveRequest:
 		return RoleMaintainer, nil
 	case EditConfig, EditSecrets, EditQueue, Deploy:
 		return p.roleForEnvironment(ctx, r.Environment)

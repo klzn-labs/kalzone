@@ -120,6 +120,12 @@ func (c ChangeSet) ApplyTo(r Revision) Revision {
 	for _, name := range c.UnsetEnv {
 		delete(r.Env, name)
 	}
+	for name, versionID := range c.SetSecrets {
+		r.Secrets[name] = versionID
+	}
+	for _, name := range c.UnsetSecrets {
+		delete(r.Secrets, name)
+	}
 	r.Message = strings.TrimSpace(c.Message)
 	return r
 }

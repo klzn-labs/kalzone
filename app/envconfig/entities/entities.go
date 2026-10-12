@@ -75,10 +75,12 @@ type SecretInfo struct {
 }
 
 type ChangeSet struct {
-	Spec     *Spec
-	SetEnv   map[string]string
-	UnsetEnv []string
-	Message  string
+	Spec         *Spec             `json:"spec,omitempty"`
+	SetEnv       map[string]string `json:"set_env,omitempty"`
+	UnsetEnv     []string          `json:"unset_env,omitempty"`
+	SetSecrets   map[string]string `json:"set_secrets,omitempty"`
+	UnsetSecrets []string          `json:"unset_secrets,omitempty"`
+	Message      string            `json:"message,omitempty"`
 }
 
 type ServiceRef struct {

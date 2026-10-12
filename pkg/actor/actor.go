@@ -21,11 +21,18 @@ func (t Token) Has(s scope.Scope) bool {
 	return slices.Contains(t.Scopes, s)
 }
 
+type Approval struct {
+	RequestID     string
+	ApproverID    string
+	ApproverLogin string
+}
+
 type Actor struct {
-	UserID string
-	Login  string
-	Admin  bool
-	Token  Token
+	UserID   string
+	Login    string
+	Admin    bool
+	Token    Token
+	Approval Approval
 }
 
 func (a Actor) SignedIn() bool {
@@ -38,6 +45,10 @@ func (a Actor) ViaToken() bool {
 
 func (a Actor) Sees(teamID string) bool {
 	return !a.ViaToken() || slices.Contains(a.Token.TeamIDs, teamID)
+}
+
+func (a Actor) Approved() bool {
+	return a.Approval.RequestID != ""
 }
 
 func (a Actor) SessionAdmin() bool {

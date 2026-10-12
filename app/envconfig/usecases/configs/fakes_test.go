@@ -10,6 +10,7 @@ import (
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/config"
 	"github.com/adrianozp/platform/pkg/events"
 )
@@ -109,15 +110,28 @@ func (s *sealer) Open(ciphertext, _, additionalData []byte, _ string) ([]byte, e
 
 type checks struct {
 	resources []authz.Resource
+	actions   []authz.Action
 	denyEnv   string
+	gate      authz.Gate
 }
 
-func (c *checks) Can(_ context.Context, _ actor.Actor, _ authz.Action, r authz.Resource) error {
+func (c *checks) Gate(_ context.Context, _ actor.Actor, action authz.Action, r authz.Resource) (authz.Gate, error) {
 	c.resources = append(c.resources, r)
+	c.actions = append(c.actions, action)
 	if r.Environment == c.denyEnv {
-		return apperror.Forbidden("no")
+		return "", apperror.Forbidden("no")
 	}
-	return nil
+	if c.gate == "" {
+		return authz.Open, nil
+	}
+	return c.gate, nil
+}
+
+type requests struct{ changes []approval.Change }
+
+func (r *requests) Submit(_ context.Context, _ actor.Actor, c approval.Change) (*approval.Pending, error) {
+	r.changes = append(r.changes, c)
+	return &approval.Pending{ID: "c1", Status: "pending"}, nil
 }
 
 type published struct{ events []events.Event }
@@ -125,11 +139,12 @@ type published struct{ events []events.Event }
 func (p *published) Publish(_ context.Context, e events.Event) { p.events = append(p.events, e) }
 
 type fixture struct {
-	store   *store
-	sealer  *sealer
-	checks  *checks
-	events  *published
-	usecase configs.ConfigUsecase
+	store    *store
+	sealer   *sealer
+	checks   *checks
+	events   *published
+	requests *requests
+	usecase  configs.ConfigUsecase
 }
 
 func newFixture(t *testing.T) fixture {
@@ -139,10 +154,10 @@ func newFixture(t *testing.T) fixture {
 
 func newFixtureAuthorizedBy(t *testing.T, authorizer configs.Authorizer) fixture {
 	t.Helper()
-	f := fixture{store: &store{}, sealer: &sealer{}, events: &published{}}
+	f := fixture{store: &store{}, sealer: &sealer{}, events: &published{}, requests: &requests{}}
 	f.checks, _ = authorizer.(*checks)
 	cfg := config.Config{AllowedDomains: []string{"kalz.one"}}
-	f.usecase = configs.NewConfigUsecase(cfg, f.store, services{}, environments{}, f.sealer, authorizer, f.events)
+	f.usecase = configs.NewConfigUsecase(cfg, f.store, services{}, environments{}, f.sealer, authorizer, f.events, f.requests)
 	return f
 }
 

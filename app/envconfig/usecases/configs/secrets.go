@@ -8,6 +8,7 @@ import (
 	"github.com/adrianozp/platform/app/envconfig/entities"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/clock"
 	"github.com/adrianozp/platform/pkg/uuid"
 )
@@ -18,35 +19,28 @@ func (u ConfigUsecase) SetSecret(ctx context.Context, a actor.Actor, serviceSlug
 	if err := validateSecret(name, value); err != nil {
 		return entities.Revision{}, err
 	}
-	t, current, err := u.editable(ctx, a, authz.EditSecrets, serviceSlug, environment)
+	e, err := u.editable(ctx, a, authz.EditSecrets, serviceSlug, environment)
 	if err != nil {
 		return entities.Revision{}, err
 	}
-	version, err := u.seal(ctx, a, t, name, value)
+	version, err := u.seal(ctx, a, e.target, name, value)
 	if err != nil {
 		return entities.Revision{}, err
 	}
-	next := current.Next()
-	next.Secrets[name] = version.ID
-	next.Message = "set secret " + name
-	if err := next.Validate(); err != nil {
-		return entities.Revision{}, err
-	}
-	return u.commit(ctx, a, t, current, next)
+	cs := entities.ChangeSet{SetSecrets: map[string]string{name: version.ID}, Message: "set secret " + name}
+	return u.change(ctx, a, e, approval.KindSecretSet, cs)
 }
 
 func (u ConfigUsecase) UnsetSecret(ctx context.Context, a actor.Actor, serviceSlug, environment, name string) (entities.Revision, error) {
-	t, current, err := u.editable(ctx, a, authz.EditSecrets, serviceSlug, environment)
+	e, err := u.editable(ctx, a, authz.EditSecrets, serviceSlug, environment)
 	if err != nil {
 		return entities.Revision{}, err
 	}
-	if _, exists := current.Secrets[name]; !exists {
+	if _, exists := e.current.Secrets[name]; !exists {
 		return entities.Revision{}, errSecretNotFound
 	}
-	next := current.Next()
-	delete(next.Secrets, name)
-	next.Message = "removed secret " + name
-	return u.commit(ctx, a, t, current, next)
+	cs := entities.ChangeSet{UnsetSecrets: []string{name}, Message: "removed secret " + name}
+	return u.change(ctx, a, e, approval.KindSecretUnset, cs)
 }
 
 func validateSecret(name, value string) error {

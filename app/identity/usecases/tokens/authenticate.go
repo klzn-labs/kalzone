@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/adrianozp/platform/app/identity/entities"
+	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/clock"
 )
 
@@ -34,4 +35,19 @@ func (u TokensUsecase) touchIfDue(ctx context.Context, t entities.AccessToken, n
 		return nil
 	}
 	return u.store.Touch(ctx, t.ID, now, ip)
+}
+
+func (u TokensUsecase) ActorOf(ctx context.Context, tokenID string) (actor.Actor, error) {
+	t, err := u.store.FindByID(ctx, tokenID)
+	if err != nil {
+		return actor.Actor{}, err
+	}
+	if err := t.Check(clock.Now().UTC()); err != nil {
+		return actor.Actor{}, err
+	}
+	user, err := u.users.FindByID(ctx, t.OwnerID)
+	if err != nil {
+		return actor.Actor{}, err
+	}
+	return entities.TokenAuthenticated{User: user, Token: t}.Actor(), nil
 }
