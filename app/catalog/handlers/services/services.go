@@ -13,9 +13,8 @@ import (
 )
 
 type Services interface {
-	List(ctx context.Context, filter entities.ServiceFilter) ([]entities.Service, error)
-	ListOwnedBy(ctx context.Context, teamSlug string) ([]entities.Service, error)
-	Get(ctx context.Context, slug string) (entities.Service, error)
+	ListFor(ctx context.Context, a actor.Actor, teamSlug string) ([]entities.Service, error)
+	GetFor(ctx context.Context, a actor.Actor, slug string) (entities.Service, error)
 	Create(ctx context.Context, a actor.Actor, n entities.NewService) (entities.Service, error)
 	Update(ctx context.Context, a actor.Actor, slug string, c entities.ServiceChanges) (entities.Service, error)
 	Transfer(ctx context.Context, a actor.Actor, slug, teamSlug string) (entities.Service, error)
@@ -31,7 +30,7 @@ func NewServicesHandler(services Services) ServicesHandler {
 }
 
 func (h ServicesHandler) List(c *gin.Context) {
-	list, err := h.list(c)
+	list, err := h.services.ListFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("team"))
 	if err != nil {
 		httperror.Abort(c, err)
 		return
@@ -43,15 +42,8 @@ func (h ServicesHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"services": result})
 }
 
-func (h ServicesHandler) list(c *gin.Context) ([]entities.Service, error) {
-	if team := c.Query("team"); team != "" {
-		return h.services.ListOwnedBy(c.Request.Context(), team)
-	}
-	return h.services.List(c.Request.Context(), entities.ServiceFilter{})
-}
-
 func (h ServicesHandler) Get(c *gin.Context) {
-	service, err := h.services.Get(c.Request.Context(), c.Param("service"))
+	service, err := h.services.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"))
 	respond(c, http.StatusOK, service, err)
 }
 

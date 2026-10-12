@@ -30,6 +30,7 @@
           <div class="me-name">{{if .Viewer.Name}}{{.Viewer.Name}}{{else}}{{.Viewer.Actor.Login}}{{end}}</div>
           <div class="me-login">@{{.Viewer.Actor.Login}}{{if .Viewer.Actor.Admin}} · admin{{end}}</div>
         </div>
+        <a class="btn btn-ghost btn-icon btn-sm {{if eq .Nav "tokens"}}active{{end}}" href="/tokens" title="Access tokens" aria-label="Access tokens">{{icon "key"}}</a>
         <form method="post" action="/logout">
           <input type="hidden" name="_csrf" value="{{.Viewer.CSRFToken}}">
           <button class="btn btn-ghost btn-icon btn-sm" title="Sign out" aria-label="Sign out">{{icon "logout"}}</button>

@@ -20,6 +20,12 @@ var statuses = map[apperror.Code]int{
 	apperror.CodeInvalidCSRFToken: http.StatusForbidden,
 	apperror.CodeUpstream:         http.StatusBadGateway,
 	apperror.CodeNotConfigured:    http.StatusServiceUnavailable,
+	apperror.CodeMissingScope:     http.StatusForbidden,
+	apperror.CodeTeamNotGranted:   http.StatusForbidden,
+	apperror.CodeApprovalRequired: http.StatusForbidden,
+	apperror.CodeTokenInvalid:     http.StatusUnauthorized,
+	apperror.CodeTokenExpired:     http.StatusUnauthorized,
+	apperror.CodeTokenRevoked:     http.StatusUnauthorized,
 }
 
 var errInternal = apperror.New(apperror.CodeInternal, "internal error")

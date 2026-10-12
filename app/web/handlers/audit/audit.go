@@ -94,7 +94,7 @@ func (h AuditHandler) options(ctx context.Context) (data, error) {
 }
 
 func queryFrom(c *gin.Context) entities.Query {
-	q := entities.Query{Team: c.Query("team"), Service: c.Query("service"), Actor: c.Query("actor"), Environment: c.Query("env"), Limit: pageSize}
+	q := entities.Query{Team: c.Query("team"), Service: c.Query("service"), Actor: c.Query("actor"), Token: c.Query("token"), Environment: c.Query("env"), Limit: pageSize}
 	if before, err := time.Parse(time.RFC3339Nano, c.Query("before")); err == nil {
 		q.Before = &before
 	}

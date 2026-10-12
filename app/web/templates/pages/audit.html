@@ -14,6 +14,7 @@
     <div class="field"><label for="f-service">Service</label><select id="f-service" name="service"><option value="">All services</option>{{range $d.Services}}<option value="{{.Slug}}" {{if eq .Slug $d.Query.Service}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
     <div class="field"><label for="f-env">Environment</label><select id="f-env" name="env"><option value="">All</option>{{range $d.Envs}}<option value="{{.Slug}}" {{if eq .Slug $d.Query.Environment}}selected{{end}}>{{.Name}}</option>{{end}}</select></div>
     <div class="field"><label for="f-actor">Who</label><input id="f-actor" name="actor" type="text" class="mono" placeholder="github login" value="{{$d.Query.Actor}}"></div>
+    {{if $d.Query.Token}}<input type="hidden" name="token" value="{{$d.Query.Token}}">{{end}}
     <button class="btn btn-primary">{{icon "search"}}Filter</button>
     <a class="btn btn-ghost" href="/audit">Reset</a>
   </div>
@@ -22,7 +23,7 @@
 <div class="card">
   {{if $d.Activity}}
     <ul class="timeline">{{range $d.Activity}}{{template "activity-line" .}}{{end}}</ul>
-    {{if $d.Older}}<div class="card-body" style="border-top:1px solid var(--border);text-align:center"><a class="btn btn-sm" href="/audit?team={{$d.Query.Team}}&service={{$d.Query.Service}}&env={{$d.Query.Environment}}&actor={{$d.Query.Actor}}&before={{$d.Older}}">Older events {{icon "arrow"}}</a></div>{{end}}
+    {{if $d.Older}}<div class="card-body" style="border-top:1px solid var(--border);text-align:center"><a class="btn btn-sm" href="/audit?team={{$d.Query.Team}}&service={{$d.Query.Service}}&env={{$d.Query.Environment}}&actor={{$d.Query.Actor}}&token={{$d.Query.Token}}&before={{$d.Older}}">Older events {{icon "arrow"}}</a></div>{{end}}
   {{else}}
     {{template "empty" dict "Icon" "activity" "Title" "Nothing matches" "Text" "Try a wider filter." "Href" "" "Action" ""}}
   {{end}}

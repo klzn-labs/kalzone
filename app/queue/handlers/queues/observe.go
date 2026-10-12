@@ -11,7 +11,7 @@ import (
 )
 
 func (h QueuesHandler) Stats(c *gin.Context) {
-	st, found, err := h.queues.Stats(c.Request.Context(), c.Param("env"), c.Param("name"))
+	st, found, err := h.queues.StatsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
 	if err != nil {
 		httperror.Abort(c, err)
 		return
@@ -24,7 +24,7 @@ func (h QueuesHandler) Stats(c *gin.Context) {
 }
 
 func (h QueuesHandler) Versions(c *gin.Context) {
-	list, err := h.queues.Versions(c.Request.Context(), c.Param("env"), c.Param("name"))
+	list, err := h.queues.VersionsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
 	if err != nil {
 		httperror.Abort(c, err)
 		return
@@ -37,7 +37,7 @@ func (h QueuesHandler) Versions(c *gin.Context) {
 }
 
 func (h QueuesHandler) Dead(c *gin.Context) {
-	st, _, err := h.queues.Stats(c.Request.Context(), c.Param("env"), c.Param("name"))
+	st, _, err := h.queues.StatsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
 	if err != nil {
 		httperror.Abort(c, err)
 		return

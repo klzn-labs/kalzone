@@ -26,39 +26,53 @@ type Authenticator interface {
 
 var errInvalidCSRF = apperror.New(apperror.CodeInvalidCSRFToken, "missing or invalid CSRF token, reload the page")
 
-func NewGuards(auth Authenticator) httpserver.Guards {
-	return httpserver.Guards{API: apiGuard(auth), Web: webGuard(auth), Session: sessionGuard(auth)}
+func NewGuards(sessions Authenticator, tokens TokenAuthenticator) httpserver.Guards {
+	return httpserver.Guards{API: apiGuard(sessions, tokens), Web: webGuard(sessions), Session: sessionGuard(sessions)}
 }
 
-func apiGuard(auth Authenticator) gin.HandlerFunc {
+func apiGuard(sessions Authenticator, tokens TokenAuthenticator) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if err := authenticate(c, auth); err != nil {
+		if raw, ok := bearer(c); ok {
+			abortOn(c, authenticateToken(c, tokens, raw))
+			return
+		}
+		if err := authenticate(c, sessions); err != nil {
 			httperror.Abort(c, err)
 			return
 		}
-		if err := checkCSRF(c); err != nil {
-			httperror.Abort(c, err)
+		abortOn(c, checkCSRF(c))
+	}
+}
+
+func webGuard(sessions Authenticator) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if _, ok := bearer(c); ok {
+			httperror.Abort(c, errBearerOnPages)
+			return
+		}
+		if err := authenticate(c, sessions); err != nil {
+			redirectToLogin(c)
+			return
+		}
+		abortOn(c, checkCSRF(c))
+	}
+}
+
+func sessionGuard(sessions Authenticator) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if _, ok := bearer(c); ok {
+			httperror.Abort(c, errBearerOnPages)
+			return
+		}
+		if err := authenticate(c, sessions); err != nil {
+			redirectToLogin(c)
 		}
 	}
 }
 
-func webGuard(auth Authenticator) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if err := authenticate(c, auth); err != nil {
-			redirectToLogin(c)
-			return
-		}
-		if err := checkCSRF(c); err != nil {
-			httperror.Abort(c, err)
-		}
-	}
-}
-
-func sessionGuard(auth Authenticator) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if err := authenticate(c, auth); err != nil {
-			redirectToLogin(c)
-		}
+func abortOn(c *gin.Context, err error) {
+	if err != nil {
+		httperror.Abort(c, err)
 	}
 }
 

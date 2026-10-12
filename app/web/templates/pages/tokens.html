@@ -1,0 +1,60 @@
+{{define "content"}}
+{{$d := .Data}}{{$csrf := .Viewer.CSRFToken}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow">You</div>
+    <h1>Access tokens</h1>
+    <p class="lead">Tokens let agents and scripts call <span class="mono">/api/v1</span> as you, limited to the scopes and teams you pick. Send them as <span class="mono">Authorization: Bearer plat_…</span>.</p>
+  </div>
+</div>
+
+{{if $d.Issued}}
+<div class="alert alert-warn" style="margin-bottom:20px">{{icon "key"}}<span>Copy <b>{{$d.IssuedName}}</b> now, it is shown only once: <code class="mono">{{$d.Issued}}</code></span></div>
+{{end}}
+
+<form class="card" method="post" action="/tokens" style="margin-bottom:20px">
+  {{template "csrf" $csrf}}
+  <div class="card-body">
+    <div class="form-row">
+      <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" class="mono" placeholder="claude-local" required maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}"></div>
+      <div class="field"><label for="expires_in_days">Expires in</label>
+        <select id="expires_in_days" name="expires_in_days">
+          <option value="7">7 days</option><option value="30">30 days</option><option value="90" selected>90 days</option><option value="365">1 year</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Scopes</label><div class="row">{{range $d.Scopes}}<label class="switch"><input type="checkbox" name="scopes" value="{{.}}">{{.}}</label>{{end}}</div></div>
+    <div class="field"><label>Teams</label><div class="row">{{range $d.Teams}}<label class="switch"><input type="checkbox" name="teams" value="{{.Slug}}">{{.Slug}}</label>{{else}}<span class="muted">You are not on a team yet.</span>{{end}}</div></div>
+    {{if $d.IsAdmin}}<div class="field"><label class="switch"><input type="checkbox" name="bypass">Bypass: changes to protected environments run without approval</label></div>{{end}}
+    <div class="form-actions"><button class="btn btn-primary">{{icon "plus"}}Create token</button></div>
+  </div>
+</form>
+
+<div class="card" style="margin-bottom:20px">
+  <table class="table">
+    <thead><tr><th>Token</th><th>Scopes</th><th>Teams</th><th>Expires</th><th>Last used</th><th class="right"></th></tr></thead>
+    <tbody>{{range $d.Mine}}{{template "token-row" dict "Row" . "CSRF" $csrf "Owner" false}}{{else}}<tr><td colspan="6" class="muted">No tokens yet.</td></tr>{{end}}</tbody>
+  </table>
+</div>
+
+{{if $d.IsAdmin}}
+<h2>Everyone's tokens</h2>
+<div class="card">
+  <table class="table">
+    <thead><tr><th>Token</th><th>Scopes</th><th>Teams</th><th>Expires</th><th>Last used</th><th class="right"></th></tr></thead>
+    <tbody>{{range $d.Everyone}}{{template "token-row" dict "Row" . "CSRF" $csrf "Owner" true}}{{end}}</tbody>
+  </table>
+</div>
+{{end}}
+{{end}}
+
+{{define "token-row"}}{{$r := .Row}}
+<tr>
+  <td><div><b class="mono">{{$r.Token.Name}}</b>{{if $r.Token.Bypass}} <span class="badge badge-warn">{{icon "shield"}}bypass</span>{{end}}</div><div class="sub mono">plat_{{$r.Token.Prefix}}…{{if .Owner}} · @{{$r.Owner}}{{end}}</div></td>
+  <td><div class="row">{{range $r.Token.Scopes}}<span class="badge">{{.}}</span>{{end}}</div></td>
+  <td><div class="row">{{range $r.Teams}}<span class="badge badge-accent">{{.}}</span>{{end}}</div></td>
+  <td class="muted nowrap" title="{{date $r.Token.ExpiresAt}}">{{if eq $r.Status "active"}}{{date $r.Token.ExpiresAt}}{{else}}{{$r.Status}}{{end}}</td>
+  <td class="muted nowrap">{{if not $r.LastUsed.IsZero}}{{ago $r.LastUsed}} · {{$r.Token.LastUsedIP}}{{else}}never{{end}}</td>
+  <td class="right">{{if ne $r.Status "revoked"}}<form method="post" action="/tokens/{{$r.Token.ID}}/revoke" hx-post="/tokens/{{$r.Token.ID}}/revoke" hx-confirm="Revoke {{$r.Token.Name}}? Agents using it stop working at once.">{{template "csrf" .CSRF}}<button class="btn btn-sm btn-ghost">{{icon "trash"}}Revoke</button></form>{{end}}</td>
+</tr>
+{{end}}

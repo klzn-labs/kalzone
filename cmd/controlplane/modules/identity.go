@@ -5,12 +5,16 @@ import (
 	"github.com/adrianozp/platform/app/identity/handlers/auth"
 	"github.com/adrianozp/platform/app/identity/handlers/guard"
 	"github.com/adrianozp/platform/app/identity/handlers/me"
+	tokensHandler "github.com/adrianozp/platform/app/identity/handlers/tokens"
 	usersHandler "github.com/adrianozp/platform/app/identity/handlers/users"
 	"github.com/adrianozp/platform/app/identity/repositories/github"
 	"github.com/adrianozp/platform/app/identity/repositories/mysql"
+	identityTeams "github.com/adrianozp/platform/app/identity/repositories/teams"
 	"github.com/adrianozp/platform/app/identity/usecases/sessions"
 	"github.com/adrianozp/platform/app/identity/usecases/signin"
+	"github.com/adrianozp/platform/app/identity/usecases/tokens"
 	"github.com/adrianozp/platform/app/identity/usecases/users"
+	"github.com/adrianozp/platform/app/team/usecases/teams"
 	"github.com/adrianozp/platform/internal/eventbus"
 	"go.uber.org/fx"
 )
@@ -18,12 +22,27 @@ import (
 func Identity() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			mysql.NewUserRepository, mysql.NewSessionRepository, github.NewClient,
-			signin.NewSignInUsecase, sessions.NewSessionsUsecase, users.NewUsersUsecase,
-			auth.NewAuthHandler, usersHandler.NewUsersHandler, guard.NewGuards,
+			mysql.NewUserRepository, mysql.NewSessionRepository, mysql.NewTokenRepository, github.NewClient,
+			signin.NewSignInUsecase, sessions.NewSessionsUsecase, users.NewUsersUsecase, tokens.NewTokensUsecase,
+			identityTeams.NewLookup, auth.NewAuthHandler, usersHandler.NewUsersHandler, guard.NewGuards,
+			tokensHandler.NewTokensHandler,
 		),
 		identityInjections(),
-		fx.Invoke(auth.RegisterAuthRoutes, me.RegisterMeRoutes, usersHandler.RegisterUsersRoutes),
+		tokenInjections(),
+		fx.Invoke(auth.RegisterAuthRoutes, me.RegisterMeRoutes, usersHandler.RegisterUsersRoutes, tokensHandler.RegisterTokensRoutes),
+	)
+}
+
+func tokenInjections() fx.Option {
+	return fx.Provide(
+		func(r mysql.TokenRepository) tokens.TokenStore { return r },
+		func(r mysql.UserRepository) tokens.UserReader { return r },
+		func(l identityTeams.Lookup) tokens.TeamLookup { return l },
+		func(u teams.TeamsUsecase) identityTeams.TeamFinder { return u },
+		func(p authz.Policy) tokens.Authorizer { return p },
+		func(b *eventbus.Bus) tokens.Publisher { return b },
+		func(u tokens.TokensUsecase) guard.TokenAuthenticator { return u },
+		func(u tokens.TokensUsecase) tokensHandler.Tokens { return u },
 	)
 }
 

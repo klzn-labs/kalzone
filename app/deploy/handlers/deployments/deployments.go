@@ -15,8 +15,8 @@ import (
 )
 
 type Deployments interface {
-	History(ctx context.Context, serviceSlug, environment string, limit int) ([]entities.Deployment, error)
-	Get(ctx context.Context, id string) (entities.Deployment, []entities.Event, error)
+	HistoryFor(ctx context.Context, a actor.Actor, serviceSlug, environment string, limit int) ([]entities.Deployment, error)
+	GetFor(ctx context.Context, a actor.Actor, id string) (entities.Deployment, []entities.Event, error)
 	Deploy(ctx context.Context, a actor.Actor, r deployments.Request) (entities.Deployment, error)
 	ApplyConfig(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.Deployment, error)
 	Promote(ctx context.Context, a actor.Actor, serviceSlug, from, to string) (entities.Deployment, error)
@@ -33,7 +33,7 @@ func NewDeploymentsHandler(deployments Deployments) DeploymentsHandler {
 
 func (h DeploymentsHandler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.Query("limit"))
-	list, err := h.deployments.History(c.Request.Context(), c.Query("service"), c.Query("env"), limit)
+	list, err := h.deployments.HistoryFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("service"), c.Query("env"), limit)
 	if err != nil {
 		httperror.Abort(c, err)
 		return
@@ -46,7 +46,7 @@ func (h DeploymentsHandler) List(c *gin.Context) {
 }
 
 func (h DeploymentsHandler) Get(c *gin.Context) {
-	d, logged, err := h.deployments.Get(c.Request.Context(), c.Param("id"))
+	d, logged, err := h.deployments.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("id"))
 	if err != nil {
 		httperror.Abort(c, err)
 		return
