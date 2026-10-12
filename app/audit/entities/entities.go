@@ -7,6 +7,8 @@ type Event struct {
 	At          time.Time
 	ActorID     string
 	ActorLogin  string
+	TokenID     string
+	TokenName   string
 	Action      string
 	TargetKind  string
 	TargetID    string
@@ -20,6 +22,8 @@ type Filter struct {
 	TeamID      string
 	TargetID    string
 	ActorID     string
+	TokenID     string
+	TeamIDs     []string
 	Environment string
 	Before      *time.Time
 	Limit       int
@@ -29,6 +33,7 @@ type Query struct {
 	Team        string
 	Service     string
 	Actor       string
+	Token       string
 	Environment string
 	Before      *time.Time
 	Limit       int

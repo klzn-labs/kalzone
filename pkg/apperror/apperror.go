@@ -16,6 +16,9 @@ const (
 	CodeInvalidCSRFToken Code = "err_invalid_csrf_token"
 	CodeUpstream         Code = "err_upstream"
 	CodeNotConfigured    Code = "err_not_configured"
+	CodeTokenInvalid     Code = "err_token_invalid"
+	CodeTokenExpired     Code = "err_token_expired"
+	CodeTokenRevoked     Code = "err_token_revoked"
 )
 
 type AppError struct {

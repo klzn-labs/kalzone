@@ -44,7 +44,11 @@ func filtered(tx *gorm.DB, f entities.Filter) *gorm.DB {
 	tx = whereSet(tx, "team_id = ?", f.TeamID)
 	tx = whereSet(tx, "target_id = ?", f.TargetID)
 	tx = whereSet(tx, "actor_id = ?", f.ActorID)
+	tx = whereSet(tx, "token_id = ?", f.TokenID)
 	tx = whereSet(tx, "environment = ?", f.Environment)
+	if len(f.TeamIDs) > 0 {
+		tx = tx.Where("team_id IN ?", f.TeamIDs)
+	}
 	if f.Before != nil {
 		tx = tx.Where("at < ?", *f.Before)
 	}

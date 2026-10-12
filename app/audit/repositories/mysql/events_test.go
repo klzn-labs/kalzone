@@ -47,3 +47,21 @@ func Test_List_FiltersAndOrdersNewestFirst(t *testing.T) {
 	require.Equal(t, []string{"e3", "e2"}, ids(prod))
 	require.Equal(t, []string{"e2"}, ids(older))
 }
+
+func Test_List_FiltersByTokenAndByTeams(t *testing.T) {
+	ctx := context.Background()
+	repo := mysql.NewEventRepository(testdb.Open(t))
+	viaToken := event("e1", 1, "t1", "s1", "dev")
+	viaToken.TokenID, viaToken.TokenName = "k1", "claude-local"
+	require.NoError(t, repo.Insert(ctx, viaToken))
+	require.NoError(t, repo.Insert(ctx, event("e2", 2, "t2", "s2", "dev")))
+	require.NoError(t, repo.Insert(ctx, event("e3", 3, "", "u1", "")))
+
+	byToken, err := repo.List(ctx, entities.Filter{TokenID: "k1", Limit: 10})
+	require.NoError(t, err)
+	byTeams, _ := repo.List(ctx, entities.Filter{TeamIDs: []string{"t1", "t2"}, Limit: 10})
+
+	require.Equal(t, []string{"e1"}, ids(byToken))
+	require.Equal(t, "claude-local", byToken[0].TokenName)
+	require.Equal(t, []string{"e2", "e1"}, ids(byTeams))
+}
