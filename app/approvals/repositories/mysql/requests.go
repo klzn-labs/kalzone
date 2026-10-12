@@ -1,0 +1,81 @@
+package mysql
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/adrianozp/platform/app/approvals/entities"
+	"github.com/adrianozp/platform/pkg/apperror"
+	"gorm.io/gorm"
+)
+
+var (
+	errRequestNotFound = apperror.NotFound("change request not found")
+	errRequestChanged  = apperror.Conflict("this request was already decided")
+)
+
+type RequestRepository struct {
+	db *gorm.DB
+}
+
+func NewRequestRepository(db *gorm.DB) RequestRepository {
+	return RequestRepository{db: db}
+}
+
+func (r RequestRepository) Create(ctx context.Context, req entities.Request) error {
+	model := fromRequest(req)
+	return r.db.WithContext(ctx).Create(&model).Error
+}
+
+func (r RequestRepository) Get(ctx context.Context, id string) (entities.Request, error) {
+	var model changeRequest
+	err := r.db.WithContext(ctx).Where("id = ?", id).Take(&model).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entities.Request{}, errRequestNotFound
+	}
+	return model.toEntity(), err
+}
+
+func (r RequestRepository) List(ctx context.Context, f entities.Filter) ([]entities.Request, error) {
+	tx := r.db.WithContext(ctx)
+	if f.Status != "" {
+		tx = tx.Where("status = ?", f.Status)
+	}
+	if len(f.TeamIDs) > 0 {
+		tx = tx.Where("team_id IN ?", f.TeamIDs)
+	}
+	return find(tx.Order("created_at DESC, id").Limit(f.Limit))
+}
+
+func (r RequestRepository) PendingFor(ctx context.Context, serviceID, environment, subject string) ([]entities.Request, error) {
+	return find(r.db.WithContext(ctx).Where("service_id = ? AND environment = ? AND subject = ? AND status = ?",
+		serviceID, environment, subject, entities.StatusPending).Order("created_at, id"))
+}
+
+func (r RequestRepository) Overdue(ctx context.Context, now time.Time) ([]entities.Request, error) {
+	return find(r.db.WithContext(ctx).Where("(status = ? AND expires_at <= ?) OR (status = ? AND decided_at <= ?)",
+		entities.StatusPending, now, entities.StatusApproved, now.Add(-entities.ExecutionLimit)).Order("created_at, id"))
+}
+
+func (r RequestRepository) Transition(ctx context.Context, req entities.Request, from entities.Status) error {
+	result := r.db.WithContext(ctx).Model(&changeRequest{}).Where("id = ? AND status = ?", req.ID, from).
+		Select("status", "decided_by", "decider_login", "decided_at", "reason", "result", "error_code", "error_message", "finished_at").
+		Updates(fromRequest(req))
+	if result.Error == nil && result.RowsAffected == 0 {
+		return errRequestChanged
+	}
+	return result.Error
+}
+
+func find(tx *gorm.DB) ([]entities.Request, error) {
+	var models []changeRequest
+	if err := tx.Find(&models).Error; err != nil {
+		return nil, err
+	}
+	result := make([]entities.Request, 0, len(models))
+	for _, m := range models {
+		result = append(result, m.toEntity())
+	}
+	return result, nil
+}
