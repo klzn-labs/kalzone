@@ -23,3 +23,16 @@ func Test_ActivityFrom_PhrasesKnownEvents(t *testing.T) {
 	require.Equal(t, "@bob → member", got[1].Detail)
 	require.Equal(t, "something.new", got[2].Phrase)
 }
+
+func Test_ActivityFrom_KeepsTheTokenAndPhrasesBypass(t *testing.T) {
+	events := []audit.Event{
+		{ActorLogin: "bob", TokenID: "t1", TokenName: "claude-local", Action: "config.revised", TargetName: "api"},
+		{ActorLogin: "bob", Action: "token.bypass_used", Environment: "prod", Details: map[string]any{"action": "deploy"}},
+	}
+
+	got := web.ActivityFrom(events)
+
+	require.Equal(t, "claude-local", got[0].TokenName)
+	require.Equal(t, "t1", got[0].TokenID)
+	require.Equal(t, "deploy on prod", got[1].Detail)
+}

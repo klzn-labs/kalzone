@@ -9,6 +9,7 @@ import (
 	"github.com/adrianozp/platform/app/deploy/usecases/agents"
 	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
+	"github.com/adrianozp/platform/app/identity/usecases/tokens"
 	"github.com/adrianozp/platform/app/identity/usecases/users"
 	"github.com/adrianozp/platform/app/observe/repositories/grafana"
 	queueCatalog "github.com/adrianozp/platform/app/queue/repositories/catalog"
@@ -30,6 +31,7 @@ import (
 	servicesPage "github.com/adrianozp/platform/app/web/handlers/services"
 	teamPage "github.com/adrianozp/platform/app/web/handlers/team"
 	teamsPage "github.com/adrianozp/platform/app/web/handlers/teams"
+	tokensPage "github.com/adrianozp/platform/app/web/handlers/tokens"
 	"go.uber.org/fx"
 )
 
@@ -41,6 +43,7 @@ func Web() fx.Option {
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
 			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler,
+			tokensPage.NewTokensHandler,
 		),
 		viewInjections(),
 		pageInjections(),
@@ -64,7 +67,7 @@ func viewInjections() fx.Option {
 }
 
 func pageInjections() fx.Option {
-	return fx.Options(overviewInjections(), catalogPageInjections(), teamPageInjections(), auditPageInjections())
+	return fx.Options(overviewInjections(), catalogPageInjections(), teamPageInjections(), auditPageInjections(), tokenPageInjections())
 }
 
 func overviewInjections() fx.Option {
@@ -114,11 +117,19 @@ func auditPageInjections() fx.Option {
 	)
 }
 
+func tokenPageInjections() fx.Option {
+	return fx.Provide(
+		func(u tokens.TokensUsecase) tokensPage.Tokens { return u },
+		func(u teams.TeamsUsecase) tokensPage.AllTeams { return u },
+	)
+}
+
 func pageRoutes() fx.Option {
 	return fx.Invoke(
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
 		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes,
+		tokensPage.RegisterTokensRoutes,
 	)
 }

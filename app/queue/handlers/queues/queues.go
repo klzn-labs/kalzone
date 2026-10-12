@@ -18,10 +18,10 @@ type Queues interface {
 	Update(ctx context.Context, a actor.Actor, environment, name string, c queues.Change) (entities.Queue, error)
 	SetPaused(ctx context.Context, a actor.Actor, environment, name string, paused bool) (entities.Queue, error)
 	Delete(ctx context.Context, a actor.Actor, environment, name string, force bool) error
-	Get(ctx context.Context, environment, name string) (entities.Queue, error)
-	List(ctx context.Context, environment, teamSlug string) ([]entities.Queue, error)
-	Versions(ctx context.Context, environment, name string) ([]entities.Version, error)
-	Stats(ctx context.Context, environment, name string) (entities.Stats, bool, error)
+	GetFor(ctx context.Context, a actor.Actor, environment, name string) (entities.Queue, error)
+	ListFor(ctx context.Context, a actor.Actor, environment, teamSlug string) ([]entities.Queue, error)
+	VersionsFor(ctx context.Context, a actor.Actor, environment, name string) ([]entities.Version, error)
+	StatsFor(ctx context.Context, a actor.Actor, environment, name string) (entities.Stats, bool, error)
 	Replay(ctx context.Context, a actor.Actor, environment, name, messageID string) error
 	ReplayAll(ctx context.Context, a actor.Actor, environment, name string) error
 	PurgeDead(ctx context.Context, a actor.Actor, environment, name string) error
@@ -41,7 +41,7 @@ func NewQueuesHandler(queues Queues, names ServiceNames) QueuesHandler {
 }
 
 func (h QueuesHandler) List(c *gin.Context) {
-	list, err := h.queues.List(c.Request.Context(), c.Query("environment"), c.Query("team"))
+	list, err := h.queues.ListFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("environment"), c.Query("team"))
 	if err != nil {
 		httperror.Abort(c, err)
 		return
@@ -71,7 +71,7 @@ func (h QueuesHandler) Create(c *gin.Context) {
 }
 
 func (h QueuesHandler) Get(c *gin.Context) {
-	q, err := h.queues.Get(c.Request.Context(), c.Param("env"), c.Param("name"))
+	q, err := h.queues.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
 	h.respond(c, http.StatusOK, q, err)
 }
 

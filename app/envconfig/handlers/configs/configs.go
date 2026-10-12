@@ -14,12 +14,12 @@ import (
 )
 
 type Configs interface {
-	Current(ctx context.Context, serviceSlug, environment string) (entities.Revision, error)
-	History(ctx context.Context, serviceSlug, environment string, limit int) ([]entities.Revision, error)
+	CurrentFor(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.Revision, error)
+	HistoryFor(ctx context.Context, a actor.Actor, serviceSlug, environment string, limit int) ([]entities.Revision, error)
 	Revise(ctx context.Context, a actor.Actor, serviceSlug, environment string, cs entities.ChangeSet) (entities.Revision, error)
 	SetSecret(ctx context.Context, a actor.Actor, serviceSlug, environment, name, value string) (entities.Revision, error)
 	UnsetSecret(ctx context.Context, a actor.Actor, serviceSlug, environment, name string) (entities.Revision, error)
-	Secrets(ctx context.Context, serviceSlug, environment string) ([]entities.SecretInfo, error)
+	SecretsFor(ctx context.Context, a actor.Actor, serviceSlug, environment string) ([]entities.SecretInfo, error)
 }
 
 type ConfigsHandler struct {
@@ -31,13 +31,13 @@ func NewConfigsHandler(configs Configs) ConfigsHandler {
 }
 
 func (h ConfigsHandler) Current(c *gin.Context) {
-	rev, err := h.configs.Current(c.Request.Context(), c.Param("service"), c.Param("env"))
+	rev, err := h.configs.CurrentFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"), c.Param("env"))
 	respond(c, http.StatusOK, rev, err)
 }
 
 func (h ConfigsHandler) History(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.Query("limit"))
-	revisions, err := h.configs.History(c.Request.Context(), c.Param("service"), c.Param("env"), limit)
+	revisions, err := h.configs.HistoryFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"), c.Param("env"), limit)
 	if err != nil {
 		httperror.Abort(c, err)
 		return
@@ -73,7 +73,7 @@ func (h ConfigsHandler) UnsetSecret(c *gin.Context) {
 }
 
 func (h ConfigsHandler) Secrets(c *gin.Context) {
-	infos, err := h.configs.Secrets(c.Request.Context(), c.Param("service"), c.Param("env"))
+	infos, err := h.configs.SecretsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"), c.Param("env"))
 	if err != nil {
 		httperror.Abort(c, err)
 		return

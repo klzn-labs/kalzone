@@ -9,6 +9,8 @@ import (
 
 type Activity struct {
 	ActorLogin  string
+	TokenID     string
+	TokenName   string
 	Phrase      string
 	TargetName  string
 	Link        string
@@ -44,6 +46,9 @@ var phrasings = map[string]phrasing{
 	"deploy.drift":        {"found drift and is redeploying", configLink, deployDetail},
 	"user.admin_granted":  {"made an admin:", nil, nil},
 	"user.admin_revoked":  {"removed admin rights from", nil, nil},
+	"token.created":       {"created access token", tokensLink, nil},
+	"token.revoked":       {"revoked access token", tokensLink, nil},
+	"token.bypass_used":   {"skipped approval with", nil, bypassDetail},
 }
 
 func ActivityFrom(events []audit.Event) []Activity {
@@ -55,7 +60,7 @@ func ActivityFrom(events []audit.Event) []Activity {
 }
 
 func activityOf(e audit.Event) Activity {
-	a := Activity{ActorLogin: e.ActorLogin, Phrase: e.Action, TargetName: e.TargetName, Environment: e.Environment, At: e.At}
+	a := Activity{ActorLogin: e.ActorLogin, TokenID: e.TokenID, TokenName: e.TokenName, Phrase: e.Action, TargetName: e.TargetName, Environment: e.Environment, At: e.At}
 	p, known := phrasings[e.Action]
 	if !known {
 		return a
@@ -68,6 +73,12 @@ func activityOf(e audit.Event) Activity {
 		a.Detail = p.detail(e)
 	}
 	return a
+}
+
+func tokensLink(audit.Event) string { return "/tokens" }
+
+func bypassDetail(e audit.Event) string {
+	return fmt.Sprintf("%v on %s", e.Details["action"], e.Environment)
 }
 
 func teamLink(e audit.Event) string    { return "/teams/" + e.TargetName }

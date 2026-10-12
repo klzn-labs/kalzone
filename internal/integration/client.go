@@ -18,12 +18,14 @@ type Client struct {
 	suite     *Suite
 	http      *http.Client
 	CSRFToken string
+	bearer    string
 }
 
 type Response struct {
-	Status   int
-	Body     string
-	Location string
+	Status       int
+	Body         string
+	Location     string
+	CacheControl string
 }
 
 func (s *Suite) Anonymous(t *testing.T) *Client {
@@ -32,6 +34,17 @@ func (s *Suite) Anonymous(t *testing.T) *Client {
 	require.NoError(t, err)
 	noRedirect := func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	return &Client{suite: s, http: &http.Client{Jar: jar, CheckRedirect: noRedirect}}
+}
+
+func (s *Suite) WithToken(t *testing.T, token string) *Client {
+	t.Helper()
+	c := s.Anonymous(t)
+	c.bearer = token
+	return c
+}
+
+func (c *Client) UseToken(token string) {
+	c.bearer = token
 }
 
 func (s *Suite) SignIn(t *testing.T, login string) *Client {
@@ -68,12 +81,15 @@ func (c *Client) Do(t *testing.T, method, path string, body any) Response {
 	if c.CSRFToken != "" {
 		req.Header.Set("X-CSRF-Token", c.CSRFToken)
 	}
+	if c.bearer != "" {
+		req.Header.Set("Authorization", "Bearer "+c.bearer)
+	}
 	resp, err := c.http.Do(req)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
-	return Response{Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location")}
+	return Response{Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location"), CacheControl: resp.Header.Get("Cache-Control")}
 }
 
 func (c *Client) MustJSON(t *testing.T, method, path string, body any, status int, out any) Response {
@@ -96,7 +112,7 @@ func (c *Client) Form(t *testing.T, path string, values url.Values) Response {
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
-	return Response{Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location")}
+	return Response{Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location"), CacheControl: resp.Header.Get("Cache-Control")}
 }
 
 func encode(t *testing.T, body any) io.Reader {

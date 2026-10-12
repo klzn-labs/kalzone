@@ -15,8 +15,8 @@ import (
 )
 
 type Releases interface {
-	List(ctx context.Context, serviceSlug string, limit int) ([]entities.Release, error)
-	Get(ctx context.Context, id string) (entities.Release, error)
+	ListFor(ctx context.Context, a actor.Actor, serviceSlug string, limit int) ([]entities.Release, error)
+	GetFor(ctx context.Context, a actor.Actor, id string) (entities.Release, error)
 	Request(ctx context.Context, a actor.Actor, serviceSlug, ref string) (entities.Release, error)
 	Register(ctx context.Context, a actor.Actor, serviceSlug, tag string) (entities.Release, error)
 }
@@ -67,7 +67,7 @@ type registerDTO struct {
 
 func (h ReleasesHandler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.Query("limit"))
-	list, err := h.releases.List(c.Request.Context(), c.Query("service"), limit)
+	list, err := h.releases.ListFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("service"), limit)
 	if err != nil {
 		httperror.Abort(c, err)
 		return
@@ -80,7 +80,7 @@ func (h ReleasesHandler) List(c *gin.Context) {
 }
 
 func (h ReleasesHandler) Get(c *gin.Context) {
-	rel, err := h.releases.Get(c.Request.Context(), c.Param("id"))
+	rel, err := h.releases.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("id"))
 	respond(c, http.StatusOK, rel, err)
 }
 

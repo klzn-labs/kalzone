@@ -15,7 +15,7 @@
 {{define "activity-line"}}<li>
   {{template "avatar" dict "Name" "" "Login" .ActorLogin "URL" "" "Class" "avatar-sm"}}
   <div class="what">
-    <div class="line"><b>@{{.ActorLogin}}</b> {{.Phrase}} {{if .Link}}<a href="{{.Link}}">{{.TargetName}}</a>{{else}}<b>{{.TargetName}}</b>{{end}}</div>
+    <div class="line"><b>@{{.ActorLogin}}</b>{{if .TokenName}} <span class="muted">via</span> <a class="mono" href="/audit?token={{.TokenID}}">{{.TokenName}}</a>{{end}} {{.Phrase}} {{if .Link}}<a href="{{.Link}}">{{.TargetName}}</a>{{else}}<b>{{.TargetName}}</b>{{end}}</div>
     {{if or .Environment .Detail}}<div class="sub">{{if .Environment}}{{template "env-badge" .Environment}}{{end}}{{if .Detail}}<span class="badge badge-outline mono">{{.Detail}}</span>{{end}}</div>{{end}}
   </div>
   <time class="when" datetime="{{iso .At}}" title="{{date .At}}">{{ago .At}}</time>
