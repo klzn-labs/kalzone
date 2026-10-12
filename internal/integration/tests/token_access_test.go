@@ -56,8 +56,8 @@ func Test_ProdNeedsProtectedAndApprovalUnlessBypassed(t *testing.T) {
 	p.root.MustJSON(t, http.MethodGet, "/api/v1/audit", nil, http.StatusOK, &all)
 
 	require.Contains(t, noScope.Body, `"required_scope":"protected"`)
-	require.Equal(t, http.StatusForbidden, noBypass.Status)
-	require.Contains(t, noBypass.Body, "err_approval_required")
+	require.Equal(t, http.StatusAccepted, noBypass.Status, noBypass.Body)
+	require.Contains(t, noBypass.Body, `"kind":"change_request"`)
 	require.Equal(t, http.StatusAccepted, bypassed.Status, bypassed.Body)
 	require.True(t, hasAction(all, "token.bypass_used"))
 }

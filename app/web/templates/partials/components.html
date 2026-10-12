@@ -20,3 +20,5 @@
   </div>
   <time class="when" datetime="{{iso .At}}" title="{{date .At}}">{{ago .At}}</time>
 </li>{{end}}
+
+{{define "request-status"}}{{$s := print .}}<span class="badge {{if eq $s "pending"}}badge-warn{{else if eq $s "executed"}}badge-ok{{else if or (eq $s "failed") (eq $s "rejected")}}badge-danger{{else if eq $s "approved"}}badge-accent{{else}}badge-outline{{end}}"><span class="dot"></span>{{$s}}</span>{{end}}

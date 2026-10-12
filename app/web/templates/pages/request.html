@@ -1,0 +1,49 @@
+{{define "content"}}{{$d := .Data}}{{$r := $d.Request}}{{$csrf := .Viewer.CSRFToken}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/requests">Requests</a></div>
+    <h1>{{$r.Summary}}</h1>
+    <p class="lead">@{{$r.RequesterLogin}} via <span class="mono">{{$r.TokenName}}</span> asked {{ago $r.CreatedAt}} to change <span class="mono">{{$r.ServiceSlug}}</span> in {{$r.Environment}}.</p>
+  </div>
+  <div class="actions">{{template "request-status" $r.Status}}</div>
+</div>
+
+<dl class="kv" style="margin-bottom:20px">
+  <div><dt>Service</dt><dd>{{$r.ServiceSlug}}</dd></div>
+  <div><dt>Environment</dt><dd>{{$r.Environment}}</dd></div>
+  <div><dt>Kind</dt><dd>{{$r.Kind}}</dd></div>
+  <div><dt>Asked</dt><dd>{{date $r.CreatedAt}}</dd></div>
+  <div><dt>{{if $r.Pending}}Expires{{else}}Decided{{end}}</dt><dd>{{if $r.Pending}}{{date $r.ExpiresAt}}{{else if $r.DecidedAt}}{{date (deref $r.DecidedAt)}} by @{{$r.DeciderLogin}}{{end}}</dd></div>
+  <div><dt>Request</dt><dd>{{$r.ID}}</dd></div>
+</dl>
+
+{{if $r.Pending}}
+{{if $d.Preview.Moved}}<div class="alert alert-warn" style="margin-bottom:12px">{{icon "alert"}}<span>{{$d.Preview.Moved}}</span></div>{{end}}
+{{if $d.Preview.Conflict}}<div class="alert alert-danger" style="margin-bottom:12px">{{icon "alert"}}<span>{{$d.Preview.Conflict}}</span></div>{{end}}
+{{if $d.PreviewError}}<div class="alert alert-danger" style="margin-bottom:12px">{{icon "alert"}}<span>{{$d.PreviewError}}</span></div>{{end}}
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header"><div><h2>What changes</h2><p>Compared with what runs now, not with what the agent saw.</p></div></div>
+  <div class="table-scroll"><table class="table">
+    <thead><tr><th>Key</th><th>Now</th><th>After approval</th></tr></thead>
+    <tbody>{{range $d.Preview.Lines}}<tr><td class="key">{{.Key}}</td><td class="value">{{or .Before "—"}}</td><td class="value">{{or .After "—"}}</td></tr>{{else}}<tr><td colspan="3" class="muted">Nothing would change.</td></tr>{{end}}</tbody>
+  </table></div>
+</div>
+{{if $d.CanDecide}}
+<div class="grid grid-2">
+  <form class="card" method="post" action="/requests/{{$r.ID}}/approve" hx-post="/requests/{{$r.ID}}/approve" hx-confirm="Approve and run it now?">{{template "csrf" $csrf}}
+    <div class="card-body"><p>Runs the change now as @{{$r.RequesterLogin}} via {{$r.TokenName}}, with you as the approver.</p><div class="form-actions"><button class="btn btn-primary">{{icon "check"}}Approve and run</button></div></div>
+  </form>
+  <form class="card" method="post" action="/requests/{{$r.ID}}/reject" hx-post="/requests/{{$r.ID}}/reject">{{template "csrf" $csrf}}
+    <div class="card-body"><div class="field"><label for="reason">Reason</label><input id="reason" name="reason" type="text" maxlength="500" placeholder="Optional, the agent reads it"></div><div class="form-actions"><button class="btn btn-danger">{{icon "x"}}Reject</button></div></div>
+  </form>
+</div>
+{{end}}
+{{if $d.CanCancel}}<form method="post" action="/requests/{{$r.ID}}/cancel" hx-post="/requests/{{$r.ID}}/cancel" style="margin-top:12px">{{template "csrf" $csrf}}<button class="btn btn-ghost">{{icon "trash"}}Cancel my request</button></form>{{end}}
+{{else}}
+<div class="card"><div class="card-body">
+  {{if $r.Result}}<p>{{icon "check"}} Done: <b class="mono">{{$r.Result}}</b></p>{{end}}
+  {{if $r.ErrorCode}}<div class="alert alert-danger">{{icon "alert"}}<span><span class="mono">{{$r.ErrorCode}}</span> · {{$r.ErrorMessage}}</span></div>{{end}}
+  {{if $r.Reason}}<p class="muted">{{$r.Reason}}</p>{{end}}
+</div></div>
+{{end}}
+{{end}}

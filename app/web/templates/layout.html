@@ -21,6 +21,7 @@
     <a class="nav-link {{if eq .Nav "teams"}}active{{end}}" href="/teams">{{icon "users"}}Teams</a>
     <a class="nav-link {{if eq .Nav "people"}}active{{end}}" href="/people">{{icon "user"}}People</a>
     <a class="nav-link {{if eq .Nav "queues"}}active{{end}}" href="/queues">{{icon "layers"}}Queues</a>
+    <a class="nav-link {{if eq .Nav "requests"}}active{{end}}" href="/requests">{{icon "shield"}}Requests<span class="nav-count" hx-get="/requests/badge" hx-trigger="load, every 30s"></span></a>
     <a class="nav-link {{if eq .Nav "agents"}}active{{end}}" href="/agents">{{icon "server"}}Agents</a>
     <a class="nav-link {{if eq .Nav "audit"}}active{{end}}" href="/audit">{{icon "activity"}}Audit log</a>
     <div class="sidebar-footer">

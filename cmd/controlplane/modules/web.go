@@ -1,6 +1,7 @@
 package modules
 
 import (
+	"github.com/adrianozp/platform/app/approvals/usecases/requests"
 	auditLookups "github.com/adrianozp/platform/app/audit/repositories/lookups"
 	"github.com/adrianozp/platform/app/audit/usecases/query"
 	"github.com/adrianozp/platform/app/authz"
@@ -27,6 +28,7 @@ import (
 	peoplePage "github.com/adrianozp/platform/app/web/handlers/people"
 	queuesPage "github.com/adrianozp/platform/app/web/handlers/queues"
 	releasesPage "github.com/adrianozp/platform/app/web/handlers/releases"
+	requestsPage "github.com/adrianozp/platform/app/web/handlers/requests"
 	servicePage "github.com/adrianozp/platform/app/web/handlers/service"
 	servicesPage "github.com/adrianozp/platform/app/web/handlers/services"
 	teamPage "github.com/adrianozp/platform/app/web/handlers/team"
@@ -43,7 +45,7 @@ func Web() fx.Option {
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
 			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler,
-			tokensPage.NewTokensHandler,
+			tokensPage.NewTokensHandler, requestsPage.NewRequestsHandler,
 		),
 		viewInjections(),
 		pageInjections(),
@@ -121,6 +123,7 @@ func tokenPageInjections() fx.Option {
 	return fx.Provide(
 		func(u tokens.TokensUsecase) tokensPage.Tokens { return u },
 		func(u teams.TeamsUsecase) tokensPage.AllTeams { return u },
+		func(u requests.RequestsUsecase) requestsPage.Requests { return u },
 	)
 }
 
@@ -130,6 +133,6 @@ func pageRoutes() fx.Option {
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
 		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes,
-		tokensPage.RegisterTokensRoutes,
+		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes,
 	)
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,6 +24,7 @@ var statuses = map[apperror.Code]int{
 	apperror.CodeMissingScope:     http.StatusForbidden,
 	apperror.CodeTeamNotGranted:   http.StatusForbidden,
 	apperror.CodeApprovalRequired: http.StatusForbidden,
+	apperror.CodeStale:            http.StatusConflict,
 	apperror.CodeTokenInvalid:     http.StatusUnauthorized,
 	apperror.CodeTokenExpired:     http.StatusUnauthorized,
 	apperror.CodeTokenRevoked:     http.StatusUnauthorized,
@@ -49,6 +51,11 @@ type Body struct {
 }
 
 func Abort(c *gin.Context, err error) {
+	var pending *approval.Pending
+	if errors.As(err, &pending) {
+		c.AbortWithStatusJSON(http.StatusAccepted, pending)
+		return
+	}
 	status, body := Resolve(err)
 	c.AbortWithStatusJSON(status, Body{Error: body})
 }

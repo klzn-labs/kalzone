@@ -36,3 +36,15 @@ func Test_ActivityFrom_KeepsTheTokenAndPhrasesBypass(t *testing.T) {
 	require.Equal(t, "t1", got[0].TokenID)
 	require.Equal(t, "deploy on prod", got[1].Detail)
 }
+
+func Test_ActivityFrom_LinksRequestEventsToTheRequest(t *testing.T) {
+	events := []audit.Event{
+		{ActorLogin: "mia", Action: "request.approved", TargetID: "c1", TargetName: "api", Details: map[string]any{"summary": "deploy release #2 to prod"}},
+	}
+
+	got := web.ActivityFrom(events)
+
+	require.Equal(t, "approved a request on", got[0].Phrase)
+	require.Equal(t, "/requests/c1", got[0].Link)
+	require.Equal(t, "deploy release #2 to prod", got[0].Detail)
+}
