@@ -32,10 +32,19 @@ func (u TokensUsecase) Create(ctx context.Context, a actor.Actor, d entities.Tok
 	if err != nil {
 		return entities.IssuedToken{}, err
 	}
+	return u.save(ctx, a, issued)
+}
+
+func (u TokensUsecase) save(ctx context.Context, a actor.Actor, issued entities.IssuedToken) (entities.IssuedToken, error) {
+	slugs, err := u.teams.SlugsByIDs(ctx, issued.Token.TeamIDs)
+	if err != nil {
+		return entities.IssuedToken{}, err
+	}
 	if err := u.store.Create(ctx, issued.Token); err != nil {
 		return entities.IssuedToken{}, err
 	}
 	u.publish(ctx, a, "token.created", issued.Token)
+	issued.Token.TeamSlugs = slugs
 	return issued, nil
 }
 

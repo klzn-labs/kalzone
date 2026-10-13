@@ -29,6 +29,7 @@ type UserReader interface {
 type TeamLookup interface {
 	IDBySlug(ctx context.Context, slug string) (string, error)
 	SlugsByIDs(ctx context.Context, ids []string) ([]string, error)
+	SlugByID(ctx context.Context, ids []string) (map[string]string, error)
 }
 
 type Authorizer interface {
@@ -60,14 +61,57 @@ func (u TokensUsecase) List(ctx context.Context, a actor.Actor) ([]entities.Acce
 	if err := u.authz.Can(ctx, a, authz.ManageTokens, authz.Resource{}); err != nil {
 		return nil, err
 	}
-	return u.store.ListByOwner(ctx, a.UserID)
+	list, err := u.store.ListByOwner(ctx, a.UserID)
+	if err != nil {
+		return nil, err
+	}
+	return u.withTeams(ctx, list)
+}
+
+func (u TokensUsecase) withTeams(ctx context.Context, list []entities.AccessToken) ([]entities.AccessToken, error) {
+	slugByID, err := u.teams.SlugByID(ctx, teamIDsOf(list))
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		list[i].TeamSlugs = slugsOf(list[i].TeamIDs, slugByID)
+	}
+	return list, nil
+}
+
+func teamIDsOf(list []entities.AccessToken) []string {
+	seen := map[string]bool{}
+	ids := []string{}
+	for _, t := range list {
+		for _, id := range t.TeamIDs {
+			if !seen[id] {
+				seen[id] = true
+				ids = append(ids, id)
+			}
+		}
+	}
+	return ids
+}
+
+func slugsOf(ids []string, slugByID map[string]string) []string {
+	slugs := []string{}
+	for _, id := range ids {
+		if slug, ok := slugByID[id]; ok {
+			slugs = append(slugs, slug)
+		}
+	}
+	return slugs
 }
 
 func (u TokensUsecase) ListAll(ctx context.Context, a actor.Actor) ([]entities.AccessToken, error) {
 	if !a.SessionAdmin() {
 		return nil, errOnlyAdmins
 	}
-	return u.store.ListAll(ctx)
+	list, err := u.store.ListAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return u.withTeams(ctx, list)
 }
 
 func (u TokensUsecase) Revoke(ctx context.Context, a actor.Actor, id string) error {

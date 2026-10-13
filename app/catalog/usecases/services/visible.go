@@ -9,7 +9,7 @@ import (
 	"github.com/adrianozp/platform/pkg/apperror"
 )
 
-var errNotVisible = apperror.NotFound("service not found")
+var errNotVisible = apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")
 
 func (u ServicesUsecase) GetFor(ctx context.Context, a actor.Actor, slug string) (entities.Service, error) {
 	s, err := u.store.FindBySlug(ctx, slug)

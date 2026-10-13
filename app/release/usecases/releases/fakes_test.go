@@ -3,6 +3,7 @@ package releases_test
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
 	"time"
 
@@ -34,13 +35,20 @@ func (s *store) Transition(_ context.Context, rel entities.Release, from entitie
 func (s *store) FindByID(_ context.Context, id string) (entities.Release, error) {
 	rel, ok := s.byID[id]
 	if !ok {
-		return entities.Release{}, apperror.NotFound("release not found")
+		return entities.Release{}, apperror.NotFound("release not found").WithHint("list a service's releases with GET /api/v1/releases?service=<slug>")
 	}
 	return rel, nil
 }
 
-func (s *store) ListByService(context.Context, string, int, int) ([]entities.Release, error) {
-	return nil, nil
+func (s *store) ListByService(_ context.Context, serviceID string, before, limit int) ([]entities.Release, error) {
+	result := []entities.Release{}
+	for _, rel := range s.byID {
+		if rel.ServiceID == serviceID && (before == 0 || rel.Number < before) {
+			result = append(result, rel)
+		}
+	}
+	slices.SortFunc(result, func(a, b entities.Release) int { return b.Number - a.Number })
+	return result[:min(limit, len(result))], nil
 }
 
 func (s *store) Unfinished(_ context.Context, before time.Time) ([]entities.Release, error) {
@@ -78,7 +86,7 @@ func byKey(match func(entities.ServiceRef) bool) (entities.ServiceRef, error) {
 			return s, nil
 		}
 	}
-	return entities.ServiceRef{}, apperror.NotFound("service not found")
+	return entities.ServiceRef{}, apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")
 }
 
 type builder struct {

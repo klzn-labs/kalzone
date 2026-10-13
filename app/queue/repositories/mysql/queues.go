@@ -13,7 +13,7 @@ import (
 const duplicateEntry = 1062
 
 var (
-	errQueueNotFound = apperror.NotFound("queue not found")
+	errQueueNotFound = apperror.NotFound("queue not found").WithHint("list queues with GET /api/v1/queues")
 	errNameTaken     = apperror.Conflict("a queue with this name already exists in this environment")
 	errConcurrent    = apperror.Conflict("the queue changed while you were editing it, reload and try again")
 )

@@ -53,9 +53,23 @@ func (s *store) FindByID(_ context.Context, id string) (entities.AccessToken, er
 	return t, nil
 }
 
-func (s *store) ListByOwner(context.Context, string) ([]entities.AccessToken, error) { return nil, nil }
+func (s *store) ListByOwner(_ context.Context, ownerID string) ([]entities.AccessToken, error) {
+	result := []entities.AccessToken{}
+	for _, t := range s.byID {
+		if t.OwnerID == ownerID {
+			result = append(result, t)
+		}
+	}
+	return result, nil
+}
 
-func (s *store) ListAll(context.Context) ([]entities.AccessToken, error) { return nil, nil }
+func (s *store) ListAll(context.Context) ([]entities.AccessToken, error) {
+	result := []entities.AccessToken{}
+	for _, t := range s.byID {
+		result = append(result, t)
+	}
+	return result, nil
+}
 
 func (s *store) Revoke(_ context.Context, id string, at time.Time) error {
 	t := s.byID[id]
@@ -93,6 +107,16 @@ func (t teams) SlugsByIDs(_ context.Context, ids []string) ([]string, error) {
 	for slug, id := range t {
 		if contains(ids, id) {
 			result = append(result, slug)
+		}
+	}
+	return result, nil
+}
+
+func (t teams) SlugByID(_ context.Context, ids []string) (map[string]string, error) {
+	result := map[string]string{}
+	for slug, id := range t {
+		if contains(ids, id) {
+			result[id] = slug
 		}
 	}
 	return result, nil

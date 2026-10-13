@@ -2,6 +2,7 @@ package fakestore
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"time"
 
@@ -37,13 +38,17 @@ func (s *Store) Transition(_ context.Context, d entities.Deployment, from entiti
 func (s *Store) FindByID(_ context.Context, id string) (entities.Deployment, error) {
 	d, ok := s.ByID[id]
 	if !ok {
-		return entities.Deployment{}, apperror.NotFound("deployment not found")
+		return entities.Deployment{}, apperror.NotFound("deployment not found").WithHint("list deployments with GET /api/v1/deployments?service=<slug>&env=<env>")
 	}
 	return d, nil
 }
 
-func (s *Store) History(_ context.Context, serviceID, env string, _, _ int) ([]entities.Deployment, error) {
-	return s.matching(func(d entities.Deployment) bool { return d.ServiceID == serviceID && d.Environment == env }), nil
+func (s *Store) History(_ context.Context, serviceID, env string, before, limit int) ([]entities.Deployment, error) {
+	found := s.matching(func(d entities.Deployment) bool {
+		return d.ServiceID == serviceID && d.Environment == env && (before == 0 || d.Number < before)
+	})
+	slices.Reverse(found)
+	return found[:min(limit, len(found))], nil
 }
 
 func (s *Store) Active(_ context.Context, serviceID, env string) ([]entities.Deployment, error) {
@@ -93,12 +98,27 @@ func (s *Store) AppendEvents(_ context.Context, id string, _ time.Time, lines []
 	return nil
 }
 
-func (s *Store) Events(_ context.Context, id string, _ int) ([]entities.Event, error) {
+func (s *Store) Events(_ context.Context, id string, limit int) ([]entities.Event, error) {
+	all := s.events(id)
+	return all[max(0, len(all)-limit):], nil
+}
+
+func (s *Store) EventsAfter(_ context.Context, id string, after int64, limit int) ([]entities.Event, error) {
+	all := s.events(id)
+	start := min(int(after), len(all))
+	return all[start:min(start+limit, len(all))], nil
+}
+
+func (s *Store) CountEvents(_ context.Context, id string) (int, error) {
+	return len(s.Lines[id]), nil
+}
+
+func (s *Store) events(id string) []entities.Event {
 	result := []entities.Event{}
-	for _, line := range s.Lines[id] {
-		result = append(result, entities.Event{DeploymentID: id, Message: line})
+	for i, line := range s.Lines[id] {
+		result = append(result, entities.Event{ID: int64(i + 1), DeploymentID: id, Message: line})
 	}
-	return result, nil
+	return result
 }
 
 func (s *Store) TouchAgent(_ context.Context, a entities.Agent) error {

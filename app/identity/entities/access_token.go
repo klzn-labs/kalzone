@@ -31,6 +31,7 @@ type AccessToken struct {
 	Prefix           string
 	Scopes           []scope.Scope
 	TeamIDs          []string
+	TeamSlugs        []string
 	Bypass           bool
 	CreatedAt        time.Time
 	CreatedByTokenID string

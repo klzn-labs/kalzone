@@ -13,7 +13,7 @@ import (
 const duplicateEntry = 1062
 
 var (
-	errTeamNotFound = apperror.NotFound("team not found")
+	errTeamNotFound = apperror.NotFound("team not found").WithHint("list teams with GET /api/v1/teams")
 	errTeamTaken    = apperror.Conflict("a team with this slug already exists")
 )
 

@@ -20,7 +20,8 @@ var protectable = map[Action]bool{EditConfig: true, EditSecrets: true, EditQueue
 
 var (
 	errNeverForTokens   = apperror.Forbidden("no token can do this, sign in to the website")
-	errApprovalRequired = apperror.New(apperror.CodeApprovalRequired, "changes to a protected environment need a human's approval")
+	errApprovalRequired = apperror.New(apperror.CodeApprovalRequired, "changes to a protected environment need a human's approval").
+				WithHint("use a bypass token, or ask a human to do it in the browser")
 )
 
 func (p Policy) tokenGate(ctx context.Context, a actor.Actor, action Action, r Resource) (Gate, error) {

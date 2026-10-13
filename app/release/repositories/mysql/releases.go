@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	errReleaseNotFound = apperror.NotFound("release not found")
+	errReleaseNotFound = apperror.NotFound("release not found").WithHint("list a service's releases with GET /api/v1/releases?service=<slug>")
 	errReleaseChanged  = apperror.Conflict("the release changed meanwhile, reload and try again")
 )
 

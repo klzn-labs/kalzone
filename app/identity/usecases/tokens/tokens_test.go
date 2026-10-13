@@ -1,10 +1,13 @@
 package tokens_test
 
 import (
+	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/adrianozp/platform/app/identity/entities"
+	"github.com/adrianozp/platform/app/identity/usecases/tokens"
 	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/stretchr/testify/require"
@@ -134,4 +137,37 @@ func Test_Whoami_NamesTheTeams(t *testing.T) {
 	require.Equal(t, "ana", who.User.Login)
 	require.Equal(t, []string{"places"}, who.Teams)
 	require.Equal(t, "parent", who.Token.Name)
+}
+
+func Test_ListAndCreate_NameTheTeamsBySlug(t *testing.T) {
+	f := newFixture()
+
+	issued, err := f.usecase.Create(ctx, ana, draftOf("read"))
+	require.NoError(t, err)
+	mine, err := f.usecase.List(ctx, ana)
+	require.NoError(t, err)
+	all, err := f.usecase.ListAll(ctx, ops)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"places"}, issued.Token.TeamSlugs)
+	require.Equal(t, []string{"places"}, mine[0].TeamSlugs)
+	require.Equal(t, []string{"places"}, all[0].TeamSlugs)
+}
+
+type unnamedTeams struct{ teams }
+
+func (unnamedTeams) SlugsByIDs(context.Context, []string) ([]string, error) {
+	return nil, errors.New("teams unavailable")
+}
+
+func Test_Create_StoresNothingWhenTheTeamsCannotBeNamed(t *testing.T) {
+	f := newFixture()
+	broken := tokens.NewTokensUsecase(f.store, users{}, unnamedTeams{teams{"places": "t1"}}, allow{}, f.events)
+
+	issued, err := broken.Create(ctx, ana, draftOf("read"))
+
+	require.Error(t, err)
+	require.Equal(t, entities.IssuedToken{}, issued)
+	require.Empty(t, f.store.byID)
+	require.Empty(t, f.events.actions)
 }

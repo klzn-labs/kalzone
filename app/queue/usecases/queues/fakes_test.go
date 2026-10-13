@@ -77,8 +77,14 @@ func (s *store) Delete(_ context.Context, id string, deletion entities.Command) 
 	return nil
 }
 
-func (s *store) Versions(context.Context, string, int, int) ([]entities.Version, error) {
-	return s.versions, nil
+func (s *store) Versions(_ context.Context, _ string, before, limit int) ([]entities.Version, error) {
+	result := []entities.Version{}
+	for _, v := range s.versions {
+		if (before == 0 || v.Number < before) && len(result) < limit {
+			result = append(result, v)
+		}
+	}
+	return result, nil
 }
 
 func (s *store) AddCommand(_ context.Context, c entities.Command) error {

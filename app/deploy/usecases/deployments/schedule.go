@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	errRunning      = apperror.Conflict("a deployment is already running here, wait for it to finish")
-	errNotBuilt     = apperror.Invalid("only built releases can be deployed")
+	errRunning = apperror.Conflict("a deployment is already running here, wait for it to finish").
+			WithHint("follow the running deployment with GET /api/v1/deployments?service=<slug>&env=<env>, then deploy again")
+	errNotBuilt = apperror.Invalid("only built releases can be deployed").
+			WithHint("wait until GET /api/v1/releases/<id> says built")
 	errOtherService = apperror.Invalid("that release belongs to another service")
 )
 

@@ -6,6 +6,7 @@ import (
 	"github.com/adrianozp/platform/app/queue/entities"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/page"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,4 +28,20 @@ func Test_ReadsFor_SkipQueuesOfOtherTeams(t *testing.T) {
 	require.ErrorIs(t, hidden, apperror.NotFound(""))
 	require.ErrorIs(t, hiddenStats, apperror.NotFound(""))
 	require.Len(t, all, 2)
+}
+
+func Test_VersionPageFor_PagesNewestFirst(t *testing.T) {
+	f := newFixture(t, false)
+	f.store.queues[key("dev", "mine")] = entities.Queue{ID: "q1", Name: "mine", Environment: "dev", TeamID: "t1"}
+	f.store.versions = []entities.Version{{Number: 3}, {Number: 2}, {Number: 1}}
+
+	first, err := f.usecase.VersionPageFor(ctx, ana, "dev", "mine", page.First(2))
+	require.NoError(t, err)
+	next, _ := page.Parse("2", first.Next)
+	second, err := f.usecase.VersionPageFor(ctx, ana, "dev", "mine", next)
+	require.NoError(t, err)
+
+	require.Equal(t, []int{3, 2}, []int{first.Items[0].Number, first.Items[1].Number})
+	require.Equal(t, []entities.Version{{Number: 1}}, second.Items)
+	require.Empty(t, second.Next)
 }
