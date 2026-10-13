@@ -55,11 +55,13 @@ func (r ConfigRepository) ByNumber(ctx context.Context, serviceID, environment s
 	return model.toEntity()
 }
 
-func (r ConfigRepository) History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Revision, error) {
+func (r ConfigRepository) History(ctx context.Context, serviceID, environment string, before, limit int) ([]entities.Revision, error) {
 	var models []revision
-	err := r.db.WithContext(ctx).Where("service_id = ? AND environment = ?", serviceID, environment).
-		Order("number DESC").Limit(limit).Find(&models).Error
-	if err != nil {
+	tx := r.db.WithContext(ctx).Where("service_id = ? AND environment = ?", serviceID, environment)
+	if before > 0 {
+		tx = tx.Where("number < ?", before)
+	}
+	if err := tx.Order("number DESC").Limit(limit).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	return toRevisions(models)

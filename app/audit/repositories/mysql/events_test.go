@@ -65,3 +65,20 @@ func Test_List_FiltersByTokenAndByTeams(t *testing.T) {
 	require.Equal(t, "claude-local", byToken[0].TokenName)
 	require.Equal(t, []string{"e2", "e1"}, ids(byTeams))
 }
+
+func Test_List_ContinuesAfterEventsOfTheSameInstant(t *testing.T) {
+	ctx := context.Background()
+	repo := mysql.NewEventRepository(testdb.Open(t))
+	for _, id := range []string{"e1", "e2", "e3"} {
+		require.NoError(t, repo.Insert(ctx, event(id, 1, "t1", "s1", "dev")))
+	}
+	at := time.Date(2026, 10, 7, 0, 0, 1, 0, time.UTC)
+
+	first, err := repo.List(ctx, entities.Filter{Limit: 2})
+	require.NoError(t, err)
+	rest, err := repo.List(ctx, entities.Filter{Before: &at, BeforeID: first[1].ID, Limit: 2})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"e3", "e2"}, ids(first))
+	require.Equal(t, []string{"e1"}, ids(rest))
+}

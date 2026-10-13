@@ -13,7 +13,7 @@ import (
 
 type Store interface {
 	Latest(ctx context.Context, serviceID, environment string) (entities.Revision, bool, error)
-	History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Revision, error)
+	History(ctx context.Context, serviceID, environment string, before, limit int) ([]entities.Revision, error)
 	Insert(ctx context.Context, rev entities.Revision) error
 	HostsTaken(ctx context.Context, hosts []string, serviceID, environment string) (bool, error)
 	InternalTaken(ctx context.Context, serviceID, environment string) (bool, error)
@@ -106,7 +106,7 @@ func (u ConfigUsecase) History(ctx context.Context, serviceSlug, environment str
 	if err != nil {
 		return nil, err
 	}
-	return u.store.History(ctx, t.service.ID, t.environment, clampLimit(limit))
+	return u.store.History(ctx, t.service.ID, t.environment, 0, clampLimit(limit))
 }
 
 func clampLimit(limit int) int {

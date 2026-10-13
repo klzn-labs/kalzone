@@ -84,3 +84,40 @@ func Test_TouchAgentUpserts(t *testing.T) {
 	require.Len(t, agents, 1)
 	require.Equal(t, "b", agents[0].Version)
 }
+
+func Test_HistoryContinuesBelowANumber(t *testing.T) {
+	repo := mysql.NewDeploymentRepository(testdb.Open(t))
+	now := time.Now().UTC()
+	for _, id := range []string{"d1", "d2", "d3"} {
+		_, err := repo.Create(ctx, deployment(id, "s1", "dev", entities.StatusSucceeded, now))
+		require.NoError(t, err)
+	}
+
+	first, err := repo.History(ctx, "s1", "dev", 0, 2)
+	require.NoError(t, err)
+	rest, err := repo.History(ctx, "s1", "dev", first[1].Number, 2)
+	require.NoError(t, err)
+
+	require.Equal(t, []int{3, 2}, []int{first[0].Number, first[1].Number})
+	require.Len(t, rest, 1)
+	require.Equal(t, 1, rest[0].Number)
+}
+
+func Test_EventsAfterReadsForwardAndCounts(t *testing.T) {
+	repo := mysql.NewDeploymentRepository(testdb.Open(t))
+	now := time.Now().UTC()
+	require.NoError(t, repo.AppendEvents(ctx, "d1", now, []string{"one", "two", "three"}))
+	require.NoError(t, repo.AppendEvents(ctx, "d2", now, []string{"other"}))
+
+	first, err := repo.EventsAfter(ctx, "d1", 0, 2)
+	require.NoError(t, err)
+	rest, err := repo.EventsAfter(ctx, "d1", first[1].ID, 2)
+	require.NoError(t, err)
+	total, err := repo.CountEvents(ctx, "d1")
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"one", "two"}, []string{first[0].Message, first[1].Message})
+	require.Len(t, rest, 1)
+	require.Equal(t, "three", rest[0].Message)
+	require.Equal(t, 3, total)
+}

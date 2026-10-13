@@ -75,8 +75,12 @@ func (r DeploymentRepository) FindByID(ctx context.Context, id string) (entities
 	return model.toEntity(), err
 }
 
-func (r DeploymentRepository) History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Deployment, error) {
-	return r.list(r.db.WithContext(ctx).Where("service_id = ? AND environment = ?", serviceID, environment).Order("number DESC").Limit(limit))
+func (r DeploymentRepository) History(ctx context.Context, serviceID, environment string, before, limit int) ([]entities.Deployment, error) {
+	tx := r.db.WithContext(ctx).Where("service_id = ? AND environment = ?", serviceID, environment)
+	if before > 0 {
+		tx = tx.Where("number < ?", before)
+	}
+	return r.list(tx.Order("number DESC").Limit(limit))
 }
 
 func (r DeploymentRepository) Active(ctx context.Context, serviceID, environment string) ([]entities.Deployment, error) {

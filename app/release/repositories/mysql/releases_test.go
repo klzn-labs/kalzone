@@ -31,7 +31,7 @@ func Test_Create_NumbersReleasesPerService(t *testing.T) {
 	b1, _ := repo.Create(ctx, requested("b1", "b", now))
 
 	require.Equal(t, []int{1, 2, 1}, []int{a1.Number, a2.Number, b1.Number})
-	list, err := repo.ListByService(ctx, "a", 10)
+	list, err := repo.ListByService(ctx, "a", 0, 10)
 	require.NoError(t, err)
 	require.Equal(t, "a2", list[0].ID)
 }
@@ -63,4 +63,22 @@ func Test_Unfinished_FindsOldPendingReleases(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, stale, 1)
 	require.Equal(t, "old", stale[0].ID)
+}
+
+func Test_ListByService_ContinuesBelowANumber(t *testing.T) {
+	repo := mysql.NewReleaseRepository(testdb.Open(t))
+	now := time.Now().UTC()
+	for _, id := range []string{"a1", "a2", "a3"} {
+		_, err := repo.Create(ctx, requested(id, "a", now))
+		require.NoError(t, err)
+	}
+
+	first, err := repo.ListByService(ctx, "a", 0, 2)
+	require.NoError(t, err)
+	rest, err := repo.ListByService(ctx, "a", first[1].Number, 2)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"a3", "a2"}, []string{first[0].ID, first[1].ID})
+	require.Len(t, rest, 1)
+	require.Equal(t, "a1", rest[0].ID)
 }

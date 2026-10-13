@@ -16,7 +16,7 @@ type Store interface {
 	Create(ctx context.Context, rel entities.Release) (entities.Release, error)
 	Transition(ctx context.Context, rel entities.Release, from entities.Status) error
 	FindByID(ctx context.Context, id string) (entities.Release, error)
-	ListByService(ctx context.Context, serviceID string, limit int) ([]entities.Release, error)
+	ListByService(ctx context.Context, serviceID string, before, limit int) ([]entities.Release, error)
 	Unfinished(ctx context.Context, createdBefore time.Time) ([]entities.Release, error)
 }
 
@@ -70,7 +70,7 @@ func (u ReleasesUsecase) List(ctx context.Context, serviceSlug string, limit int
 	if limit <= 0 || limit > 100 {
 		limit = 50
 	}
-	return u.store.ListByService(ctx, service.ID, limit)
+	return u.store.ListByService(ctx, service.ID, 0, limit)
 }
 
 func (u ReleasesUsecase) Get(ctx context.Context, id string) (entities.Release, error) {

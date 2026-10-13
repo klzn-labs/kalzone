@@ -109,23 +109,28 @@ func (r QueueRepository) All(ctx context.Context) ([]entities.Queue, error) {
 }
 
 func (r QueueRepository) Delete(ctx context.Context, queueID string, deletion entities.Command) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		for _, model := range []any{&publisherModel{}, &versionModel{}, &commandModel{}} {
-			if err := tx.Where("queue_id = ?", queueID).Delete(model).Error; err != nil {
-				return err
-			}
-		}
-		if err := tx.Delete(&queueModel{ID: queueID}).Error; err != nil {
-			return err
-		}
-		return tx.Create(ptr(fromCommand(deletion))).Error
-	})
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error { return removeQueue(tx, queueID, deletion) })
 }
 
-func (r QueueRepository) Versions(ctx context.Context, queueID string, limit int) ([]entities.Version, error) {
+func removeQueue(tx *gorm.DB, queueID string, deletion entities.Command) error {
+	for _, model := range []any{&publisherModel{}, &versionModel{}, &commandModel{}} {
+		if err := tx.Where("queue_id = ?", queueID).Delete(model).Error; err != nil {
+			return err
+		}
+	}
+	if err := tx.Delete(&queueModel{ID: queueID}).Error; err != nil {
+		return err
+	}
+	return tx.Create(ptr(fromCommand(deletion))).Error
+}
+
+func (r QueueRepository) Versions(ctx context.Context, queueID string, before, limit int) ([]entities.Version, error) {
 	var models []versionModel
-	err := r.db.WithContext(ctx).Where("queue_id = ?", queueID).Order("number DESC").Limit(limit).Find(&models).Error
-	if err != nil {
+	tx := r.db.WithContext(ctx).Where("queue_id = ?", queueID)
+	if before > 0 {
+		tx = tx.Where("number < ?", before)
+	}
+	if err := tx.Order("number DESC").Limit(limit).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	result := make([]entities.Version, 0, len(models))

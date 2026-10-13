@@ -26,6 +26,7 @@ type Filter struct {
 	TeamIDs     []string
 	Environment string
 	Before      *time.Time
+	BeforeID    string
 	Limit       int
 }
 
