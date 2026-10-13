@@ -18,6 +18,8 @@ type Store interface {
 	Active(ctx context.Context, serviceID, environment string) ([]entities.Deployment, error)
 	LatestSucceeded(ctx context.Context, serviceID, environment string) (entities.Deployment, bool, error)
 	Events(ctx context.Context, deploymentID string, limit int) ([]entities.Event, error)
+	EventsAfter(ctx context.Context, deploymentID string, after int64, limit int) ([]entities.Event, error)
+	CountEvents(ctx context.Context, deploymentID string) (int, error)
 }
 
 type ServiceLookup interface {

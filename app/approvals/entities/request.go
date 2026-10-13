@@ -18,6 +18,8 @@ const (
 	StatusExpired   Status = "expired"
 )
 
+var Statuses = []Status{StatusPending, StatusApproved, StatusExecuted, StatusFailed, StatusRejected, StatusCancelled, StatusExpired}
+
 const (
 	Lifetime       = 24 * time.Hour
 	ExecutionLimit = 10 * time.Minute

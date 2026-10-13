@@ -2,12 +2,14 @@ package mysql_test
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/adrianozp/platform/app/audit/entities"
 	"github.com/adrianozp/platform/app/audit/repositories/mysql"
 	"github.com/adrianozp/platform/internal/testdb"
+	"github.com/adrianozp/platform/pkg/page"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,4 +83,46 @@ func Test_List_ContinuesAfterEventsOfTheSameInstant(t *testing.T) {
 
 	require.Equal(t, []string{"e3", "e2"}, ids(first))
 	require.Equal(t, []string{"e1"}, ids(rest))
+}
+
+func Test_List_PagesAcrossEventsStoredInTheSameMillisecond(t *testing.T) {
+	ctx := context.Background()
+	repo := mysql.NewEventRepository(testdb.Open(t))
+	base := time.Date(2026, 10, 7, 0, 0, 1, 123000000, time.UTC)
+	offsets := map[string]time.Duration{"e0": -time.Millisecond, "e1": 400 * time.Microsecond, "e2": 100 * time.Microsecond, "e3": 300 * time.Microsecond}
+	for id, offset := range offsets {
+		e := event(id, 0, "t1", "s1", "dev")
+		e.At = base.Add(offset)
+		require.NoError(t, repo.Insert(ctx, e))
+	}
+
+	first, err := repo.List(ctx, entities.Filter{Limit: 2})
+	require.NoError(t, err)
+	next, err := page.Parse("2", page.Encode(page.TimeKey(first[1].At, first[1].ID)))
+	require.NoError(t, err)
+	before, beforeID, err := next.Time()
+	require.NoError(t, err)
+	rest, err := repo.List(ctx, entities.Filter{Before: before, BeforeID: beforeID, Limit: 3})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"e3", "e2"}, ids(first))
+	require.Equal(t, []string{"e1", "e0"}, ids(rest))
+}
+
+func Test_List_KeysetPagesStayWithinTheTeams(t *testing.T) {
+	ctx := context.Background()
+	repo := mysql.NewEventRepository(testdb.Open(t))
+	for i, team := range []string{"t1", "t2", "t1", "t2", "t1"} {
+		require.NoError(t, repo.Insert(ctx, event("e"+strconv.Itoa(i), 1, team, "s1", "dev")))
+	}
+	at := time.Date(2026, 10, 7, 0, 0, 1, 0, time.UTC)
+	teams := []string{"t1", "t3"}
+
+	first, err := repo.List(ctx, entities.Filter{TeamIDs: teams, Limit: 2})
+	require.NoError(t, err)
+	rest, err := repo.List(ctx, entities.Filter{TeamIDs: teams, Before: &at, BeforeID: first[1].ID, Limit: 5})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"e4", "e2"}, ids(first))
+	require.Equal(t, []string{"e0"}, ids(rest))
 }

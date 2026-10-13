@@ -13,14 +13,14 @@ type Services struct{}
 
 func (Services) FindService(_ context.Context, slug string) (entities.ServiceRef, error) {
 	if slug != API.Slug {
-		return entities.ServiceRef{}, apperror.NotFound("service not found")
+		return entities.ServiceRef{}, apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")
 	}
 	return API, nil
 }
 
 func (Services) FindServiceByID(_ context.Context, id string) (entities.ServiceRef, error) {
 	if id != API.ID {
-		return entities.ServiceRef{}, apperror.NotFound("service not found")
+		return entities.ServiceRef{}, apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")
 	}
 	return API, nil
 }

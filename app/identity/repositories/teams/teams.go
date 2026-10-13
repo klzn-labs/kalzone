@@ -24,6 +24,18 @@ func (l Lookup) IDBySlug(ctx context.Context, slug string) (string, error) {
 	return t.ID, err
 }
 
+func (l Lookup) SlugByID(ctx context.Context, ids []string) (map[string]string, error) {
+	found, err := l.teams.FindByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	slugs := make(map[string]string, len(found))
+	for _, t := range found {
+		slugs[t.ID] = t.Slug
+	}
+	return slugs, nil
+}
+
 func (l Lookup) SlugsByIDs(ctx context.Context, ids []string) ([]string, error) {
 	found, err := l.teams.FindByIDs(ctx, ids)
 	if err != nil {

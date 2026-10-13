@@ -19,9 +19,10 @@ const (
 )
 
 var (
-	errDeploymentNotFound = apperror.NotFound("deployment not found")
-	errDeploymentChanged  = apperror.Conflict("the deployment changed meanwhile, reload and try again")
-	activeStatuses        = []entities.Status{entities.StatusPending, entities.StatusInProgress}
+	errDeploymentNotFound = apperror.NotFound("deployment not found").
+				WithHint("list deployments with GET /api/v1/deployments?service=<slug>&env=<env>")
+	errDeploymentChanged = apperror.Conflict("the deployment changed meanwhile, reload and try again")
+	activeStatuses       = []entities.Status{entities.StatusPending, entities.StatusInProgress}
 )
 
 type DeploymentRepository struct {

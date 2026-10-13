@@ -26,10 +26,13 @@ const (
 )
 
 type AppError struct {
-	Code          Code   `json:"code"`
-	Message       string `json:"message"`
-	RequiredScope string `json:"required_scope,omitempty"`
-	Team          string `json:"team,omitempty"`
+	Code          Code           `json:"code"`
+	Message       string         `json:"message"`
+	Hint          string         `json:"hint,omitempty"`
+	Field         string         `json:"field,omitempty"`
+	Details       map[string]any `json:"details,omitempty"`
+	RequiredScope string         `json:"required_scope,omitempty"`
+	Team          string         `json:"team,omitempty"`
 }
 
 func New(code Code, message string) *AppError {
@@ -38,6 +41,24 @@ func New(code Code, message string) *AppError {
 
 func (e *AppError) Error() string {
 	return e.Message
+}
+
+func (e *AppError) WithHint(hint string) *AppError {
+	copied := *e
+	copied.Hint = hint
+	return &copied
+}
+
+func (e *AppError) WithField(field string) *AppError {
+	copied := *e
+	copied.Field = field
+	return &copied
+}
+
+func (e *AppError) WithDetails(details map[string]any) *AppError {
+	copied := *e
+	copied.Details = details
+	return &copied
 }
 
 func (e *AppError) Is(target error) bool {
@@ -69,11 +90,17 @@ func Forbidden(message string) *AppError {
 }
 
 func MissingScope(scopeName string) *AppError {
-	return &AppError{Code: CodeMissingScope, Message: "this token lacks " + scopeName, RequiredScope: scopeName}
+	return &AppError{
+		Code: CodeMissingScope, Message: "this token lacks " + scopeName, RequiredScope: scopeName,
+		Hint: "ask the token's owner for a token with the " + scopeName + " scope",
+	}
 }
 
 func TeamNotGranted(teamID string) *AppError {
-	return &AppError{Code: CodeTeamNotGranted, Message: "this token is not granted team " + teamID, Team: teamID}
+	return &AppError{
+		Code: CodeTeamNotGranted, Message: "this token is not granted team " + teamID, Team: teamID,
+		Hint: "this token is limited to other teams; ask for a token granted this team",
+	}
 }
 
 func CodeOf(err error) Code {

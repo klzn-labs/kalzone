@@ -31,8 +31,15 @@ func (s *store) Latest(_ context.Context, serviceID, env string) (entities.Revis
 	return entities.Revision{}, false, nil
 }
 
-func (s *store) History(context.Context, string, string, int, int) ([]entities.Revision, error) {
-	return s.revisions, nil
+func (s *store) History(_ context.Context, serviceID, env string, before, limit int) ([]entities.Revision, error) {
+	result := []entities.Revision{}
+	for i := len(s.revisions) - 1; i >= 0 && len(result) < limit; i-- {
+		r := s.revisions[i]
+		if r.ServiceID == serviceID && r.Environment == env && (before == 0 || r.Number < before) {
+			result = append(result, r)
+		}
+	}
+	return result, nil
 }
 
 func (s *store) Insert(_ context.Context, rev entities.Revision) error {

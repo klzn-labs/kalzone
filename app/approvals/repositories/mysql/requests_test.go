@@ -10,6 +10,7 @@ import (
 	"github.com/adrianozp/platform/internal/testdb"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/page"
 	"github.com/stretchr/testify/require"
 )
 
@@ -114,6 +115,64 @@ func Test_Requests_ListContinuesAfterACreationTimeAndID(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"c3", "c2"}, []string{first[0].ID, first[1].ID})
+	require.Len(t, rest, 1)
+	require.Equal(t, "c1", rest[0].ID)
+}
+
+func createdAt(id string, at time.Time) entities.Request {
+	r := request(id, "t1", "deploy")
+	r.CreatedAt, r.ExpiresAt = at, at.Add(entities.Lifetime)
+	return r
+}
+
+func Test_Requests_PagesAcrossRequestsStoredInTheSameMillisecond(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	base := created.Add(123 * time.Millisecond)
+	offsets := map[string]time.Duration{"c0": -time.Millisecond, "c1": 400 * time.Microsecond, "c2": 100 * time.Microsecond, "c3": 300 * time.Microsecond}
+	for id, offset := range offsets {
+		require.NoError(t, repo.Create(ctx, createdAt(id, base.Add(offset))))
+	}
+
+	first, err := repo.List(ctx, entities.Filter{Limit: 2})
+	require.NoError(t, err)
+	next, err := page.Parse("2", page.Encode(page.TimeKey(first[1].CreatedAt, first[1].ID)))
+	require.NoError(t, err)
+	before, beforeID, err := next.Time()
+	require.NoError(t, err)
+	rest, err := repo.List(ctx, entities.Filter{Before: before, BeforeID: beforeID, Limit: 3})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"c3", "c2"}, []string{first[0].ID, first[1].ID})
+	require.Equal(t, []string{"c1", "c0"}, []string{rest[0].ID, rest[1].ID})
+}
+
+func Test_Requests_ListBeforeAnInstantWithoutAnID(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	require.NoError(t, repo.Create(ctx, createdAt("c1", created)))
+	require.NoError(t, repo.Create(ctx, createdAt("c2", created.Add(time.Second))))
+	require.NoError(t, repo.Create(ctx, createdAt("c3", created.Add(time.Second))))
+	instant := created.Add(time.Second)
+
+	older, err := repo.List(ctx, entities.Filter{Before: &instant, Limit: 10})
+
+	require.NoError(t, err)
+	require.Len(t, older, 1)
+	require.Equal(t, "c1", older[0].ID)
+}
+
+func Test_Requests_KeysetPagesStayWithinTheTeams(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	for _, r := range []entities.Request{request("c1", "t1", "deploy"), request("c2", "t2", "deploy"), request("c3", "t1", "deploy"), request("c4", "t2", "deploy"), request("c5", "t1", "deploy")} {
+		require.NoError(t, repo.Create(ctx, r))
+	}
+	teams := []string{"t1", "t3"}
+
+	first, err := repo.List(ctx, entities.Filter{TeamIDs: teams, Limit: 2})
+	require.NoError(t, err)
+	rest, err := repo.List(ctx, entities.Filter{TeamIDs: teams, Before: &first[1].CreatedAt, BeforeID: first[1].ID, Limit: 5})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"c5", "c3"}, []string{first[0].ID, first[1].ID})
 	require.Len(t, rest, 1)
 	require.Equal(t, "c1", rest[0].ID)
 }

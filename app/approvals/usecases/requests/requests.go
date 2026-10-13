@@ -3,6 +3,7 @@ package requests
 import (
 	"context"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/adrianozp/platform/app/approvals/entities"
@@ -11,6 +12,7 @@ import (
 	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/events"
+	"github.com/adrianozp/platform/pkg/page"
 )
 
 type Store interface {
@@ -42,7 +44,9 @@ type Publisher interface {
 const listLimit = 100
 
 var (
-	errNotVisible = apperror.NotFound("change request not found")
+	errNotVisible = apperror.NotFound("change request not found").WithHint("list change requests with GET /api/v1/requests")
+	errStatus     = apperror.Invalid("unknown status").WithField("status").
+			WithHint("send one of " + statusList() + ", or leave status out")
 	errNotPending = apperror.Conflict("this request was already decided")
 	errExpired    = apperror.Conflict("this request expired, ask for a new one")
 	errNotYours   = apperror.Forbidden("only the person who asked can cancel a request, approvers reject it")
@@ -77,6 +81,39 @@ func (u RequestsUsecase) List(ctx context.Context, a actor.Actor, status entitie
 		return []entities.Request{}, nil
 	}
 	return u.store.List(ctx, entities.Filter{Status: status, TeamIDs: a.Token.TeamIDs, Limit: listLimit})
+}
+
+func (u RequestsUsecase) PageFor(ctx context.Context, a actor.Actor, status string, p page.Request) (page.Page[entities.Request], error) {
+	filter, err := filterOf(a, status, p)
+	if err != nil {
+		return page.Page[entities.Request]{}, err
+	}
+	if a.ViaToken() && len(a.Token.TeamIDs) == 0 {
+		return page.Page[entities.Request]{Items: []entities.Request{}}, nil
+	}
+	list, err := u.store.List(ctx, filter)
+	return page.Cut(list, p, requestKey), err
+}
+
+func filterOf(a actor.Actor, status string, p page.Request) (entities.Filter, error) {
+	if status != "" && !slices.Contains(entities.Statuses, entities.Status(status)) {
+		return entities.Filter{}, errStatus
+	}
+	before, beforeID, err := p.Time()
+	filter := entities.Filter{Status: entities.Status(status), TeamIDs: a.Token.TeamIDs, Before: before, BeforeID: beforeID, Limit: p.Fetch()}
+	return filter, err
+}
+
+func statusList() string {
+	names := make([]string, 0, len(entities.Statuses))
+	for _, s := range entities.Statuses {
+		names = append(names, string(s))
+	}
+	return strings.Join(names, ", ")
+}
+
+func requestKey(r entities.Request) string {
+	return page.TimeKey(r.CreatedAt, r.ID)
 }
 
 func (u RequestsUsecase) Awaiting(ctx context.Context, a actor.Actor) ([]entities.Request, error) {

@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var errEnvironmentNotFound = apperror.NotFound("environment not found")
+var errEnvironmentNotFound = apperror.NotFound("environment not found").WithHint("list environments with GET /api/v1/environments")
 
 type EnvironmentRepository struct {
 	db *gorm.DB

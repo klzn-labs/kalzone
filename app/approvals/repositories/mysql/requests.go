@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	errRequestNotFound = apperror.NotFound("change request not found")
+	errRequestNotFound = apperror.NotFound("change request not found").WithHint("list change requests with GET /api/v1/requests")
 	errRequestChanged  = apperror.Conflict("this request was already decided")
 )
 
@@ -49,8 +49,11 @@ func (r RequestRepository) List(ctx context.Context, f entities.Filter) ([]entit
 }
 
 func before(tx *gorm.DB, f entities.Filter) *gorm.DB {
-	if f.Before == nil {
+	switch {
+	case f.Before == nil:
 		return tx
+	case f.BeforeID == "":
+		return tx.Where("created_at < ?", *f.Before)
 	}
 	return tx.Where("created_at < ? OR (created_at = ? AND id < ?)", *f.Before, *f.Before, f.BeforeID)
 }
