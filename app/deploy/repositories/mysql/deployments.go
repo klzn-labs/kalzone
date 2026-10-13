@@ -49,8 +49,12 @@ func (r DeploymentRepository) Create(ctx context.Context, d entities.Deployment)
 }
 
 func (r DeploymentRepository) nextNumber(ctx context.Context, serviceID, environment string) (int, error) {
+	return nextNumberIn(r.db.WithContext(ctx), serviceID, environment)
+}
+
+func nextNumberIn(tx *gorm.DB, serviceID, environment string) (int, error) {
 	var highest *int
-	err := r.db.WithContext(ctx).Model(&deployment{}).Where("service_id = ? AND environment = ?", serviceID, environment).
+	err := tx.Model(&deployment{}).Where("service_id = ? AND environment = ?", serviceID, environment).
 		Select("MAX(number)").Scan(&highest).Error
 	if err != nil || highest == nil {
 		return 1, err

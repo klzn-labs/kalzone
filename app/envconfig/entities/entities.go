@@ -93,3 +93,19 @@ type Resolved struct {
 	Revision Revision
 	Secrets  map[string]string
 }
+
+type MatchKind string
+
+const (
+	MatchEnv    MatchKind = "env"
+	MatchSecret MatchKind = "secret"
+)
+
+type Match struct {
+	ServiceID   string
+	ServiceSlug string
+	Environment string
+	Revision    int
+	Kind        MatchKind
+	Value       string
+}
