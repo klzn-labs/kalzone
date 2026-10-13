@@ -42,7 +42,7 @@ func (s *Store) FindByID(_ context.Context, id string) (entities.Deployment, err
 	return d, nil
 }
 
-func (s *Store) History(_ context.Context, serviceID, env string, _ int) ([]entities.Deployment, error) {
+func (s *Store) History(_ context.Context, serviceID, env string, _, _ int) ([]entities.Deployment, error) {
 	return s.matching(func(d entities.Deployment) bool { return d.ServiceID == serviceID && d.Environment == env }), nil
 }
 

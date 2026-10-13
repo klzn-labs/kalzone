@@ -77,7 +77,7 @@ func (s *store) Delete(_ context.Context, id string, deletion entities.Command) 
 	return nil
 }
 
-func (s *store) Versions(context.Context, string, int) ([]entities.Version, error) {
+func (s *store) Versions(context.Context, string, int, int) ([]entities.Version, error) {
 	return s.versions, nil
 }
 

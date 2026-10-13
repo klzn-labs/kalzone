@@ -55,6 +55,10 @@ type deploymentEvent struct {
 
 func (deploymentEvent) TableName() string { return "deployment_events" }
 
+func (m deploymentEvent) toEntity() entities.Event {
+	return entities.Event{ID: m.ID, DeploymentID: m.DeploymentID, At: m.At, Message: m.Message}
+}
+
 type agent struct {
 	Name       string `gorm:"primaryKey"`
 	Version    string

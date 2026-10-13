@@ -66,12 +66,16 @@ func Test_InsertVersion_UpdatesTheQueueAndKeepsHistory(t *testing.T) {
 	require.NoError(t, repo.InsertVersion(ctx, q, entities.Version{QueueID: "q1", Number: 2, Settings: q.Settings, AuthorID: "ana", CreatedAt: at}))
 
 	got, _ := repo.Get(ctx, "prod", "place-import")
-	history, err := repo.Versions(ctx, "q1", 10)
+	history, err := repo.Versions(ctx, "q1", 0, 10)
 	require.NoError(t, err)
 	require.Equal(t, 9, got.Settings.MaxAttempts)
 	require.Equal(t, []string{"consumer"}, got.Publishers)
 	require.Len(t, history, 2)
 	require.Equal(t, 2, history[0].Number)
+	older, err := repo.Versions(ctx, "q1", 2, 10)
+	require.NoError(t, err)
+	require.Len(t, older, 1)
+	require.Equal(t, 1, older[0].Number)
 }
 
 func Test_InsertVersion_SameNumberTwiceIsAConflict(t *testing.T) {
@@ -120,7 +124,7 @@ func Test_Delete_RemovesTheQueueAndLeavesOnlyTheDeleteCommand(t *testing.T) {
 
 	_, err := repo.Get(ctx, "prod", "place-import")
 	pending, _ := repo.PendingCommands(ctx)
-	versions, _ := repo.Versions(ctx, "q1", 10)
+	versions, _ := repo.Versions(ctx, "q1", 0, 10)
 	require.ErrorIs(t, err, apperror.NotFound(""))
 	require.Len(t, pending, 1)
 	require.Equal(t, "c2", pending[0].ID)

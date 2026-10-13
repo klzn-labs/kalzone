@@ -101,3 +101,19 @@ func Test_Requests_OverdueAreExpiredPendingAndStuckApproved(t *testing.T) {
 	require.Len(t, overdue, 2)
 	require.Equal(t, []string{"c1", "c2"}, []string{overdue[0].ID, overdue[1].ID})
 }
+
+func Test_Requests_ListContinuesAfterACreationTimeAndID(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	for _, id := range []string{"c1", "c2", "c3"} {
+		require.NoError(t, repo.Create(ctx, request(id, "t1", "deploy")))
+	}
+
+	first, err := repo.List(ctx, entities.Filter{Limit: 2})
+	require.NoError(t, err)
+	rest, err := repo.List(ctx, entities.Filter{Before: &first[1].CreatedAt, BeforeID: first[1].ID, Limit: 2})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"c3", "c2"}, []string{first[0].ID, first[1].ID})
+	require.Len(t, rest, 1)
+	require.Equal(t, "c1", rest[0].ID)
+}

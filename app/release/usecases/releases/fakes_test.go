@@ -39,7 +39,7 @@ func (s *store) FindByID(_ context.Context, id string) (entities.Release, error)
 	return rel, nil
 }
 
-func (s *store) ListByService(context.Context, string, int) ([]entities.Release, error) {
+func (s *store) ListByService(context.Context, string, int, int) ([]entities.Release, error) {
 	return nil, nil
 }
 

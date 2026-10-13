@@ -14,7 +14,7 @@ type Store interface {
 	Create(ctx context.Context, d entities.Deployment) (entities.Deployment, error)
 	Transition(ctx context.Context, d entities.Deployment, from entities.Status) error
 	FindByID(ctx context.Context, id string) (entities.Deployment, error)
-	History(ctx context.Context, serviceID, environment string, limit int) ([]entities.Deployment, error)
+	History(ctx context.Context, serviceID, environment string, before, limit int) ([]entities.Deployment, error)
 	Active(ctx context.Context, serviceID, environment string) ([]entities.Deployment, error)
 	LatestSucceeded(ctx context.Context, serviceID, environment string) (entities.Deployment, bool, error)
 	Events(ctx context.Context, deploymentID string, limit int) ([]entities.Event, error)
@@ -75,7 +75,7 @@ func (u DeploymentsUsecase) History(ctx context.Context, serviceSlug, environmen
 	if limit <= 0 || limit > 100 {
 		limit = 30
 	}
-	return u.store.History(ctx, service.ID, environment, limit)
+	return u.store.History(ctx, service.ID, environment, 0, limit)
 }
 
 func (u DeploymentsUsecase) Live(ctx context.Context, serviceSlug, environment string) (entities.Deployment, bool, error) {

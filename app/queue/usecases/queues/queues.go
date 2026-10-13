@@ -24,7 +24,7 @@ type Store interface {
 	Get(ctx context.Context, environment, name string) (entities.Queue, error)
 	List(ctx context.Context, environment, teamID string) ([]entities.Queue, error)
 	Delete(ctx context.Context, queueID string, deletion entities.Command) error
-	Versions(ctx context.Context, queueID string, limit int) ([]entities.Version, error)
+	Versions(ctx context.Context, queueID string, before, limit int) ([]entities.Version, error)
 	AddCommand(ctx context.Context, c entities.Command) error
 }
 
@@ -95,7 +95,7 @@ func (u QueuesUsecase) Versions(ctx context.Context, environment, name string) (
 	if err != nil {
 		return nil, err
 	}
-	return u.store.Versions(ctx, q.ID, 50)
+	return u.store.Versions(ctx, q.ID, 0, 50)
 }
 
 func (u QueuesUsecase) Stats(ctx context.Context, environment, name string) (entities.Stats, bool, error) {

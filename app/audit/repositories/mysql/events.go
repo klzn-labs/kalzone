@@ -49,10 +49,17 @@ func filtered(tx *gorm.DB, f entities.Filter) *gorm.DB {
 	if len(f.TeamIDs) > 0 {
 		tx = tx.Where("team_id IN ?", f.TeamIDs)
 	}
-	if f.Before != nil {
-		tx = tx.Where("at < ?", *f.Before)
+	return before(tx, f)
+}
+
+func before(tx *gorm.DB, f entities.Filter) *gorm.DB {
+	switch {
+	case f.Before == nil:
+		return tx
+	case f.BeforeID == "":
+		return tx.Where("at < ?", *f.Before)
 	}
-	return tx
+	return tx.Where("at < ? OR (at = ? AND id < ?)", *f.Before, *f.Before, f.BeforeID)
 }
 
 func whereSet(tx *gorm.DB, query, value string) *gorm.DB {

@@ -31,7 +31,7 @@ func (s *store) Latest(_ context.Context, serviceID, env string) (entities.Revis
 	return entities.Revision{}, false, nil
 }
 
-func (s *store) History(context.Context, string, string, int) ([]entities.Revision, error) {
+func (s *store) History(context.Context, string, string, int, int) ([]entities.Revision, error) {
 	return s.revisions, nil
 }
 

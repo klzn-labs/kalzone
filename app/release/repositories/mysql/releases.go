@@ -74,8 +74,15 @@ func (r ReleaseRepository) FindByID(ctx context.Context, id string) (entities.Re
 	return model.toEntity(), err
 }
 
-func (r ReleaseRepository) ListByService(ctx context.Context, serviceID string, limit int) ([]entities.Release, error) {
-	return r.list(r.db.WithContext(ctx).Where("service_id = ?", serviceID).Order("number DESC").Limit(limit))
+func (r ReleaseRepository) ListByService(ctx context.Context, serviceID string, before, limit int) ([]entities.Release, error) {
+	return r.list(belowNumber(r.db.WithContext(ctx).Where("service_id = ?", serviceID), before).Order("number DESC").Limit(limit))
+}
+
+func belowNumber(tx *gorm.DB, before int) *gorm.DB {
+	if before <= 0 {
+		return tx
+	}
+	return tx.Where("number < ?", before)
 }
 
 func (r ReleaseRepository) Unfinished(ctx context.Context, createdBefore time.Time) ([]entities.Release, error) {

@@ -45,7 +45,14 @@ func (r RequestRepository) List(ctx context.Context, f entities.Filter) ([]entit
 	if len(f.TeamIDs) > 0 {
 		tx = tx.Where("team_id IN ?", f.TeamIDs)
 	}
-	return find(tx.Order("created_at DESC, id").Limit(f.Limit))
+	return find(before(tx, f).Order("created_at DESC, id DESC").Limit(f.Limit))
+}
+
+func before(tx *gorm.DB, f entities.Filter) *gorm.DB {
+	if f.Before == nil {
+		return tx
+	}
+	return tx.Where("created_at < ? OR (created_at = ? AND id < ?)", *f.Before, *f.Before, f.BeforeID)
 }
 
 func (r RequestRepository) PendingFor(ctx context.Context, serviceID, environment, subject string) ([]entities.Request, error) {

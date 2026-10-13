@@ -2,6 +2,7 @@ package mysql_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -112,4 +113,20 @@ func Test_ByNumber(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "a.kalz.one", first.Spec.Host)
 	require.ErrorIs(t, missing, apperror.NotFound(""))
+}
+
+func Test_History_ContinuesBelowANumber(t *testing.T) {
+	repo := mysql.NewConfigRepository(testdb.Open(t))
+	for number := 1; number <= 3; number++ {
+		require.NoError(t, repo.Insert(ctx, revision(fmt.Sprintf("r%d", number), "svc", "dev", number, "")))
+	}
+
+	first, err := repo.History(ctx, "svc", "dev", 0, 2)
+	require.NoError(t, err)
+	rest, err := repo.History(ctx, "svc", "dev", first[1].Number, 2)
+	require.NoError(t, err)
+
+	require.Equal(t, []int{3, 2}, []int{first[0].Number, first[1].Number})
+	require.Len(t, rest, 1)
+	require.Equal(t, 1, rest[0].Number)
 }

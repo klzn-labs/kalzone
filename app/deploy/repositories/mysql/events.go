@@ -27,9 +27,25 @@ func (r DeploymentRepository) Events(ctx context.Context, deploymentID string, l
 	}
 	result := make([]entities.Event, len(models))
 	for i, m := range models {
-		result[len(models)-1-i] = entities.Event{ID: m.ID, DeploymentID: m.DeploymentID, At: m.At, Message: m.Message}
+		result[len(models)-1-i] = m.toEntity()
 	}
 	return result, nil
+}
+
+func (r DeploymentRepository) EventsAfter(ctx context.Context, deploymentID string, after int64, limit int) ([]entities.Event, error) {
+	var models []deploymentEvent
+	err := r.db.WithContext(ctx).Where("deployment_id = ? AND id > ?", deploymentID, after).Order("id").Limit(limit).Find(&models).Error
+	result := make([]entities.Event, 0, len(models))
+	for _, m := range models {
+		result = append(result, m.toEntity())
+	}
+	return result, err
+}
+
+func (r DeploymentRepository) CountEvents(ctx context.Context, deploymentID string) (int, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&deploymentEvent{}).Where("deployment_id = ?", deploymentID).Count(&count).Error
+	return int(count), err
 }
 
 func (r DeploymentRepository) TouchAgent(ctx context.Context, a entities.Agent) error {
