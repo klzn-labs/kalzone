@@ -11,6 +11,7 @@ import (
 
 	"github.com/adrianozp/platform/app/release/repositories/registry"
 	"github.com/adrianozp/platform/cmd/controlplane/options"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/fakegithub"
 	"github.com/adrianozp/platform/internal/fakegrafana"
 	"github.com/adrianozp/platform/internal/fakeoidc"
@@ -38,7 +39,9 @@ type Suite struct {
 	Registry *fakeregistry.Registry
 	Grafana  *fakegrafana.Grafana
 	Engine   *gin.Engine
+	Catalog  *apispec.Catalog
 	db       *gorm.DB
+	contract *contract
 	nextID   int64
 }
 
@@ -52,9 +55,10 @@ func NewSuite(t *testing.T) *Suite {
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
 		fx.Decorate(func(config.Config) config.Config { return testConfig(t, s) }),
 		fx.Decorate(func(registry.Resolver) registry.Resolver { return registry.WithBaseURL(s.Registry.URL) }),
-		fx.Populate(&s.Engine, &s.db),
+		fx.Populate(&s.Engine, &s.db, &s.Catalog),
 	)
 	app.RequireStart()
+	s.contract = loadContract(t, s.Catalog)
 	s.Server = httptest.NewServer(s.Engine)
 	t.Cleanup(func() { s.close(app) })
 	return s

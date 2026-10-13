@@ -77,6 +77,18 @@ func Test_AnEditBasedOnAnOlderVersionIsAConflict(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, missing.Status, missing.Body)
 }
 
+type queueStats struct {
+	Depth int64 `json:"depth"`
+	Fresh bool  `json:"fresh"`
+}
+
+func devQueueStats(t *testing.T, c *integration.Client) queueStats {
+	t.Helper()
+	var stats queueStats
+	c.MustJSON(t, http.MethodGet, "/api/v1/queues/dev/place-import/stats", nil, http.StatusOK, &stats)
+	return stats
+}
+
 func Test_TheGatewaySeesDesiredQueuesAndReportsStats(t *testing.T) {
 	s, p := setupQueue(t)
 	empty := s.Queued(t, http.MethodGet, "/queued/v1/desired", nil)
@@ -85,11 +97,7 @@ func Test_TheGatewaySeesDesiredQueuesAndReportsStats(t *testing.T) {
 	desired := s.Queued(t, http.MethodGet, "/queued/v1/desired", nil)
 	reported := s.Queued(t, http.MethodPost, "/queued/v1/stats", map[string]any{"stats": []map[string]any{{"queue_id": q.ID, "depth": 7}}})
 	anonymous := s.Raw(t, http.MethodGet, "/queued/v1/desired", nil, nil)
-	var stats struct {
-		Stats struct{ Depth int64 } `json:"stats"`
-		Fresh bool                  `json:"fresh"`
-	}
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/queues/dev/place-import/stats", nil, http.StatusOK, &stats)
+	stats := devQueueStats(t, p.eve)
 
 	require.Equal(t, http.StatusOK, empty.Status, empty.Body)
 	require.Contains(t, empty.Body, `"queues":[]`)
@@ -97,7 +105,7 @@ func Test_TheGatewaySeesDesiredQueuesAndReportsStats(t *testing.T) {
 	require.Contains(t, desired.Body, `"signing_key":"`)
 	require.Equal(t, http.StatusNoContent, reported.Status, reported.Body)
 	require.Equal(t, http.StatusUnauthorized, anonymous.Status)
-	require.EqualValues(t, 7, stats.Stats.Depth)
+	require.EqualValues(t, 7, stats.Depth)
 	require.True(t, stats.Fresh)
 }
 

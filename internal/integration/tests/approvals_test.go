@@ -57,7 +57,7 @@ func Test_AnAgentsProdDeployWaitsForAHuman(t *testing.T) {
 	releaseID := builtRelease(t, s, p)
 	agent := prodAgent(t, s, p)
 
-	pending := ask(t, agent, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "prod", "release_id": releaseID})
+	pending := ask(t, agent, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "prod", "release": releaseID})
 	before := poll(t, agent, pending)
 	approved := decide(t, p.mia, pending, "approve", url.Values{})
 	after := poll(t, agent, pending)
@@ -75,7 +75,7 @@ type detailedEvents struct {
 	Events []struct {
 		Action  string         `json:"action"`
 		Details map[string]any `json:"details"`
-	} `json:"events"`
+	} `json:"items"`
 }
 
 func approvalOf(t *testing.T, c *integration.Client, action string) map[string]any {
@@ -169,7 +169,7 @@ func Test_ANewerRequestSupersedesTheOlderOne(t *testing.T) {
 	s, p := setupPlaces(t)
 	releaseID := builtRelease(t, s, p)
 	agent := prodAgent(t, s, p)
-	deploy := map[string]string{"service": "places-api", "environment": "prod", "release_id": releaseID}
+	deploy := map[string]string{"service": "places-api", "environment": "prod", "release": releaseID}
 
 	first := ask(t, agent, http.MethodPost, "/api/v1/deployments", deploy)
 	second := ask(t, agent, http.MethodPost, "/api/v1/deployments", deploy)

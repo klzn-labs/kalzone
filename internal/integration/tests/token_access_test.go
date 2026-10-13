@@ -16,12 +16,12 @@ type auditEvents struct {
 		Actor      string `json:"actor"`
 		Token      string `json:"token"`
 		TargetName string `json:"target_name"`
-	} `json:"events"`
+	} `json:"items"`
 }
 
 func deployVia(t *testing.T, c *integration.Client, releaseID, env string) integration.Response {
 	t.Helper()
-	return c.Do(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": env, "release_id": releaseID})
+	return c.Do(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": env, "release": releaseID})
 }
 
 func agentFor(t *testing.T, s *integration.Suite, owner *integration.Client, body map[string]any) *integration.Client {
@@ -111,7 +111,7 @@ func Test_ScopeTeamAndRoleRefusalsAreDistinct(t *testing.T) {
 type serviceList struct {
 	Services []struct {
 		Slug string `json:"slug"`
-	} `json:"services"`
+	} `json:"items"`
 }
 
 func Test_ReadsOutsideTheTokensTeamsAreHidden(t *testing.T) {
@@ -237,5 +237,5 @@ func Test_QueuesOutsideTheTokensTeamsAreHidden(t *testing.T) {
 }
 
 type queueList struct {
-	Queues []queueDTO `json:"queues"`
+	Queues []queueDTO `json:"items"`
 }

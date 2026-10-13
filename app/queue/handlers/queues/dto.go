@@ -51,16 +51,28 @@ type createDTO struct {
 	Environment string       `json:"environment" binding:"required"`
 	Consumer    string       `json:"consumer" binding:"required"`
 	Path        string       `json:"path" binding:"required"`
-	Settings    *settingsDTO `json:"settings"`
-	Publishers  []string     `json:"publishers"`
-	Message     string       `json:"message"`
+	Settings    *settingsDTO `json:"settings,omitempty" description:"initial settings; its path is ignored on create, the top-level path wins"`
+	Publishers  []string     `json:"publishers,omitempty"`
+	Message     string       `json:"message,omitempty"`
 }
 
 type changeDTO struct {
-	Settings   *settingsDTO `json:"settings"`
-	Publishers *[]string    `json:"publishers"`
-	Message    string       `json:"message"`
-	Version    int          `json:"version" binding:"required"`
+	Settings   *settingsDTO `json:"settings,omitempty"`
+	Publishers *[]string    `json:"publishers,omitempty"`
+	Message    string       `json:"message,omitempty"`
+	Version    int          `json:"version" binding:"required" description:"the version you are changing from"`
+}
+
+type statsDTO struct {
+	entities.Stats
+	Fresh bool `json:"fresh"`
+}
+
+func toStatsDTO(s entities.Stats, fresh bool) statsDTO {
+	if s.NewestDead == nil {
+		s.NewestDead = []entities.DeadLetter{}
+	}
+	return statsDTO{Stats: s, Fresh: fresh}
 }
 
 func fromSettings(s entities.Settings) settingsDTO {

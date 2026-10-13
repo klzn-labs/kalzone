@@ -3,6 +3,7 @@ package me
 import (
 	"net/http"
 
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/gin-gonic/gin"
@@ -23,5 +24,8 @@ func Me(c *gin.Context) {
 }
 
 func RegisterMeRoutes(api httpserver.API) {
-	api.GET("/me", Me)
+	api.Handle(apispec.Operation{
+		ID: "getMe", Method: http.MethodGet, Path: "/me", Summary: "The signed-in person and the CSRF token their writes need",
+		Status: http.StatusOK, Response: response{}, Handler: Me,
+	})
 }

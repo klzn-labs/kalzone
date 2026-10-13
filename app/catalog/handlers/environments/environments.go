@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/internal/httperror"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httpserver"
+	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,19 +29,21 @@ type environmentDTO struct {
 	Protected bool   `json:"protected"`
 }
 
+func toDTO(e entities.Environment) environmentDTO {
+	return environmentDTO{Slug: e.Slug, Name: e.Name, Protected: e.Protected}
+}
+
+func environmentKey(e entities.Environment) string {
+	return e.Slug
+}
+
 func (h EnvironmentsHandler) List(c *gin.Context) {
-	list, err := h.environments.List(c.Request.Context())
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	result := make([]environmentDTO, 0, len(list))
-	for _, e := range list {
-		result = append(result, environmentDTO{Slug: e.Slug, Name: e.Name, Protected: e.Protected})
-	}
-	c.JSON(http.StatusOK, gin.H{"environments": result})
+	apispec.RespondWindow(c, func() ([]entities.Environment, error) { return h.environments.List(c.Request.Context()) }, environmentKey, toDTO)
 }
 
 func RegisterEnvironmentsRoutes(api httpserver.API, h EnvironmentsHandler) {
-	api.GET("/environments", h.List)
+	api.Handle(apispec.Operation{
+		ID: "listEnvironments", Method: http.MethodGet, Path: "/environments", Summary: "List environments in promotion order; protected ones need approval for agents",
+		Scope: scope.Read, Params: apispec.ListParams{}, Status: http.StatusOK, Response: apispec.Page[environmentDTO]{}, Handler: h.List,
+	})
 }

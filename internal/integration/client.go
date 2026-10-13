@@ -26,6 +26,7 @@ type Response struct {
 	Body         string
 	Location     string
 	CacheControl string
+	Header       http.Header
 }
 
 func (s *Suite) Anonymous(t *testing.T) *Client {
@@ -84,12 +85,22 @@ func (c *Client) Do(t *testing.T, method, path string, body any) Response {
 	if c.bearer != "" {
 		req.Header.Set("Authorization", "Bearer "+c.bearer)
 	}
-	resp, err := c.http.Do(req)
+	response := send(t, c.http, req)
+	c.suite.contract.check(t, req, response)
+	return response
+}
+
+func send(t *testing.T, client *http.Client, req *http.Request) Response {
+	t.Helper()
+	resp, err := client.Do(req)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
-	return Response{Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location"), CacheControl: resp.Header.Get("Cache-Control")}
+	return Response{
+		Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location"),
+		CacheControl: resp.Header.Get("Cache-Control"), Header: resp.Header,
+	}
 }
 
 func (c *Client) MustJSON(t *testing.T, method, path string, body any, status int, out any) Response {
@@ -136,12 +147,9 @@ func (s *Suite) Raw(t *testing.T, method, path string, body []byte, headers map[
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
-	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-	defer resp.Body.Close()
-	raw, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-	return Response{Status: resp.StatusCode, Body: string(raw)}
+	response := send(t, http.DefaultClient, req)
+	s.contract.check(t, req, response)
+	return response
 }
 
 func (s *Suite) Agent(t *testing.T, method, path string, body any) Response {

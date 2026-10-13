@@ -36,7 +36,7 @@ func realAgent(s *integration.Suite, runtime agent.Runtime) agent.Agent {
 func Test_TheAgentDeploysAndThenHealsDrift(t *testing.T) {
 	s, p := setupPlaces(t)
 	releaseID := builtRelease(t, s, p)
-	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release_id": releaseID}, http.StatusAccepted, nil)
+	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release": releaseID}, http.StatusAccepted, nil)
 	runtime := &recordingRuntime{}
 	a := realAgent(s, runtime)
 
@@ -46,7 +46,7 @@ func Test_TheAgentDeploysAndThenHealsDrift(t *testing.T) {
 
 	require.Len(t, runtime.applied, 2)
 	var history struct {
-		Deployments []deploymentView `json:"deployments"`
+		Deployments []deploymentView `json:"items"`
 	}
 	p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments?service=places-api&env=dev", nil, http.StatusOK, &history)
 	require.Equal(t, "reconcile", history.Deployments[0].Trigger)

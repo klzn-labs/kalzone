@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/adrianozp/platform/app/team/entities"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httperror"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,39 +46,30 @@ type createDTO struct {
 	Name string `json:"name" binding:"required"`
 }
 
+type teamParams struct {
+	Team string `path:"team"`
+}
+
 func (h TeamsHandler) List(c *gin.Context) {
-	list, err := h.teams.List(c.Request.Context())
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	result := make([]TeamDTO, 0, len(list))
-	for _, t := range list {
-		result = append(result, ToDTO(t))
-	}
-	c.JSON(http.StatusOK, gin.H{"teams": result})
+	apispec.RespondWindow(c, func() ([]entities.Team, error) { return h.teams.List(c.Request.Context()) }, teamKey, ToDTO)
+}
+
+func teamKey(t entities.Team) string {
+	return t.Slug
 }
 
 func (h TeamsHandler) Get(c *gin.Context) {
 	team, err := h.teams.Get(c.Request.Context(), c.Param("team"))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, ToDTO(team))
+	apispec.Respond(c, http.StatusOK, ToDTO(team), err)
 }
 
 func (h TeamsHandler) Create(c *gin.Context) {
 	var body createDTO
-	if !httperror.BindJSON(c, &body) {
+	if !httperror.BindStrict(c, &body) {
 		return
 	}
 	team, err := h.teams.Create(c.Request.Context(), requestctx.ActorFrom(c), body.Slug, body.Name)
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, ToDTO(team))
+	apispec.Respond(c, http.StatusCreated, ToDTO(team), err)
 }
 
 func (h TeamsHandler) Delete(c *gin.Context) {
@@ -88,8 +81,14 @@ func (h TeamsHandler) Delete(c *gin.Context) {
 }
 
 func RegisterTeamsRoutes(api httpserver.API, h TeamsHandler) {
-	api.GET("/teams", h.List)
-	api.POST("/teams", h.Create)
-	api.GET("/teams/:team", h.Get)
-	api.DELETE("/teams/:team", h.Delete)
+	api.Handle(
+		apispec.Operation{ID: "listTeams", Method: http.MethodGet, Path: "/teams", Summary: "List teams by slug",
+			Scope: scope.Read, Params: apispec.ListParams{}, Status: http.StatusOK, Response: apispec.Page[TeamDTO]{}, Handler: h.List},
+		apispec.Operation{ID: "createTeam", Method: http.MethodPost, Path: "/teams", Summary: "Create a team",
+			Scope: scope.TeamsAdmin, Body: createDTO{}, Status: http.StatusCreated, Response: TeamDTO{}, Handler: h.Create},
+		apispec.Operation{ID: "getTeam", Method: http.MethodGet, Path: "/teams/:team", Summary: "Show a team",
+			Scope: scope.Read, Params: teamParams{}, Status: http.StatusOK, Response: TeamDTO{}, Handler: h.Get},
+		apispec.Operation{ID: "deleteTeam", Method: http.MethodDelete, Path: "/teams/:team", Summary: "Delete a team that owns no services",
+			Scope: scope.TeamsAdmin, Params: teamParams{}, Status: http.StatusNoContent, Handler: h.Delete},
+	)
 }

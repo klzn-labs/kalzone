@@ -3,20 +3,20 @@ package audit
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/internal/httperror"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/page"
+	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
 type Events interface {
-	ListFor(ctx context.Context, a actor.Actor, filter entities.Filter) ([]entities.Event, error)
+	PageFor(ctx context.Context, a actor.Actor, filter entities.Filter, p page.Request) (page.Page[entities.Event], error)
 }
 
 type FilterResolver interface {
@@ -44,45 +44,38 @@ type eventDTO struct {
 	Token       string         `json:"token,omitempty"`
 }
 
+func toDTO(e entities.Event) eventDTO {
+	return eventDTO{e.ID, e.At, e.ActorLogin, e.Action, e.TargetKind, e.TargetName, e.Environment, e.Details, e.TokenName}
+}
+
+type listParams struct {
+	Team        string `query:"team" description:"team slug"`
+	Service     string `query:"service" description:"service slug"`
+	Actor       string `query:"actor" description:"login of the person who acted"`
+	Environment string `query:"env" description:"environment slug"`
+	Token       string `query:"token" description:"token id, from GET /api/v1/tokens"`
+	apispec.ListParams
+}
+
 func (h AuditHandler) List(c *gin.Context) {
-	query, err := QueryFrom(c)
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	list, err := h.list(c.Request.Context(), requestctx.ActorFrom(c), query)
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	result := make([]eventDTO, 0, len(list))
-	for _, e := range list {
-		result = append(result, eventDTO{e.ID, e.At, e.ActorLogin, e.Action, e.TargetKind, e.TargetName, e.Environment, e.Details, e.TokenName})
-	}
-	c.JSON(http.StatusOK, gin.H{"events": result})
+	apispec.RespondPage(c, func(p page.Request) (page.Page[entities.Event], error) { return h.list(c, p) }, toDTO)
 }
 
-func (h AuditHandler) list(ctx context.Context, a actor.Actor, query entities.Query) ([]entities.Event, error) {
-	filter, err := h.resolver.Resolve(ctx, query)
+func (h AuditHandler) list(c *gin.Context, p page.Request) (page.Page[entities.Event], error) {
+	filter, err := h.resolver.Resolve(c.Request.Context(), queryFrom(c))
 	if err != nil {
-		return nil, err
+		return page.Page[entities.Event]{}, err
 	}
-	return h.events.ListFor(ctx, a, filter)
+	return h.events.PageFor(c.Request.Context(), requestctx.ActorFrom(c), filter, p)
 }
 
-func QueryFrom(c *gin.Context) (entities.Query, error) {
-	query := entities.Query{Team: c.Query("team"), Service: c.Query("service"), Actor: c.Query("actor"), Environment: c.Query("env"), Token: c.Query("token")}
-	query.Limit, _ = strconv.Atoi(c.Query("limit"))
-	if before := c.Query("before"); before != "" {
-		at, err := time.Parse(time.RFC3339Nano, before)
-		if err != nil {
-			return entities.Query{}, apperror.Invalid("before must be an RFC 3339 time")
-		}
-		query.Before = &at
-	}
-	return query, nil
+func queryFrom(c *gin.Context) entities.Query {
+	return entities.Query{Team: c.Query("team"), Service: c.Query("service"), Actor: c.Query("actor"), Environment: c.Query("env"), Token: c.Query("token")}
 }
 
 func RegisterAuditRoutes(api httpserver.API, h AuditHandler) {
-	api.GET("/audit", h.List)
+	api.Handle(apispec.Operation{
+		ID: "listAuditEvents", Method: http.MethodGet, Path: "/audit", Summary: "List what happened, newest first, limited to the token's teams",
+		Scope: scope.Read, Params: listParams{}, Status: http.StatusOK, Response: apispec.Page[eventDTO]{}, Handler: h.List,
+	})
 }

@@ -3,19 +3,21 @@ package releases
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/adrianozp/platform/app/release/entities"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httperror"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/page"
+	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
 type Releases interface {
-	ListFor(ctx context.Context, a actor.Actor, serviceSlug string, limit int) ([]entities.Release, error)
+	PageFor(ctx context.Context, a actor.Actor, serviceSlug string, p page.Request) (page.Page[entities.Release], error)
 	GetFor(ctx context.Context, a actor.Actor, id string) (entities.Release, error)
 	Request(ctx context.Context, a actor.Actor, serviceSlug, ref string) (entities.Release, error)
 	Register(ctx context.Context, a actor.Actor, serviceSlug, tag string) (entities.Release, error)
@@ -32,9 +34,9 @@ func NewReleasesHandler(releases Releases) ReleasesHandler {
 type ReleaseDTO struct {
 	ID         string     `json:"id"`
 	Number     int        `json:"number"`
-	Source     string     `json:"source"`
-	Status     string     `json:"status"`
-	Trigger    string     `json:"trigger"`
+	Source     string     `json:"source" enum:"build,registered,shared"`
+	Status     string     `json:"status" enum:"requested,building,built,failed"`
+	Trigger    string     `json:"trigger" enum:"manual,push,register"`
 	GitRef     string     `json:"git_ref,omitempty"`
 	CommitSHA  string     `json:"commit_sha,omitempty"`
 	Image      string     `json:"image"`
@@ -57,62 +59,62 @@ func ToDTO(r entities.Release) ReleaseDTO {
 
 type requestDTO struct {
 	Service string `json:"service" binding:"required"`
-	Ref     string `json:"ref" binding:"required"`
+	Ref     string `json:"ref" binding:"required" description:"branch, tag or commit to build"`
 }
 
 type registerDTO struct {
 	Service string `json:"service" binding:"required"`
-	Tag     string `json:"tag" binding:"required"`
+	Tag     string `json:"tag" binding:"required" description:"an existing tag in the service's image repository"`
+}
+
+type listParams struct {
+	Service string `query:"service" required:"true" description:"service slug"`
+	apispec.ListParams
+}
+
+type releaseParams struct {
+	ID string `path:"id"`
 }
 
 func (h ReleasesHandler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.Query("limit"))
-	list, err := h.releases.ListFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("service"), limit)
-	if err != nil {
-		httperror.Abort(c, err)
-		return
+	load := func(p page.Request) (page.Page[entities.Release], error) {
+		return h.releases.PageFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("service"), p)
 	}
-	result := make([]ReleaseDTO, 0, len(list))
-	for _, r := range list {
-		result = append(result, ToDTO(r))
-	}
-	c.JSON(http.StatusOK, gin.H{"releases": result})
+	apispec.RespondPage(c, load, ToDTO)
 }
 
 func (h ReleasesHandler) Get(c *gin.Context) {
 	rel, err := h.releases.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("id"))
-	respond(c, http.StatusOK, rel, err)
+	apispec.Respond(c, http.StatusOK, ToDTO(rel), err)
 }
 
 func (h ReleasesHandler) Request(c *gin.Context) {
 	var body requestDTO
-	if !httperror.BindJSON(c, &body) {
+	if !httperror.BindStrict(c, &body) {
 		return
 	}
 	rel, err := h.releases.Request(c.Request.Context(), requestctx.ActorFrom(c), body.Service, body.Ref)
-	respond(c, http.StatusAccepted, rel, err)
+	apispec.Respond(c, http.StatusAccepted, ToDTO(rel), err)
 }
 
 func (h ReleasesHandler) Register(c *gin.Context) {
 	var body registerDTO
-	if !httperror.BindJSON(c, &body) {
+	if !httperror.BindStrict(c, &body) {
 		return
 	}
 	rel, err := h.releases.Register(c.Request.Context(), requestctx.ActorFrom(c), body.Service, body.Tag)
-	respond(c, http.StatusCreated, rel, err)
-}
-
-func respond(c *gin.Context, status int, rel entities.Release, err error) {
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.JSON(status, ToDTO(rel))
+	apispec.Respond(c, http.StatusCreated, ToDTO(rel), err)
 }
 
 func RegisterReleasesRoutes(api httpserver.API, h ReleasesHandler) {
-	api.GET("/releases", h.List)
-	api.POST("/releases", h.Request)
-	api.POST("/releases/registrations", h.Register)
-	api.GET("/releases/:id", h.Get)
+	api.Handle(
+		apispec.Operation{ID: "listReleases", Method: http.MethodGet, Path: "/releases", Summary: "List a service's releases, newest first",
+			Scope: scope.Read, Params: listParams{}, Status: http.StatusOK, Response: apispec.Page[ReleaseDTO]{}, Handler: h.List},
+		apispec.Operation{ID: "requestRelease", Method: http.MethodPost, Path: "/releases", Summary: "Build a git ref into a release; poll it until built or failed",
+			Scope: scope.Builds, Body: requestDTO{}, Status: http.StatusAccepted, Response: ReleaseDTO{}, Handler: h.Request},
+		apispec.Operation{ID: "registerRelease", Method: http.MethodPost, Path: "/releases/registrations", Summary: "Register an image tag that was built elsewhere",
+			Scope: scope.Builds, Body: registerDTO{}, Status: http.StatusCreated, Response: ReleaseDTO{}, Handler: h.Register},
+		apispec.Operation{ID: "getRelease", Method: http.MethodGet, Path: "/releases/:id", Summary: "Show a release",
+			Scope: scope.Read, Params: releaseParams{}, Status: http.StatusOK, Response: ReleaseDTO{}, Handler: h.Get},
+	)
 }

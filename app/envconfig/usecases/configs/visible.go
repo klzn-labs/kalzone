@@ -30,13 +30,6 @@ func (u ConfigUsecase) CurrentFor(ctx context.Context, a actor.Actor, serviceSlu
 	return u.Current(ctx, serviceSlug, environment)
 }
 
-func (u ConfigUsecase) HistoryFor(ctx context.Context, a actor.Actor, serviceSlug, environment string, limit int) ([]entities.Revision, error) {
-	if err := u.visible(ctx, a, serviceSlug); err != nil {
-		return nil, err
-	}
-	return u.History(ctx, serviceSlug, environment, limit)
-}
-
 func (u ConfigUsecase) RevisionsFor(ctx context.Context, a actor.Actor, serviceSlug, environment string, p page.Request) (page.Page[entities.Revision], error) {
 	if err := u.visible(ctx, a, serviceSlug); err != nil {
 		return page.Page[entities.Revision]{}, err

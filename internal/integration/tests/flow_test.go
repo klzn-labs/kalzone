@@ -53,7 +53,7 @@ func Test_RevisionsAreNumberedAndHistoryKeepsOldValues(t *testing.T) {
 			Number  int               `json:"number"`
 			Env     map[string]string `json:"env"`
 			Message string            `json:"message"`
-		} `json:"revisions"`
+		} `json:"items"`
 	}
 
 	p.eve.MustJSON(t, http.MethodGet, path, nil, http.StatusOK, &history)
@@ -116,7 +116,7 @@ func Test_TheAuditLogRecordsWhoDidWhat(t *testing.T) {
 			Actor       string `json:"actor"`
 			Action      string `json:"action"`
 			Environment string `json:"environment"`
-		} `json:"events"`
+		} `json:"items"`
 	}
 
 	p.eve.MustJSON(t, http.MethodGet, "/api/v1/audit?team=places", nil, http.StatusOK, &audit)

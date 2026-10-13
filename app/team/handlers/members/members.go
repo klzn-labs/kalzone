@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/adrianozp/platform/app/team/entities"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httperror"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,7 +33,7 @@ type memberDTO struct {
 	Login     string    `json:"login"`
 	Name      string    `json:"name"`
 	AvatarURL string    `json:"avatar_url"`
-	Role      string    `json:"role"`
+	Role      string    `json:"role" enum:"member,maintainer"`
 	Since     time.Time `json:"since"`
 }
 
@@ -40,33 +42,35 @@ func toDTO(m entities.Member) memberDTO {
 }
 
 type putDTO struct {
-	Role string `json:"role" binding:"required"`
+	Role string `json:"role" binding:"required" enum:"member,maintainer"`
+}
+
+type memberParams struct {
+	Team  string `path:"team"`
+	Login string `path:"login"`
+}
+
+type listParams struct {
+	Team string `path:"team"`
+	apispec.ListParams
 }
 
 func (h MembersHandler) List(c *gin.Context) {
-	list, err := h.members.List(c.Request.Context(), c.Param("team"))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	result := make([]memberDTO, 0, len(list))
-	for _, m := range list {
-		result = append(result, toDTO(m))
-	}
-	c.JSON(http.StatusOK, gin.H{"members": result})
+	load := func() ([]entities.Member, error) { return h.members.List(c.Request.Context(), c.Param("team")) }
+	apispec.RespondWindow(c, load, memberKey, toDTO)
+}
+
+func memberKey(m entities.Member) string {
+	return m.User.Login
 }
 
 func (h MembersHandler) Put(c *gin.Context) {
 	var body putDTO
-	if !httperror.BindJSON(c, &body) {
+	if !httperror.BindStrict(c, &body) {
 		return
 	}
 	member, err := h.members.Put(c.Request.Context(), requestctx.ActorFrom(c), c.Param("team"), c.Param("login"), entities.Role(body.Role))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, toDTO(member))
+	apispec.Respond(c, http.StatusOK, toDTO(member), err)
 }
 
 func (h MembersHandler) Remove(c *gin.Context) {
@@ -78,7 +82,12 @@ func (h MembersHandler) Remove(c *gin.Context) {
 }
 
 func RegisterMembersRoutes(api httpserver.API, h MembersHandler) {
-	api.GET("/teams/:team/members", h.List)
-	api.PUT("/teams/:team/members/:login", h.Put)
-	api.DELETE("/teams/:team/members/:login", h.Remove)
+	api.Handle(
+		apispec.Operation{ID: "listMembers", Method: http.MethodGet, Path: "/teams/:team/members", Summary: "List a team's members in the order they joined",
+			Scope: scope.Read, Params: listParams{}, Status: http.StatusOK, Response: apispec.Page[memberDTO]{}, Handler: h.List},
+		apispec.Operation{ID: "putMember", Method: http.MethodPut, Path: "/teams/:team/members/:login", Summary: "Add a member or change their role",
+			Scope: scope.TeamsAdmin, Params: memberParams{}, Body: putDTO{}, Status: http.StatusOK, Response: memberDTO{}, Handler: h.Put},
+		apispec.Operation{ID: "removeMember", Method: http.MethodDelete, Path: "/teams/:team/members/:login", Summary: "Remove a member",
+			Scope: scope.TeamsAdmin, Params: memberParams{}, Status: http.StatusNoContent, Handler: h.Remove},
+	)
 }

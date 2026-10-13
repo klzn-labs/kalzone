@@ -25,26 +25,6 @@ var (
 				WithHint("use tail once, then follow with next_cursor")
 )
 
-func (u DeploymentsUsecase) HistoryFor(ctx context.Context, a actor.Actor, serviceSlug, environment string, limit int) ([]entities.Deployment, error) {
-	service, err := u.services.FindService(ctx, serviceSlug)
-	if err != nil {
-		return nil, err
-	}
-	if !a.Sees(service.OwnerTeamID) {
-		return nil, errServiceNotVisible
-	}
-	return u.History(ctx, serviceSlug, environment, limit)
-}
-
-func (u DeploymentsUsecase) GetFor(ctx context.Context, a actor.Actor, id string) (entities.Deployment, []entities.Event, error) {
-	d, err := u.visible(ctx, a, id)
-	if err != nil {
-		return entities.Deployment{}, nil, err
-	}
-	logged, err := u.store.Events(ctx, id, entities.SummaryWindow)
-	return d, logged, err
-}
-
 func (u DeploymentsUsecase) PageFor(ctx context.Context, a actor.Actor, serviceSlug, environment string, p page.Request) (page.Page[entities.Deployment], error) {
 	service, err := u.visibleService(ctx, a, serviceSlug, environment)
 	if err != nil {

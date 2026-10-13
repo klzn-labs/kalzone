@@ -6,10 +6,12 @@ import (
 
 	"github.com/adrianozp/platform/app/queue/entities"
 	"github.com/adrianozp/platform/app/queue/usecases/queues"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httperror"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/page"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,7 +22,7 @@ type Queues interface {
 	Delete(ctx context.Context, a actor.Actor, environment, name string, force bool) error
 	GetFor(ctx context.Context, a actor.Actor, environment, name string) (entities.Queue, error)
 	ListFor(ctx context.Context, a actor.Actor, environment, teamSlug string) ([]entities.Queue, error)
-	VersionsFor(ctx context.Context, a actor.Actor, environment, name string) ([]entities.Version, error)
+	VersionPageFor(ctx context.Context, a actor.Actor, environment, name string, p page.Request) (page.Page[entities.Version], error)
 	StatsFor(ctx context.Context, a actor.Actor, environment, name string) (entities.Stats, bool, error)
 	Replay(ctx context.Context, a actor.Actor, environment, name, messageID string) error
 	ReplayAll(ctx context.Context, a actor.Actor, environment, name string) error
@@ -41,21 +43,19 @@ func NewQueuesHandler(queues Queues, names ServiceNames) QueuesHandler {
 }
 
 func (h QueuesHandler) List(c *gin.Context) {
-	list, err := h.queues.ListFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("environment"), c.Query("team"))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
+	load := func() ([]entities.Queue, error) {
+		return h.queues.ListFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("environment"), c.Query("team"))
 	}
-	result := make([]QueueDTO, 0, len(list))
-	for _, q := range list {
-		result = append(result, h.toDTO(c.Request.Context(), q))
-	}
-	c.JSON(http.StatusOK, gin.H{"queues": result})
+	apispec.RespondWindow(c, load, queueKey, func(q entities.Queue) QueueDTO { return h.toDTO(c.Request.Context(), q) })
+}
+
+func queueKey(q entities.Queue) string {
+	return q.Environment + "/" + q.Name
 }
 
 func (h QueuesHandler) Create(c *gin.Context) {
 	var body createDTO
-	if !httperror.BindJSON(c, &body) {
+	if !httperror.BindStrict(c, &body) {
 		return
 	}
 	settings, err := body.settings()
@@ -77,7 +77,7 @@ func (h QueuesHandler) Get(c *gin.Context) {
 
 func (h QueuesHandler) Update(c *gin.Context) {
 	var body changeDTO
-	if !httperror.BindJSON(c, &body) {
+	if !httperror.BindStrict(c, &body) {
 		return
 	}
 	settings, err := body.settings()
@@ -141,18 +141,7 @@ func noContent(c *gin.Context, status int, err error) {
 }
 
 func RegisterQueuesRoutes(api httpserver.API, h QueuesHandler) {
-	api.GET("/queues", h.List)
-	api.POST("/queues", h.Create)
-	queue := api.Group("/queues/:env/:name")
-	queue.GET("", h.Get)
-	queue.PATCH("", h.Update)
-	queue.DELETE("", h.Delete)
-	queue.POST("/pause", h.Pause)
-	queue.POST("/resume", h.Resume)
-	queue.GET("/stats", h.Stats)
-	queue.GET("/versions", h.Versions)
-	queue.GET("/dead", h.Dead)
-	queue.DELETE("/dead", h.PurgeDead)
-	queue.POST("/dead/replay-all", h.ReplayAll)
-	queue.POST("/dead/:id/replay", h.Replay)
+	api.Handle(queueOperations(h)...)
+	api.Handle(controlOperations(h)...)
+	api.Handle(observeOperations(h)...)
 }

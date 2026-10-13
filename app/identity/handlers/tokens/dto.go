@@ -11,8 +11,8 @@ type createDTO struct {
 	Name          string   `json:"name" binding:"required"`
 	Scopes        []string `json:"scopes" binding:"required"`
 	Teams         []string `json:"teams" binding:"required"`
-	Bypass        bool     `json:"bypass"`
-	ExpiresInDays int      `json:"expires_in_days"`
+	Bypass        bool     `json:"bypass,omitempty"`
+	ExpiresInDays int      `json:"expires_in_days,omitempty"`
 }
 
 func (d createDTO) toEntity() entities.TokenDraft {
@@ -25,7 +25,7 @@ type TokenDTO struct {
 	Name       string        `json:"name"`
 	Prefix     string        `json:"prefix"`
 	Scopes     []scope.Scope `json:"scopes"`
-	TeamIDs    []string      `json:"team_ids"`
+	Teams      []string      `json:"teams"`
 	Bypass     bool          `json:"bypass"`
 	CreatedAt  time.Time     `json:"created_at"`
 	ExpiresAt  time.Time     `json:"expires_at"`
@@ -41,7 +41,7 @@ type issuedDTO struct {
 
 func ToDTO(t entities.AccessToken) TokenDTO {
 	return TokenDTO{
-		ID: t.ID, OwnerID: t.OwnerID, Name: t.Name, Prefix: t.Prefix, Scopes: t.Scopes, TeamIDs: t.TeamIDs,
+		ID: t.ID, OwnerID: t.OwnerID, Name: t.Name, Prefix: t.Prefix, Scopes: t.Scopes, Teams: t.TeamSlugs,
 		Bypass: t.Bypass, CreatedAt: t.CreatedAt, ExpiresAt: t.ExpiresAt, LastUsedAt: t.LastUsedAt,
 		LastUsedIP: t.LastUsedIP, RevokedAt: t.RevokedAt,
 	}
@@ -65,7 +65,7 @@ type tokenInfoDTO struct {
 
 type whoamiDTO struct {
 	Owner ownerDTO      `json:"owner"`
-	Token *tokenInfoDTO `json:"token"`
+	Token *tokenInfoDTO `json:"token,omitempty"`
 }
 
 func toWhoami(w entities.Whoami) whoamiDTO {
