@@ -109,10 +109,33 @@ with a token shows in the audit log as "person via token".
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/v1/whoami` | owner, scopes, teams, bypass and expiry of the calling token |
-| `GET /api/v1/tokens` | your tokens (`?all=true` for admins in the browser) |
+| `GET /api/v1/whoami` | owner, and for a token its scopes, team slugs, bypass and expiry (a browser session gets the owner only) |
+| `GET /api/v1/tokens` | your tokens with their team slugs (`?all=true` for admins in the browser) |
 | `POST /api/v1/tokens` | `{"name","scopes","teams","expires_in_days","bypass"}` → the token, once |
 | `DELETE /api/v1/tokens/:id` | revoke |
+
+## API for agents
+
+`GET /api/v1/openapi.json` describes every operation: its `operationId`, the token
+scope it needs, path and query parameters, the request body, every response, and the
+values of every status field. Any valid token or session reads it. It is generated
+from the handlers' declarations, so it is always the API that runs.
+
+- A single resource is the bare object; actions that start work (build, deploy,
+  promote, config apply, rollback) answer `202` with it.
+- A list is `{"items": [...], "next_cursor": "..."}`: `?limit` 1-100 (20 by
+  default), and `?cursor=<next_cursor>` for the next page; no `next_cursor` means
+  the end.
+- An error is `{"error": {"code", "message", "hint", "field", "details"}}`; `hint`
+  says how to fix the call and `field` names the offending field or parameter.
+  `hint`, `field` and `details` appear only when they apply.
+- Bodies are strict: an unknown field is a `400` that lists the accepted fields.
+- `GET /api/v1/deployments/:id` carries `events_summary` (`total` lines,
+  `progress_lines` counting the docker layer progress lines the tail skips, `phases` with the seconds spent waiting and running, the
+  last 20 other lines as `tail`, and the `log` path); the full log is
+  `GET /api/v1/deployments/:id/events`, oldest first. `?tail=N` (1-100) answers the
+  last N lines instead and cannot be combined with `cursor`. While a deployment
+  runs, `next_cursor` stays so the log can be followed.
 
 ## Approvals
 
@@ -137,7 +160,7 @@ Queue pause, resume and dead-letter commands still answer `err_approval_required
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/v1/requests/:id` | `status` (`pending`, `approved`, `executed`, `failed`, `rejected`, `cancelled`, `expired`), `result`, `reason`, `error` |
-| `GET /api/v1/requests?status=pending` | the newest 100 in the token's teams |
+| `GET /api/v1/requests?status=pending` | the token's teams' requests, newest first, paged |
 | `POST /api/v1/requests/:id/cancel` | withdraw your own request |
 
 ## Builds and releases
