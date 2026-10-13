@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/adrianozp/platform/app/identity/entities"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httperror"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,47 +42,43 @@ func toDTO(u entities.User) userDTO {
 	return userDTO{ID: u.ID, Login: u.Login, Name: u.Name, AvatarURL: u.AvatarURL, Admin: u.Admin, LastLoginAt: u.LastLoginAt}
 }
 
-func (h UsersHandler) List(c *gin.Context) {
-	list, err := h.users.List(c.Request.Context())
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	result := make([]userDTO, 0, len(list))
-	for _, u := range list {
-		result = append(result, toDTO(u))
-	}
-	c.JSON(http.StatusOK, gin.H{"users": result})
-}
-
-func (h UsersHandler) Get(c *gin.Context) {
-	user, err := h.users.FindByLogin(c.Request.Context(), c.Param("login"))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, toDTO(user))
+type userParams struct {
+	Login string `path:"login"`
 }
 
 type adminDTO struct {
 	Admin *bool `json:"admin" binding:"required"`
 }
 
+func (h UsersHandler) List(c *gin.Context) {
+	apispec.RespondWindow(c, func() ([]entities.User, error) { return h.users.List(c.Request.Context()) }, userKey, toDTO)
+}
+
+func userKey(u entities.User) string {
+	return u.Login
+}
+
+func (h UsersHandler) Get(c *gin.Context) {
+	user, err := h.users.FindByLogin(c.Request.Context(), c.Param("login"))
+	apispec.Respond(c, http.StatusOK, toDTO(user), err)
+}
+
 func (h UsersHandler) SetAdmin(c *gin.Context) {
 	var body adminDTO
-	if !httperror.BindJSON(c, &body) {
+	if !httperror.BindStrict(c, &body) {
 		return
 	}
 	user, err := h.users.SetAdmin(c.Request.Context(), requestctx.ActorFrom(c), c.Param("login"), *body.Admin)
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, toDTO(user))
+	apispec.Respond(c, http.StatusOK, toDTO(user), err)
 }
 
 func RegisterUsersRoutes(api httpserver.API, h UsersHandler) {
-	api.GET("/users", h.List)
-	api.GET("/users/:login", h.Get)
-	api.PUT("/users/:login/admin", h.SetAdmin)
+	api.Handle(
+		apispec.Operation{ID: "listUsers", Method: http.MethodGet, Path: "/users", Summary: "List everyone who signed in, by login",
+			Scope: scope.Read, Params: apispec.ListParams{}, Status: http.StatusOK, Response: apispec.Page[userDTO]{}, Handler: h.List},
+		apispec.Operation{ID: "getUser", Method: http.MethodGet, Path: "/users/:login", Summary: "Show one person",
+			Scope: scope.Read, Params: userParams{}, Status: http.StatusOK, Response: userDTO{}, Handler: h.Get},
+		apispec.Operation{ID: "setAdmin", Method: http.MethodPut, Path: "/users/:login/admin", Summary: "Make a person a platform admin or not",
+			Session: true, Params: userParams{}, Body: adminDTO{}, Status: http.StatusOK, Response: userDTO{}, Handler: h.SetAdmin},
+	)
 }

@@ -47,17 +47,6 @@ func releaseKey(r entities.Release) string {
 	return strconv.Itoa(r.Number)
 }
 
-func (u ReleasesUsecase) ListFor(ctx context.Context, a actor.Actor, serviceSlug string, limit int) ([]entities.Release, error) {
-	service, err := u.services.FindService(ctx, serviceSlug)
-	if err != nil {
-		return nil, err
-	}
-	if !a.Sees(service.OwnerTeamID) {
-		return nil, errServiceNotVisible
-	}
-	return u.List(ctx, serviceSlug, limit)
-}
-
 func (u ReleasesUsecase) GetFor(ctx context.Context, a actor.Actor, id string) (entities.Release, error) {
 	rel, err := u.Get(ctx, id)
 	if err != nil {

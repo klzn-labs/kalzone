@@ -3,6 +3,7 @@ package guard
 import (
 	"context"
 	"crypto/subtle"
+	"errors"
 	"net/http"
 	"net/url"
 
@@ -37,11 +38,19 @@ func apiGuard(sessions Authenticator, tokens TokenAuthenticator) gin.HandlerFunc
 			return
 		}
 		if err := authenticate(c, sessions); err != nil {
-			httperror.Abort(c, err)
+			httperror.Abort(c, withSignInHint(err))
 			return
 		}
 		abortOn(c, checkCSRF(c))
 	}
+}
+
+func withSignInHint(err error) error {
+	var appErr *apperror.AppError
+	if !errors.As(err, &appErr) || appErr.Code != apperror.CodeUnauthenticated {
+		return err
+	}
+	return appErr.WithHint("send Authorization: Bearer <token>, or sign in to the website")
 }
 
 func webGuard(sessions Authenticator) gin.HandlerFunc {

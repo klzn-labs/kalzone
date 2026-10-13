@@ -6,17 +6,19 @@ import (
 	"strings"
 
 	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/internal/httperror"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/config"
+	"github.com/adrianozp/platform/pkg/page"
+	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
 type Requests interface {
 	Get(ctx context.Context, a actor.Actor, id string) (entities.Request, error)
-	List(ctx context.Context, a actor.Actor, status entities.Status) ([]entities.Request, error)
+	PageFor(ctx context.Context, a actor.Actor, status string, p page.Request) (page.Page[entities.Request], error)
 	Cancel(ctx context.Context, a actor.Actor, id string) (entities.Request, error)
 }
 
@@ -29,39 +31,43 @@ func NewRequestsHandler(cfg config.Config, requests Requests) RequestsHandler {
 	return RequestsHandler{requests: requests, baseURL: strings.TrimSuffix(cfg.BaseURL, "/")}
 }
 
+type listParams struct {
+	Status string `query:"status" enum:"pending,approved,executed,failed,rejected,cancelled,expired"`
+	apispec.ListParams
+}
+
+type requestParams struct {
+	ID string `path:"id"`
+}
+
 func (h RequestsHandler) List(c *gin.Context) {
-	list, err := h.requests.List(c.Request.Context(), requestctx.ActorFrom(c), entities.Status(c.Query("status")))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
+	load := func(p page.Request) (page.Page[entities.Request], error) {
+		return h.requests.PageFor(c.Request.Context(), requestctx.ActorFrom(c), c.Query("status"), p)
 	}
-	result := make([]requestDTO, 0, len(list))
-	for _, r := range list {
-		result = append(result, toDTO(r, h.baseURL))
-	}
-	c.JSON(http.StatusOK, gin.H{"requests": result})
+	apispec.RespondPage(c, load, h.toDTO)
 }
 
 func (h RequestsHandler) Get(c *gin.Context) {
 	r, err := h.requests.Get(c.Request.Context(), requestctx.ActorFrom(c), c.Param("id"))
-	h.respond(c, r, err)
+	apispec.Respond(c, http.StatusOK, h.toDTO(r), err)
 }
 
 func (h RequestsHandler) Cancel(c *gin.Context) {
 	r, err := h.requests.Cancel(c.Request.Context(), requestctx.ActorFrom(c), c.Param("id"))
-	h.respond(c, r, err)
+	apispec.Respond(c, http.StatusOK, h.toDTO(r), err)
 }
 
-func (h RequestsHandler) respond(c *gin.Context, r entities.Request, err error) {
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, toDTO(r, h.baseURL))
+func (h RequestsHandler) toDTO(r entities.Request) requestDTO {
+	return toDTO(r, h.baseURL)
 }
 
 func RegisterRequestsRoutes(api httpserver.API, h RequestsHandler) {
-	api.GET("/requests", h.List)
-	api.GET("/requests/:id", h.Get)
-	api.POST("/requests/:id/cancel", h.Cancel)
+	api.Handle(
+		apispec.Operation{ID: "listRequests", Method: http.MethodGet, Path: "/requests", Summary: "List change requests of your teams, newest first",
+			Scope: scope.Read, Params: listParams{}, Status: http.StatusOK, Response: apispec.Page[requestDTO]{}, Handler: h.List},
+		apispec.Operation{ID: "getRequest", Method: http.MethodGet, Path: "/requests/:id", Summary: "Show a change request and its outcome",
+			Scope: scope.Read, Params: requestParams{}, Status: http.StatusOK, Response: requestDTO{}, Handler: h.Get},
+		apispec.Operation{ID: "cancelRequest", Method: http.MethodPost, Path: "/requests/:id/cancel", Summary: "Cancel a pending change request you asked for",
+			Params: requestParams{}, Status: http.StatusOK, Response: requestDTO{}, Handler: h.Cancel},
+	)
 }

@@ -19,7 +19,7 @@ type TokenAuthenticator interface {
 
 var errBearerOnPages = apperror.New(apperror.CodeUnauthenticated, "access tokens work on /api/v1 only, sign in to use the website")
 
-var readFree = map[string]bool{"/api/v1/whoami": true, "/api/v1/me": true, "/api/v1/tokens": true}
+var readFree = map[string]bool{"/api/v1/whoami": true, "/api/v1/me": true, "/api/v1/tokens": true, "/api/v1/openapi.json": true}
 
 func bearer(c *gin.Context) (string, bool) {
 	header := c.GetHeader("Authorization")

@@ -66,13 +66,27 @@ func Test_LogoutEndsTheSession(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, client.Do(t, http.MethodGet, "/api/v1/me", nil).Status)
 }
 
+func Test_AnUnauthenticatedCallLearnsHowToSignIn(t *testing.T) {
+	suite := integration.NewSuite(t)
+
+	var body struct {
+		Error struct {
+			Hint string `json:"hint"`
+		} `json:"error"`
+	}
+
+	suite.Anonymous(t).MustJSON(t, http.MethodGet, "/api/v1/services", nil, http.StatusUnauthorized, &body)
+
+	require.Equal(t, "send Authorization: Bearer <token>, or sign in to the website", body.Error.Hint)
+}
+
 func Test_EveryAPIRouteNeedsASession(t *testing.T) {
 	suite := integration.NewSuite(t)
 	anonymous := suite.Anonymous(t)
 
 	for _, route := range suite.Routes() {
 		key := route.Method + " " + route.Path
-		if publicRoutes[key] || !isAPI(route.Path) {
+		if publicRoutes[key] || !integration.IsAPI(route.Path) {
 			continue
 		}
 		resp := anonymous.Do(t, route.Method, param.ReplaceAllString(route.Path, "x"), nil)
@@ -96,8 +110,4 @@ func Test_StateChangesNeedTheCSRFToken(t *testing.T) {
 	require.Contains(t, missing.Body, "err_invalid_csrf_token")
 	require.Equal(t, http.StatusForbidden, wrong.Status)
 	require.Equal(t, http.StatusCreated, right.Status, right.Body)
-}
-
-func isAPI(path string) bool {
-	return len(path) >= 7 && path[:7] == "/api/v1"
 }

@@ -32,13 +32,6 @@ func (u QueuesUsecase) ListFor(ctx context.Context, a actor.Actor, environment, 
 	return slices.DeleteFunc(list, func(q entities.Queue) bool { return !a.Sees(q.TeamID) }), nil
 }
 
-func (u QueuesUsecase) VersionsFor(ctx context.Context, a actor.Actor, environment, name string) ([]entities.Version, error) {
-	if _, err := u.GetFor(ctx, a, environment, name); err != nil {
-		return nil, err
-	}
-	return u.Versions(ctx, environment, name)
-}
-
 func (u QueuesUsecase) VersionPageFor(ctx context.Context, a actor.Actor, environment, name string, p page.Request) (page.Page[entities.Version], error) {
 	q, err := u.GetFor(ctx, a, environment, name)
 	if err != nil {

@@ -54,11 +54,17 @@ func Test_ADeployIsClaimedRunAndBecomesLive(t *testing.T) {
 	p.bob.MustJSON(t, http.MethodPut, "/api/v1/config/places-api/dev/secrets/DB_PASSWORD", map[string]string{"value": secretValue}, http.StatusOK, nil)
 	var d deploymentView
 
-	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release_id": releaseID}, http.StatusAccepted, &d)
+	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release": releaseID}, http.StatusAccepted, &d)
 	w := runToSuccess(t, s)
 
 	require.Equal(t, "pending", d.Status)
 	require.Equal(t, 1, d.ConfigRevision)
+	requirePlacesDevWorkload(t, w)
+	requireSucceededWithoutSecrets(t, p, d.ID)
+}
+
+func requirePlacesDevWorkload(t *testing.T, w agentapi.Workload) {
+	t.Helper()
 	require.Equal(t, "places-api-dev", w.Name)
 	require.Equal(t, "r1.c1", w.Version)
 	require.Equal(t, "docker.io/adrianozdp/places-api@"+digest, w.ImageRef)
@@ -66,20 +72,24 @@ func Test_ADeployIsClaimedRunAndBecomesLive(t *testing.T) {
 	require.Equal(t, "http://queued:8080", w.Env["PLATFORM_QUEUE_URL"])
 	require.Len(t, w.Secrets["PLATFORM_QUEUE_TOKEN"], 64)
 	require.Len(t, w.Secrets["PLATFORM_QUEUE_SIGNING_KEY"], 64)
+}
+
+func requireSucceededWithoutSecrets(t *testing.T, p people, deploymentID string) {
+	t.Helper()
 	var history struct {
-		Deployments []deploymentView `json:"deployments"`
+		Deployments []deploymentView `json:"items"`
 	}
 	list := p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments?service=places-api&env=dev", nil, http.StatusOK, &history)
 	require.Equal(t, "succeeded", history.Deployments[0].Status)
 	require.NotContains(t, list.Body, secretValue)
-	detail := p.eve.Do(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil)
+	detail := p.eve.Do(t, http.MethodGet, "/api/v1/deployments/"+deploymentID, nil)
 	require.Contains(t, detail.Body, `"message":"pulling"`)
 }
 
 func Test_OnlyMaintainersPromoteToProd(t *testing.T) {
 	s, p := setupPlaces(t)
 	releaseID := builtRelease(t, s, p)
-	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release_id": releaseID}, http.StatusAccepted, nil)
+	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release": releaseID}, http.StatusAccepted, nil)
 	runToSuccess(t, s)
 	promote := map[string]string{"service": "places-api", "from": "dev", "to": "prod"}
 
@@ -95,7 +105,7 @@ func Test_OnlyMaintainersPromoteToProd(t *testing.T) {
 func Test_DriftReappliesTheDesiredState(t *testing.T) {
 	s, p := setupPlaces(t)
 	releaseID := builtRelease(t, s, p)
-	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release_id": releaseID}, http.StatusAccepted, nil)
+	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release": releaseID}, http.StatusAccepted, nil)
 	runToSuccess(t, s)
 	var desired agentapi.DesiredList
 	require.NoError(t, json.Unmarshal([]byte(s.Agent(t, http.MethodGet, agentapi.DesiredPath, nil).Body), &desired))

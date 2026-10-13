@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/adrianozp/platform/internal/apispec"
 )
 
 type specDTO struct {
@@ -50,10 +51,10 @@ func secretNames(secrets map[string]string) []string {
 }
 
 type changeDTO struct {
-	Spec     *specDTO          `json:"spec"`
-	SetEnv   map[string]string `json:"set_env"`
-	UnsetEnv []string          `json:"unset_env"`
-	Message  string            `json:"message"`
+	Spec     *specDTO          `json:"spec,omitempty" description:"replaces the whole spec"`
+	SetEnv   map[string]string `json:"set_env,omitempty"`
+	UnsetEnv []string          `json:"unset_env,omitempty"`
+	Message  string            `json:"message,omitempty"`
 }
 
 func (d changeDTO) toEntity() entities.ChangeSet {
@@ -73,4 +74,29 @@ type secretInfoDTO struct {
 	Name  string    `json:"name"`
 	SetBy string    `json:"set_by"`
 	SetAt time.Time `json:"set_at"`
+}
+
+func toSecretDTO(i entities.SecretInfo) secretInfoDTO {
+	return secretInfoDTO{Name: i.Name, SetBy: i.SetBy, SetAt: i.SetAt}
+}
+
+func secretKey(i entities.SecretInfo) string {
+	return i.Name
+}
+
+type configParams struct {
+	Service     string `path:"service"`
+	Environment string `path:"env"`
+}
+
+type pagedParams struct {
+	Service     string `path:"service"`
+	Environment string `path:"env"`
+	apispec.ListParams
+}
+
+type secretParams struct {
+	Service     string `path:"service"`
+	Environment string `path:"env"`
+	Name        string `path:"name"`
 }

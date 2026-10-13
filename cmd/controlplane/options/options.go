@@ -2,6 +2,7 @@ package options
 
 import (
 	"github.com/adrianozp/platform/cmd/controlplane/modules"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/db"
 	"github.com/adrianozp/platform/internal/eventbus"
 	"github.com/adrianozp/platform/internal/httpserver"
@@ -36,10 +37,11 @@ func Infrastructure() fx.Option {
 			migrator.New,
 			db.NewGormDB,
 			httpserver.NewEngine,
+			apispec.NewCatalog,
 			httpserver.NewRoutes,
 			eventbus.New,
 			secretbox.New,
 		),
-		fx.Invoke(migrator.MigrateOnStart),
+		fx.Invoke(migrator.MigrateOnStart, httpserver.RegisterDocumentRoutes),
 	)
 }

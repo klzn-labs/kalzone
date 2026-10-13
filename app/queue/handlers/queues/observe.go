@@ -4,49 +4,35 @@ import (
 	"net/http"
 
 	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/internal/httperror"
+	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/adrianozp/platform/pkg/page"
 	"github.com/gin-gonic/gin"
 )
 
 func (h QueuesHandler) Stats(c *gin.Context) {
-	st, found, err := h.queues.StatsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	if !found {
-		c.JSON(http.StatusOK, gin.H{"stats": nil, "fresh": false})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"stats": st, "fresh": st.Fresh(clock.Now().UTC())})
+	st, _, err := h.queues.StatsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
+	apispec.Respond(c, http.StatusOK, toStatsDTO(st, st.Fresh(clock.Now().UTC())), err)
 }
 
 func (h QueuesHandler) Versions(c *gin.Context) {
-	list, err := h.queues.VersionsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
+	load := func(p page.Request) (page.Page[entities.Version], error) {
+		return h.queues.VersionPageFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"), p)
 	}
-	result := make([]versionDTO, 0, len(list))
-	for _, v := range list {
-		result = append(result, toVersionDTO(v))
-	}
-	c.JSON(http.StatusOK, gin.H{"versions": result})
+	apispec.RespondPage(c, load, toVersionDTO)
 }
 
 func (h QueuesHandler) Dead(c *gin.Context) {
-	st, _, err := h.queues.StatsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
-	if err != nil {
-		httperror.Abort(c, err)
-		return
+	load := func() ([]entities.DeadLetter, error) {
+		st, _, err := h.queues.StatsFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
+		return st.NewestDead, err
 	}
-	dead := st.NewestDead
-	if dead == nil {
-		dead = []entities.DeadLetter{}
-	}
-	c.JSON(http.StatusOK, gin.H{"dead": dead})
+	apispec.RespondWindow(c, load, deadKey, func(d entities.DeadLetter) entities.DeadLetter { return d })
+}
+
+func deadKey(d entities.DeadLetter) string {
+	return d.ID
 }
 
 func (h QueuesHandler) Replay(c *gin.Context) {

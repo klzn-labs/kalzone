@@ -13,8 +13,8 @@ type errorDTO struct {
 
 type requestDTO struct {
 	ID          string     `json:"id"`
-	Kind        string     `json:"kind"`
-	Status      string     `json:"status"`
+	Kind        string     `json:"kind" enum:"config.revise,secret.set,secret.unset,deploy,promote,rollback,config.apply,queue.create,queue.update,queue.delete"`
+	Status      string     `json:"status" enum:"pending,approved,executed,failed,rejected,cancelled,expired"`
 	Service     string     `json:"service"`
 	Environment string     `json:"environment"`
 	Summary     string     `json:"summary"`
