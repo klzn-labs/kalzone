@@ -8,27 +8,41 @@ infra-plateful now deploys only the platform's own control plane.
 | Service | Repository | Image | dev | prod |
 |---|---|---|---|---|
 | `api` | go-plateful | `docker.io/adrianozdp/plateful-backend` | internal, `traefik:8091`, database `plateful_dev` | internal, `traefik:8081` |
-| `worker` | go-plateful | same image, shared builds | not deployed | command `./worker` |
-| `importer` | go-plateful | same image, shared builds | not deployed | command `./importer` |
+| `worker` | go-plateful | same image, shared builds | command `./worker`, database `plateful_dev` | command `./worker` |
+| `importer` | go-plateful | same image, shared builds | command `./importer`, database `plateful_dev`, no Google Places key | command `./importer` |
 | `web` | fe-plateful | `docker.io/adrianozdp/plateful-frontend` | `dev.kalz.one` | `kalz.one` + alias `www.kalz.one` |
 
 All four belong to the team `plateful`. Containers are `<service>-<env>-<colour>`.
+The importer hands places to the worker through the managed queue `place-import`
+(one per environment, consumer `worker`, publisher `importer`).
 
-`worker` and `importer` have no dev deployment on purpose: they consume the prod
-NATS stream, and a dev copy would take messages meant for prod. They need a dev
-NATS account and stream before they get a dev environment.
+The live picture is in the API, not in this file: `GET /api/v1/services?team=plateful`,
+`GET /api/v1/config/<service>/<env>` for variables and secret names, and
+`GET /api/v1/queues?team=plateful`.
 
-`api` in dev has no object storage secrets, so review uploads fail there. Give it a
-separate R2 bucket before testing media in dev.
+## Working with the API
+
+Every call, field, scope and status value is described in
+`GET https://platform.kalz.one/api/v1/openapi.json`. Read it before calling
+anything; do not guess routes from the source. Send
+`Authorization: Bearer <token>`; `GET /api/v1/whoami` shows what the token may do.
+Lists come in pages of `{"items", "next_cursor"}`, and a refused call says in
+`error.hint` how to fix it.
 
 ## Shipping a change
 
-1. Build `api` or `web` from the Releases tab, or switch auto-build on. A build of
-   `api` is shared with `worker` and `importer`, which get a release with the same
-   digest.
-2. Deploy the release to dev and check the dev site and the embedded panels.
-3. Promote dev to prod for `api` and `web`. Deploy the shared release of `worker` and
-   `importer` to prod directly.
+1. Build `api` or `web`: `POST /api/v1/releases` with `{"service", "ref"}`, or the
+   Releases tab, or auto-build on push. A build of `api` is shared with `worker` and
+   `importer`, which get a release with the same digest and their own number.
+2. Wait until `GET /api/v1/releases/<id>` says `built`.
+3. Deploy each service to dev: `POST /api/v1/deployments` with
+   `{"service", "environment": "dev", "release"}`; follow
+   `GET /api/v1/deployments/<id>` until `succeeded`, and read its `events_summary`
+   when it fails.
+4. Promote to prod: `POST /api/v1/deployments/promotions` with
+   `{"service", "from": "dev", "to": "prod"}`. A token without bypass gets `202`
+   with a change request; a maintainer approves it in the browser, and
+   `GET /api/v1/requests/<id>` says `executed` with the deployment.
 
 ## How the cutover went
 
@@ -48,3 +62,5 @@ deployctl state are in `~deploy/retired-state/` on the host.
 3. **More than one host.** Closed: a spec takes `aliases`.
 4. **Replicas and CPU** are still ignored by the compose runtime (see the deploys
    spec); they become real with a Kubernetes runtime.
+5. **Workers in dev.** Closed: the NATS stream is gone; worker and importer talk
+   through the managed queue, which has its own dev queue.
