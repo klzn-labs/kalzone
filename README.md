@@ -158,6 +158,33 @@ from the handlers' declarations, so it is always the API that runs.
   the current configs of the services the caller sees, narrowed by `env` and `team`;
   the key is matched exactly and secrets are listed by name only.
 
+## MCP for agents
+
+`/mcp` is a Model Context Protocol server over the same API (Streamable HTTP,
+stateless, JSON answers). It takes the same access tokens, as a bearer only:
+
+```
+claude mcp add --transport http platform https://platform.kalz.one/mcp \
+  --header "Authorization: Bearer plat_…"
+```
+
+- Every operation of `openapi.json` is a tool named by its `operationId`
+  (`createDeployment`, `patchConfig`), with path, query and body fields as one input
+  object; a body whose field shares a parameter's name (`patchConfig`'s `env`) goes
+  whole under `body`. A call runs as the API call it names, with the same checks,
+  approvals, audit and error hints; an error comes back as a tool error with the
+  error body.
+- `tools/list` shows only the tools the token's scopes allow.
+- Not tools: tokens, users, team administration, deleting or transferring a service,
+  deleting a queue, unsetting a secret, `getMe` and the document itself.
+- Tools that start a build or a deployment take `wait: true` to answer once the
+  result is final (up to 120s); the `wait` tool waits on a release, a deployment or a
+  change request by `kind` and `id`, for up to `seconds` (120 by default). An answer
+  that is not final yet says so.
+- On a protected environment a change answers a change request with its
+  `approve_url`; `wait` with `kind: request` follows it.
+- `purgeDeadLetters` needs `confirm` set to the queue's name.
+
 ## Approvals
 
 A token with `protected` but without bypass does not change a protected environment
