@@ -27,6 +27,25 @@ func (s *Store) Create(_ context.Context, d entities.Deployment) (entities.Deplo
 	return d, nil
 }
 
+func (s *Store) ScheduleAll(ctx context.Context, ds []entities.Deployment) ([]entities.Deployment, error) {
+	created := make([]entities.Deployment, 0, len(ds))
+	for _, d := range ds {
+		s.supersede(d)
+		next, _ := s.Create(ctx, d)
+		created = append(created, next)
+	}
+	return created, nil
+}
+
+func (s *Store) supersede(d entities.Deployment) {
+	for _, old := range s.matching(func(o entities.Deployment) bool {
+		return o.ServiceID == d.ServiceID && o.Environment == d.Environment && o.Status == entities.StatusPending
+	}) {
+		old.Status = entities.StatusCancelled
+		s.ByID[old.ID] = old
+	}
+}
+
 func (s *Store) Transition(_ context.Context, d entities.Deployment, from entities.Status) error {
 	if s.ByID[d.ID].Status != from {
 		return apperror.Conflict("changed")

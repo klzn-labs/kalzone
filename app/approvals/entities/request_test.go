@@ -44,3 +44,13 @@ func Test_Clip_KeepsShortTextAndCutsLongText(t *testing.T) {
 	require.Equal(t, "short", entities.Clip("short", 10))
 	require.Equal(t, strings.Repeat("a", 9)+"…", entities.Clip(strings.Repeat("a", 20), 10))
 }
+
+func Test_Request_IsFinalOnceNothingMoreHappensToIt(t *testing.T) {
+	final := map[entities.Status]bool{
+		entities.StatusPending: false, entities.StatusApproved: false, entities.StatusExecuted: true, entities.StatusFailed: true,
+		entities.StatusRejected: true, entities.StatusCancelled: true, entities.StatusExpired: true,
+	}
+	for _, status := range entities.Statuses {
+		require.Equal(t, final[status], entities.Request{Status: status}.Final(), status)
+	}
+}

@@ -101,7 +101,10 @@ func (u DeploymentsUsecase) promotePinned(ctx context.Context, a actor.Actor, o 
 	if p.release, err = u.deployable(ctx, p.service, o.ReleaseID); err != nil {
 		return entities.Deployment{}, err
 	}
-	return u.promote(ctx, p, o.From)
+	if p, err = u.promoted(ctx, p); err != nil {
+		return entities.Deployment{}, err
+	}
+	return u.proceed(ctx, p, Proposal{Kind: approval.KindPromote, ReleaseID: p.release.ID, From: o.From})
 }
 
 func (u DeploymentsUsecase) Preview(ctx context.Context, o Proposal) (approval.Preview, error) {

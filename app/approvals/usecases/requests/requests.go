@@ -76,6 +76,11 @@ func (u RequestsUsecase) Get(ctx context.Context, a actor.Actor, id string) (ent
 	return r, nil
 }
 
+func (u RequestsUsecase) RequestState(ctx context.Context, a actor.Actor, id string) (string, bool, error) {
+	r, err := u.Get(ctx, a, id)
+	return string(r.Status), r.Final(), err
+}
+
 func (u RequestsUsecase) List(ctx context.Context, a actor.Actor, status entities.Status) ([]entities.Request, error) {
 	if a.ViaToken() && len(a.Token.TeamIDs) == 0 {
 		return []entities.Request{}, nil

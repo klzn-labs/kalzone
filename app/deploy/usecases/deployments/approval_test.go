@@ -29,6 +29,10 @@ func (g gated) as(gate authz.Gate) deployments.DeploymentsUsecase {
 	return deployments.NewDeploymentsUsecase(g.store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{gate: gate}, g.events, g.requests)
 }
 
+func (g gated) per(gates map[string]authz.Gate) deployments.DeploymentsUsecase {
+	return deployments.NewDeploymentsUsecase(g.store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{gates: gates}, g.events, g.requests)
+}
+
 func (g gated) live(t *testing.T, env, releaseID string) entities.Deployment {
 	t.Helper()
 	d, err := g.as(authz.Open).Deploy(ctx, ana, deployments.Request{Service: "api", Environment: env, ReleaseID: releaseID})

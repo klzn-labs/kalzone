@@ -129,3 +129,7 @@ func (c ChangeSet) ApplyTo(r Revision) Revision {
 	r.Message = strings.TrimSpace(c.Message)
 	return r
 }
+
+func IsName(name string) bool {
+	return namePattern.MatchString(name)
+}

@@ -38,6 +38,10 @@ func (u DeploymentsUsecase) PageFor(ctx context.Context, a actor.Actor, serviceS
 	return page.Cut(list, p, deploymentKey), err
 }
 
+func (u DeploymentsUsecase) GetFor(ctx context.Context, a actor.Actor, id string) (entities.Deployment, error) {
+	return u.visible(ctx, a, id)
+}
+
 func (u DeploymentsUsecase) SummaryFor(ctx context.Context, a actor.Actor, id string) (entities.Deployment, entities.Summary, error) {
 	d, err := u.visible(ctx, a, id)
 	if err != nil {

@@ -20,6 +20,7 @@ type Store interface {
 	Events(ctx context.Context, deploymentID string, limit int) ([]entities.Event, error)
 	EventsAfter(ctx context.Context, deploymentID string, after int64, limit int) ([]entities.Event, error)
 	CountEvents(ctx context.Context, deploymentID string) (int, error)
+	ScheduleAll(ctx context.Context, ds []entities.Deployment) ([]entities.Deployment, error)
 }
 
 type ServiceLookup interface {
@@ -29,6 +30,7 @@ type ServiceLookup interface {
 
 type ReleaseLookup interface {
 	FindRelease(ctx context.Context, id string) (entities.ReleaseRef, error)
+	ResolveRelease(ctx context.Context, serviceSlug, ref string) (entities.ReleaseRef, error)
 }
 
 type ConfigSource interface {

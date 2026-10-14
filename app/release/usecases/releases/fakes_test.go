@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -59,6 +60,46 @@ func (s *store) Unfinished(_ context.Context, before time.Time) ([]entities.Rele
 		}
 	}
 	return result, nil
+}
+
+func (s *store) LatestBuilt(_ context.Context, serviceID string) (entities.Release, bool, error) {
+	return s.newest(func(r entities.Release) bool { return r.ServiceID == serviceID && r.Status == entities.StatusBuilt })
+}
+
+func (s *store) ByNumber(_ context.Context, serviceID string, number int) (entities.Release, bool, error) {
+	return s.newest(func(r entities.Release) bool { return r.ServiceID == serviceID && r.Number == number })
+}
+
+func (s *store) BuiltByCommitPrefix(_ context.Context, serviceID, prefix string, limit int) ([]entities.Release, error) {
+	found := s.sorted(func(r entities.Release) bool {
+		return r.ServiceID == serviceID && r.Status == entities.StatusBuilt && strings.HasPrefix(r.CommitSHA, prefix)
+	})
+	return found[:min(limit, len(found))], nil
+}
+
+func (s *store) BuiltByTag(_ context.Context, serviceID, tag string) (entities.Release, bool, error) {
+	return s.newest(func(r entities.Release) bool {
+		return r.ServiceID == serviceID && r.Status == entities.StatusBuilt && r.Tag == tag
+	})
+}
+
+func (s *store) newest(keep func(entities.Release) bool) (entities.Release, bool, error) {
+	found := s.sorted(keep)
+	if len(found) == 0 {
+		return entities.Release{}, false, nil
+	}
+	return found[0], true, nil
+}
+
+func (s *store) sorted(keep func(entities.Release) bool) []entities.Release {
+	result := []entities.Release{}
+	for _, rel := range s.byID {
+		if keep(rel) {
+			result = append(result, rel)
+		}
+	}
+	slices.SortFunc(result, func(a, b entities.Release) int { return b.Number - a.Number })
+	return result
 }
 
 var api = entities.ServiceRef{ID: "s1", Slug: "api", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/api", BuildWorkflow: "platform-build.yml", AutoBuild: true}
