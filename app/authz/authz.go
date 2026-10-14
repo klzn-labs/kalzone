@@ -25,6 +25,7 @@ const (
 	ManageAdmins    Action = "admins.manage"
 	ManageTokens    Action = "tokens.manage"
 	ApproveRequest  Action = "request.approve"
+	ReadLogs        Action = "logs.read"
 )
 
 type Gate string
@@ -114,7 +115,7 @@ func (p Policy) ownerCan(ctx context.Context, a actor.Actor, action Action, r Re
 
 func (p Policy) requiredRole(ctx context.Context, action Action, r Resource) (Role, error) {
 	switch action {
-	case CreateService, EditService, CreateRelease:
+	case CreateService, EditService, CreateRelease, ReadLogs:
 		return RoleMember, nil
 	case DeleteService, TransferService, ManageMembers, ApproveRequest:
 		return RoleMaintainer, nil

@@ -11,13 +11,17 @@ import (
 )
 
 type Store struct {
-	ByID  map[string]entities.Deployment
-	Lines map[string][]string
-	Seen  map[string]entities.Agent
+	ByID     map[string]entities.Deployment
+	Lines    map[string][]string
+	Seen     map[string]entities.Agent
+	Runtimes map[string]entities.RuntimeStatus
 }
 
 func New() *Store {
-	return &Store{ByID: map[string]entities.Deployment{}, Lines: map[string][]string{}, Seen: map[string]entities.Agent{}}
+	return &Store{
+		ByID: map[string]entities.Deployment{}, Lines: map[string][]string{}, Seen: map[string]entities.Agent{},
+		Runtimes: map[string]entities.RuntimeStatus{},
+	}
 }
 
 func (s *Store) Create(_ context.Context, d entities.Deployment) (entities.Deployment, error) {

@@ -101,8 +101,8 @@ func Test_ReportAndFinish_OnlyByTheClaimingAgent(t *testing.T) {
 
 	stranger := usecase.Report(ctx, "vps-2", "d1", []string{"x"})
 	require.NoError(t, usecase.Report(ctx, "vps-1", "d1", []string{"pulling\n", "switching traffic"}))
-	done, err := usecase.Finish(ctx, "vps-1", "d1", true, "live")
-	_, twice := usecase.Finish(ctx, "vps-1", "d1", true, "live")
+	done, err := usecase.Finish(ctx, "vps-1", "d1", true, "live", nil)
+	_, twice := usecase.Finish(ctx, "vps-1", "d1", true, "live", nil)
 
 	require.ErrorIs(t, stranger, apperror.Forbidden(""))
 	require.NoError(t, err)

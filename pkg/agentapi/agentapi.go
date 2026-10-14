@@ -1,11 +1,14 @@
 package agentapi
 
+import "time"
+
 const (
 	NameHeader    = "X-Agent-Name"
 	VersionHeader = "X-Agent-Version"
 	ClaimPath     = "/agent/v1/claim"
 	DesiredPath   = "/agent/v1/desired"
 	DriftPath     = "/agent/v1/drift"
+	StatusPath    = "/agent/v1/status"
 )
 
 func EventsPath(deploymentID string) string {
@@ -47,8 +50,44 @@ type Events struct {
 }
 
 type Finish struct {
-	Succeeded bool   `json:"succeeded"`
-	Message   string `json:"message"`
+	Succeeded bool     `json:"succeeded"`
+	Message   string   `json:"message"`
+	Failure   *Failure `json:"failure,omitempty"`
+}
+
+type Failure struct {
+	Class     string   `json:"class"`
+	Container string   `json:"container"`
+	ExitCode  int      `json:"exit_code"`
+	OOMKilled bool     `json:"oom_killed"`
+	HealthLog []string `json:"health_log"`
+	Logs      []string `json:"logs"`
+}
+
+type Container struct {
+	Found          bool      `json:"found"`
+	Name           string    `json:"name"`
+	Image          string    `json:"image"`
+	State          string    `json:"state"`
+	Health         string    `json:"health"`
+	HealthLog      []string  `json:"health_log"`
+	ExitCode       int       `json:"exit_code"`
+	OOMKilled      bool      `json:"oom_killed"`
+	Restarts       int       `json:"restarts"`
+	StartedAt      time.Time `json:"started_at"`
+	CreatedAt      time.Time `json:"created_at"`
+	MemoryLimitMB  int       `json:"memory_limit_mb"`
+	CPULimitMillis int       `json:"cpu_limit_millis"`
+}
+
+type Snapshot struct {
+	Service     string    `json:"service"`
+	Environment string    `json:"environment"`
+	Container   Container `json:"container"`
+}
+
+type StatusReport struct {
+	Workloads []Snapshot `json:"workloads"`
 }
 
 type Desired struct {

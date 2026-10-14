@@ -16,10 +16,14 @@ func (u AgentsUsecase) Report(ctx context.Context, agent, deploymentID string, l
 	return u.store.AppendEvents(ctx, d.ID, clock.Now().UTC(), clean(lines))
 }
 
-func (u AgentsUsecase) Finish(ctx context.Context, agent, deploymentID string, succeeded bool, message string) (entities.Deployment, error) {
+func (u AgentsUsecase) Finish(ctx context.Context, agent, deploymentID string, succeeded bool, message string, failure *entities.Failure) (entities.Deployment, error) {
 	d, err := u.running(ctx, agent, deploymentID)
 	if err != nil {
 		return entities.Deployment{}, err
+	}
+	if failure != nil && !succeeded {
+		clipped := failure.Clipped()
+		d.Failure = &clipped
 	}
 	return u.finish(ctx, agent, d, succeeded, message)
 }
