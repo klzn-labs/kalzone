@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/adrianozp/platform/app/deploy/entities"
@@ -24,6 +25,7 @@ type deployment struct {
 	CreatedAt      time.Time
 	StartedAt      *time.Time
 	FinishedAt     *time.Time
+	Failure        []byte
 }
 
 func (deployment) TableName() string { return "deployments" }
@@ -33,8 +35,27 @@ func fromDeployment(d entities.Deployment) deployment {
 		ID: d.ID, ServiceID: d.ServiceID, Environment: d.Environment, Number: d.Number, ReleaseID: d.ReleaseID,
 		ReleaseNumber: d.ReleaseNumber, ImageRef: d.ImageRef, ConfigRevision: d.ConfigRevision, Strategy: string(d.Strategy),
 		Trigger: string(d.Trigger), Status: string(d.Status), RequestedBy: d.RequestedBy, Agent: d.Agent, Message: d.Message,
-		CreatedAt: d.CreatedAt, StartedAt: d.StartedAt, FinishedAt: d.FinishedAt,
+		CreatedAt: d.CreatedAt, StartedAt: d.StartedAt, FinishedAt: d.FinishedAt, Failure: failureJSON(d.Failure),
 	}
+}
+
+func failureJSON(f *entities.Failure) []byte {
+	if f == nil {
+		return nil
+	}
+	raw, _ := json.Marshal(f)
+	return raw
+}
+
+func failureOf(raw []byte) *entities.Failure {
+	if len(raw) == 0 {
+		return nil
+	}
+	var f entities.Failure
+	if json.Unmarshal(raw, &f) != nil {
+		return nil
+	}
+	return &f
 }
 
 func (m deployment) toEntity() entities.Deployment {
@@ -42,7 +63,7 @@ func (m deployment) toEntity() entities.Deployment {
 		ID: m.ID, ServiceID: m.ServiceID, Environment: m.Environment, Number: m.Number, ReleaseID: m.ReleaseID,
 		ReleaseNumber: m.ReleaseNumber, ImageRef: m.ImageRef, ConfigRevision: m.ConfigRevision, Strategy: entities.Strategy(m.Strategy),
 		Trigger: entities.Trigger(m.Trigger), Status: entities.Status(m.Status), RequestedBy: m.RequestedBy, Agent: m.Agent,
-		Message: m.Message, CreatedAt: m.CreatedAt, StartedAt: m.StartedAt, FinishedAt: m.FinishedAt,
+		Message: m.Message, CreatedAt: m.CreatedAt, StartedAt: m.StartedAt, FinishedAt: m.FinishedAt, Failure: failureOf(m.Failure),
 	}
 }
 
