@@ -28,18 +28,26 @@ func (u DeploymentsUsecase) Deploy(ctx context.Context, a actor.Actor, r Request
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	p, err := u.authorize(ctx, a, r.Service, r.Environment)
+	p, err := u.deployPlan(ctx, a, Target{Service: r.Service, Environment: r.Environment}, r.ReleaseID, strategy)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	if p.release, err = u.deployable(ctx, p.service, r.ReleaseID); err != nil {
-		return entities.Deployment{}, err
+	return u.proceed(ctx, p, Proposal{Kind: approval.KindDeploy, ReleaseID: p.release.ID, Strategy: string(strategy)})
+}
+
+func (u DeploymentsUsecase) deployPlan(ctx context.Context, a actor.Actor, t Target, ref string, strategy entities.Strategy) (plan, error) {
+	p, err := u.authorize(ctx, a, t.Service, t.Environment)
+	if err != nil {
+		return plan{}, err
+	}
+	if p.release, err = u.deployable(ctx, p.service, ref); err != nil {
+		return plan{}, err
 	}
 	if p.config, err = u.configs.CurrentNumber(ctx, p.service.Slug, p.env); err != nil {
-		return entities.Deployment{}, err
+		return plan{}, err
 	}
 	p.strategy, p.trigger = strategy, entities.TriggerManual
-	return u.proceed(ctx, p, Proposal{Kind: approval.KindDeploy, ReleaseID: p.release.ID, Strategy: string(strategy)})
+	return p, nil
 }
 
 func (u DeploymentsUsecase) ApplyConfig(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.Deployment, error) {
@@ -63,26 +71,31 @@ func (u DeploymentsUsecase) ApplyConfig(ctx context.Context, a actor.Actor, serv
 }
 
 func (u DeploymentsUsecase) Promote(ctx context.Context, a actor.Actor, serviceSlug, from, to string) (entities.Deployment, error) {
-	if from == to {
-		return entities.Deployment{}, errSameEnvironment
-	}
-	p, err := u.authorize(ctx, a, serviceSlug, to)
+	p, err := u.promotePlan(ctx, a, Target{Service: serviceSlug, Environment: to}, from)
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	if _, p.release, err = u.live(ctx, p.service, from); err != nil {
-		return entities.Deployment{}, err
-	}
-	return u.promote(ctx, p, from)
+	return u.proceed(ctx, p, Proposal{Kind: approval.KindPromote, ReleaseID: p.release.ID, From: from})
 }
 
-func (u DeploymentsUsecase) promote(ctx context.Context, p plan, from string) (entities.Deployment, error) {
-	config, err := u.configs.CurrentNumber(ctx, p.service.Slug, p.env)
-	if err != nil {
-		return entities.Deployment{}, err
+func (u DeploymentsUsecase) promotePlan(ctx context.Context, a actor.Actor, t Target, from string) (plan, error) {
+	if from == t.Environment {
+		return plan{}, errSameEnvironment
 	}
+	p, err := u.authorize(ctx, a, t.Service, t.Environment)
+	if err != nil {
+		return plan{}, err
+	}
+	if _, p.release, err = u.live(ctx, p.service, from); err != nil {
+		return plan{}, err
+	}
+	return u.promoted(ctx, p)
+}
+
+func (u DeploymentsUsecase) promoted(ctx context.Context, p plan) (plan, error) {
+	config, err := u.configs.CurrentNumber(ctx, p.service.Slug, p.env)
 	p.config, p.strategy, p.trigger = config, entities.StrategyBlueGreen, entities.TriggerPromote
-	return u.proceed(ctx, p, Proposal{Kind: approval.KindPromote, ReleaseID: p.release.ID, From: from})
+	return p, err
 }
 
 func (u DeploymentsUsecase) Rollback(ctx context.Context, a actor.Actor, deploymentID string) (entities.Deployment, error) {

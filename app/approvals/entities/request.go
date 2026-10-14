@@ -66,6 +66,14 @@ func (r Request) Pending() bool {
 	return r.Status == StatusPending
 }
 
+func (r Request) Final() bool {
+	switch r.Status {
+	case StatusExecuted, StatusFailed, StatusRejected, StatusCancelled, StatusExpired:
+		return true
+	}
+	return false
+}
+
 func (r Request) ExpiredAt(now time.Time) bool {
 	return r.Pending() && !now.Before(r.ExpiresAt)
 }

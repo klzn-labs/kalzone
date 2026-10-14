@@ -29,6 +29,13 @@ func (r releases) FindRelease(_ context.Context, id string) (entities.ReleaseRef
 	return rel, nil
 }
 
+func (r releases) ResolveRelease(ctx context.Context, serviceSlug, ref string) (entities.ReleaseRef, error) {
+	if rel, ok := r[serviceSlug+"@"+ref]; ok {
+		return rel, nil
+	}
+	return r.FindRelease(ctx, ref)
+}
+
 type configs map[string]int
 
 func (c configs) CurrentNumber(_ context.Context, _, env string) (int, error) { return c[env], nil }
@@ -45,11 +52,15 @@ func (environments) EnvironmentExists(_ context.Context, slug string) error {
 type policy struct {
 	denyEnv string
 	gate    authz.Gate
+	gates   map[string]authz.Gate
 }
 
 func (p policy) Gate(_ context.Context, _ actor.Actor, action authz.Action, r authz.Resource) (authz.Gate, error) {
 	if action != authz.Deploy || r.Environment == p.denyEnv {
 		return "", apperror.Forbidden("no")
+	}
+	if gate, set := p.gates[r.Environment]; set {
+		return gate, nil
 	}
 	if p.gate == "" {
 		return authz.Open, nil
@@ -71,10 +82,12 @@ func (p *published) Publish(_ context.Context, e events.Event) {
 }
 
 var rels = releases{
-	"r1":    {ID: "r1", ServiceID: "s1", Number: 1, Built: true, Reference: "img@sha256:1"},
-	"r2":    {ID: "r2", ServiceID: "s1", Number: 2, Built: true, Reference: "img@sha256:2"},
-	"wip":   {ID: "wip", ServiceID: "s1", Number: 3, Built: false},
-	"other": {ID: "other", ServiceID: "s9", Number: 1, Built: true},
+	"r1":                 {ID: "r1", ServiceID: "s1", Number: 1, Built: true, Reference: "img@sha256:1"},
+	"r2":                 {ID: "r2", ServiceID: "s1", Number: 2, Built: true, Reference: "img@sha256:2"},
+	"wip":                {ID: "wip", ServiceID: "s1", Number: 3, Built: false},
+	"other":              {ID: "other", ServiceID: "s9", Number: 1, Built: true},
+	"api@sha:abc1234":    {ID: "r2", ServiceID: "s1", Number: 2, Built: true, Reference: "img@sha256:2"},
+	"worker@sha:abc1234": {ID: "w1", ServiceID: "s2", Number: 1, Built: true, Reference: "worker@sha256:1"},
 }
 
 func setup(denyEnv string) (*fakestore.Store, deployments.DeploymentsUsecase) {
