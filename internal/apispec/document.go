@@ -18,6 +18,7 @@ const (
 	gatedNote     = "On a protected environment the token also needs the protected scope; without bypass the call answers 202 with a change request."
 	waitNote      = "With ?wait the call answers once the result is final (200), or when the wait ends with the current state (202 and Retry-After)."
 	gatedWaitNote = "A waited call that became a change request follows the change request and answers with it."
+	jsonType      = "application/json"
 )
 
 type WaitParams struct {
@@ -38,7 +39,31 @@ func Build(c *Catalog, baseURL string) ([]byte, error) {
 			return nil, fmt.Errorf("operation %s %s: %w", op.Method, op.Path, err)
 		}
 	}
+	if err := moveBodyTypes(r.Spec, c.Operations()); err != nil {
+		return nil, err
+	}
 	return r.Spec.MarshalJSON()
+}
+
+func moveBodyTypes(spec *openapi31.Spec, ops []Operation) error {
+	for _, op := range ops {
+		if op.BodyType == "" {
+			continue
+		}
+		if err := spec.SetupOperation(op.Method, DocPath(op.Path), moveBodyType(op.BodyType)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func moveBodyType(bodyType string) func(*openapi31.Operation) error {
+	return func(o *openapi31.Operation) error {
+		content := o.RequestBody.RequestBody.Content
+		content[bodyType] = content[jsonType]
+		delete(content, jsonType)
+		return nil
+	}
 }
 
 func DocPath(ginPath string) string {
@@ -78,7 +103,7 @@ func describe(oc openapi.OperationContext, op Operation) {
 	oc.SetID(op.ID)
 	oc.SetSummary(op.Summary)
 	oc.SetTags(strings.Split(strings.TrimPrefix(op.Path, "/"), "/")[0])
-	if note := notes(op); note != "" {
+	if note := Notes(op); note != "" {
 		oc.SetDescription(note)
 	}
 	if !op.Session {
@@ -87,7 +112,7 @@ func describe(oc openapi.OperationContext, op Operation) {
 	oc.AddSecurity("session")
 }
 
-func notes(op Operation) string {
+func Notes(op Operation) string {
 	all := []string{noteIf(op.Gated, gatedNote), noteIf(op.Waits, waitNote), noteIf(op.Gated && op.Waits, gatedWaitNote)}
 	return strings.TrimSpace(strings.Join(all, " "))
 }
@@ -111,18 +136,11 @@ func request(oc openapi.OperationContext, op Operation) {
 		oc.AddReqStructure(op.Params)
 	}
 	if op.Body != nil {
-		oc.AddReqStructure(op.Body, contentType(op.BodyType)...)
+		oc.AddReqStructure(op.Body)
 	}
 	if op.Waits {
 		oc.AddReqStructure(WaitParams{})
 	}
-}
-
-func contentType(bodyType string) []openapi.ContentOption {
-	if bodyType == "" {
-		return nil
-	}
-	return []openapi.ContentOption{openapi.WithContentType(bodyType)}
 }
 
 func waitedStatus(status int) int {

@@ -181,3 +181,15 @@ func Test_Build_DocumentsTheBodysContentType(t *testing.T) {
 	require.Contains(t, content, "application/merge-patch+json")
 	require.NotContains(t, content, "application/json")
 }
+
+func Test_Build_DescribesAMergePatchBodyAsTheObjectItDecodesInto(t *testing.T) {
+	c := apispec.NewCatalog()
+	c.Add(apispec.Operation{ID: "patchThing", Method: http.MethodPatch, Path: "/things/:id", Summary: "Patch a thing", Params: thingParams{},
+		Body: thingBody{}, BodyType: "application/merge-patch+json", Status: http.StatusOK, Response: thingDTO{}})
+
+	doc := build(t, c)
+	schema := at(doc, "paths", "/api/v1/things/{id}", "patch", "requestBody", "content", "application/merge-patch+json", "schema")
+
+	require.Equal(t, map[string]any{"$ref": "#/components/schemas/Apispec_testThingBody"}, schema)
+	require.Contains(t, at(doc, "components", "schemas"), "Apispec_testThingBody")
+}
