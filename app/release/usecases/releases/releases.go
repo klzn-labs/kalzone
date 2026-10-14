@@ -49,20 +49,23 @@ type Publisher interface {
 var errNotYours = apperror.Forbidden("this build belongs to another repository")
 
 type ReleasesUsecase struct {
-	store       Store
-	services    ServiceLookup
-	builder     Builder
-	resolver    DigestResolver
-	authz       Authorizer
-	publisher   Publisher
-	platformURL string
-	timeout     time.Duration
+	store         Store
+	services      ServiceLookup
+	builder       Builder
+	resolver      DigestResolver
+	authz         Authorizer
+	publisher     Publisher
+	platformURL   string
+	timeout       time.Duration
+	buildWorkflow string
+	registry      config.Registry
 }
 
 func NewReleasesUsecase(cfg config.Config, store Store, services ServiceLookup, builder Builder, resolver DigestResolver, authz Authorizer, publisher Publisher) ReleasesUsecase {
 	return ReleasesUsecase{
 		store: store, services: services, builder: builder, resolver: resolver, authz: authz,
 		publisher: publisher, platformURL: cfg.BaseURL, timeout: cfg.Build.Timeout,
+		buildWorkflow: cfg.Build.Workflow, registry: cfg.Registry,
 	}
 }
 

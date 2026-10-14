@@ -22,7 +22,14 @@ type BuildRequest struct {
 }
 
 type BuildCaller struct {
-	Repository string
+	Repository  string
+	WorkflowRef string
+}
+
+type RegistryCredentials struct {
+	Registry string
+	Username string
+	Password string
 }
 
 type BuildReport struct {
