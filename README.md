@@ -185,6 +185,28 @@ claude mcp add --transport http platform https://platform.kalz.one/mcp \
   `approve_url`; `wait` with `kind: request` follows it.
 - `purgeDeadLetters` needs `confirm` set to the queue's name.
 
+## Diagnostics
+
+- `GET /api/v1/runtime/:service/:env` (`getRuntime`, scope `read`) shows the live
+  container: `state`, `health` and the last health check outputs, `restarts`,
+  `exit_code`, `oom_killed`, `image`, `started_at`, and `usage` (CPU millicores and
+  memory MB next to the container's limits, from Prometheus; left out when Grafana or
+  Prometheus cannot answer). The agent reports every 15s (`AGENT_STATUS_EVERY`);
+  `stale: true` means it has not reported for over a minute.
+- `GET /api/v1/logs/:service/:env` (`listLogs`) reads both colours' container logs
+  from Loki, oldest first: `since` (default `15m`, at most `24h`), `limit` (1-1000,
+  default 100, the newest lines in the window), `contains`, `colour`. It needs a
+  member of the owning team or an admin, and on a token both `read` and `logs`.
+- A failed deployment carries `failure`: `class` (`timeout`, `oom_killed`,
+  `unhealthy`, `crashed`, `start_failed`, `smoke_failed`, `gate_failed`,
+  `platform_error`), a `hint`, the failed candidate `container`, its `exit_code`,
+  `oom_killed`, `health_log` and its last 50 log lines in `logs`. deployctl exits 10
+  (start), 11 (smoke), 12 (traffic gate) or 13 (anything else), and the agent
+  inspects the candidate it left stopped.
+- Both reads are MCP tools too; `listLogs` shows only for tokens with `logs`.
+- Grafana's datasource uids are `PLATFORM_GRAFANA_PROMETHEUS_UID` (`prometheus`) and
+  `PLATFORM_GRAFANA_LOKI_UID` (`loki`).
+
 ## Approvals
 
 A token with `protected` but without bypass does not change a protected environment
