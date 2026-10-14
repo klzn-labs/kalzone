@@ -84,7 +84,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Deploy.Timeout = time.Hour
 	cfg.Agent.Token = AgentToken
 	cfg.Queues = config.Queues{GatewayURL: "http://queued:8080", Token: QueuedToken}
-	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token"}
+	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token", PrometheusUID: "prometheus", LokiUID: "loki"}
 	return cfg
 }
 

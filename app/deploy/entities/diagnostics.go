@@ -94,6 +94,14 @@ type Snapshot struct {
 	Status      RuntimeStatus
 }
 
+type RuntimeView struct {
+	Service     string
+	Environment string
+	Status      RuntimeStatus
+	Stale       bool
+	Usage       *Usage
+}
+
 type Usage struct {
 	CPUMillis      int
 	CPULimitMillis int

@@ -28,14 +28,6 @@ type Meter interface {
 	Usage(ctx context.Context, container string) (cpuMillis, memoryMB int, ok bool)
 }
 
-type View struct {
-	Service     string
-	Environment string
-	Status      entities.RuntimeStatus
-	Stale       bool
-	Usage       *entities.Usage
-}
-
 type RuntimeUsecase struct {
 	store    Store
 	services ServiceLookup
@@ -46,16 +38,16 @@ func NewRuntimeUsecase(store Store, services ServiceLookup, meter Meter) Runtime
 	return RuntimeUsecase{store: store, services: services, meter: meter}
 }
 
-func (u RuntimeUsecase) StatusFor(ctx context.Context, a actor.Actor, serviceSlug, environment string) (View, error) {
+func (u RuntimeUsecase) StatusFor(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.RuntimeView, error) {
 	service, err := u.visibleService(ctx, a, serviceSlug, environment)
 	if err != nil {
-		return View{}, err
+		return entities.RuntimeView{}, err
 	}
 	status, found, err := u.store.Runtime(ctx, service.ID, environment)
 	if err != nil || !found {
-		return View{}, firstOr(err, errNotReported)
+		return entities.RuntimeView{}, firstOr(err, errNotReported)
 	}
-	view := View{Service: service.Slug, Environment: environment, Status: status, Stale: status.Stale(clock.Now())}
+	view := entities.RuntimeView{Service: service.Slug, Environment: environment, Status: status, Stale: status.Stale(clock.Now())}
 	view.Usage = u.usage(ctx, status)
 	return view, nil
 }

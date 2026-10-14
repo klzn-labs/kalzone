@@ -6,14 +6,18 @@ import (
 	"github.com/adrianozp/platform/app/catalog/usecases/services"
 	"github.com/adrianozp/platform/app/deploy/handlers/agentapi"
 	deploymentsHandler "github.com/adrianozp/platform/app/deploy/handlers/deployments"
+	runtimeHandler "github.com/adrianozp/platform/app/deploy/handlers/runtime"
 	deployCatalog "github.com/adrianozp/platform/app/deploy/repositories/catalog"
 	deployConfig "github.com/adrianozp/platform/app/deploy/repositories/envconfig"
+	"github.com/adrianozp/platform/app/deploy/repositories/metrics"
 	"github.com/adrianozp/platform/app/deploy/repositories/mysql"
 	deployQueue "github.com/adrianozp/platform/app/deploy/repositories/queue"
 	deployRelease "github.com/adrianozp/platform/app/deploy/repositories/release"
 	"github.com/adrianozp/platform/app/deploy/usecases/agents"
 	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
+	"github.com/adrianozp/platform/app/deploy/usecases/runtime"
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
+	"github.com/adrianozp/platform/app/observe/repositories/grafana"
 	"github.com/adrianozp/platform/app/queue/usecases/credentials"
 	"github.com/adrianozp/platform/app/release/usecases/releases"
 	"github.com/adrianozp/platform/internal/eventbus"
@@ -28,10 +32,11 @@ func Deploy() fx.Option {
 			mysql.NewDeploymentRepository, deployCatalog.NewLookup, deployRelease.NewLookup, deployConfig.NewSource,
 			deployments.NewDeploymentsUsecase, agents.NewAgentsUsecase,
 			deploymentsHandler.NewDeploymentsHandler, agentapi.NewAgentAPIHandler,
+			runtime.NewRuntimeUsecase, runtimeHandler.NewRuntimeHandler,
 		),
 		deployAdapterInjections(),
 		deployUsecaseInjections(),
-		fx.Invoke(deploymentsHandler.RegisterDeploymentsRoutes, agentapi.RegisterAgentAPIRoutes, startDeploySweeper),
+		fx.Invoke(deploymentsHandler.RegisterDeploymentsRoutes, agentapi.RegisterAgentAPIRoutes, runtimeHandler.RegisterRuntimeRoutes, startDeploySweeper),
 	)
 }
 
@@ -44,6 +49,9 @@ func deployAdapterInjections() fx.Option {
 		func(u credentials.CredentialsUsecase) deployQueue.Credentials { return u },
 		func(c deployQueue.Credentials, cfg config.Config) deployQueue.Access {
 			return deployQueue.NewAccess(c, cfg.Queues.GatewayURL)
+		},
+		func(c grafana.Client, cfg config.Config) metrics.Metrics {
+			return metrics.New(c, cfg.Grafana.PrometheusUID)
 		},
 	)
 }
@@ -64,6 +72,10 @@ func deployUsecaseInjections() fx.Option {
 		func(b *eventbus.Bus) agents.Publisher { return b },
 		func(u deployments.DeploymentsUsecase) deploymentsHandler.Deployments { return u },
 		func(u agents.AgentsUsecase) agentapi.Agents { return u },
+		func(r mysql.DeploymentRepository) runtime.Store { return r },
+		func(l deployCatalog.Lookup) runtime.ServiceLookup { return l },
+		func(m metrics.Metrics) runtime.Meter { return m },
+		func(u runtime.RuntimeUsecase) runtimeHandler.Runtime { return u },
 	)
 }
 
