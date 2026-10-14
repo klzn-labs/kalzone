@@ -6,6 +6,7 @@ import (
 	"github.com/adrianozp/platform/app/deploy/entities"
 	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
 	"github.com/adrianozp/platform/internal/apispec"
+	"github.com/adrianozp/platform/pkg/apperror"
 )
 
 type DeploymentDTO struct {
@@ -70,21 +71,70 @@ func withSummary(d entities.Deployment, s entities.Summary) DeploymentDTO {
 	return dto
 }
 
+var errBothForms = apperror.Invalid("send one target or a list of targets, not both").WithField("targets").
+	WithHint("leave out service and the environment when sending targets")
+
+type targetDTO struct {
+	Service     string `json:"service"`
+	Environment string `json:"environment"`
+}
+
 type deployDTO struct {
-	Service     string `json:"service" binding:"required"`
-	Environment string `json:"environment" binding:"required"`
-	Release     string `json:"release" binding:"required" description:"the release id"`
-	Strategy    string `json:"strategy,omitempty" enum:"bluegreen,canary"`
+	Service     string      `json:"service,omitempty" description:"the service of a single deployment; leave out with targets"`
+	Environment string      `json:"environment,omitempty" description:"the environment of a single deployment; leave out with targets"`
+	Targets     []targetDTO `json:"targets,omitempty" minItems:"1" maxItems:"10" description:"1 to 10 services and environments, deployed all or nothing"`
+	Release     string      `json:"release" binding:"required" description:"a release id, latest, r42, sha:<7 to 40 hex> or a tag, resolved per service"`
+	Strategy    string      `json:"strategy,omitempty" enum:"bluegreen,canary"`
+}
+
+func (d deployDTO) batch() (bool, error) {
+	return batchForm(d.Service, d.Environment, "environment", d.Targets)
 }
 
 func (d deployDTO) toRequest() deployments.Request {
 	return deployments.Request{Service: d.Service, Environment: d.Environment, ReleaseID: d.Release, Strategy: d.Strategy}
 }
 
+func (d deployDTO) toBatch() deployments.Batch {
+	return deployments.Batch{Targets: toTargets(d.Targets), Release: d.Release, Strategy: d.Strategy}
+}
+
 type promoteDTO struct {
-	Service string `json:"service" binding:"required"`
-	From    string `json:"from" binding:"required"`
-	To      string `json:"to" binding:"required"`
+	Service string      `json:"service,omitempty" description:"the service of a single promotion; leave out with targets"`
+	To      string      `json:"to,omitempty" description:"the environment of a single promotion; leave out with targets"`
+	Targets []targetDTO `json:"targets,omitempty" minItems:"1" maxItems:"10" description:"1 to 10 services and the environments to promote them to, all or nothing"`
+	From    string      `json:"from" binding:"required"`
+}
+
+func (d promoteDTO) batch() (bool, error) {
+	return batchForm(d.Service, d.To, "to", d.Targets)
+}
+
+func batchForm(service, environment, environmentField string, targets []targetDTO) (bool, error) {
+	switch {
+	case targets != nil && (service != "" || environment != ""):
+		return false, errBothForms
+	case targets != nil:
+		return true, nil
+	case service == "":
+		return false, missing("service", environmentField)
+	case environment == "":
+		return false, missing(environmentField, environmentField)
+	}
+	return false, nil
+}
+
+func missing(field, environmentField string) error {
+	return apperror.Invalid(field + " is required").WithField(field).
+		WithHint("send service and " + environmentField + ", or send targets")
+}
+
+func toTargets(targets []targetDTO) []deployments.Target {
+	result := make([]deployments.Target, 0, len(targets))
+	for _, t := range targets {
+		result = append(result, deployments.Target(t))
+	}
+	return result
 }
 
 type applyDTO struct {

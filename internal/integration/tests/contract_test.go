@@ -73,8 +73,8 @@ func Test_AnUnknownFieldIsRefusedWithTheAcceptedFields(t *testing.T) {
 
 	require.Equal(t, "err_invalid_input", refused.Error.Code)
 	require.Equal(t, "release_id", refused.Error.Field)
-	require.Contains(t, refused.Error.Hint, "this body accepts: service, environment, release, strategy")
-	require.Equal(t, []any{"service", "environment", "release", "strategy"}, refused.Error.Details["accepted"])
+	require.Contains(t, refused.Error.Hint, "this body accepts: service, environment, targets, release, strategy")
+	require.Equal(t, []any{"service", "environment", "targets", "release", "strategy"}, refused.Error.Details["accepted"])
 }
 
 func Test_ListsPageWithACursor(t *testing.T) {

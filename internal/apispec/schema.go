@@ -57,6 +57,9 @@ func defName(t reflect.Type, _ string) string {
 	if strings.HasPrefix(t.Name(), "OrChangeRequest[") {
 		return defName(answerOf(t), "") + "OrChangeRequest"
 	}
+	if strings.HasPrefix(t.Name(), "BatchOrChangeRequest[") {
+		return defName(answerOf(t), "") + "BatchOrChangeRequest"
+	}
 	return pascal(packageName(t.PkgPath())) + pascal(strings.TrimSuffix(t.Name(), "DTO"))
 }
 

@@ -15,6 +15,7 @@ import (
 	"github.com/adrianozp/platform/app/identity/usecases/tokens"
 	"github.com/adrianozp/platform/app/queue/usecases/queues"
 	"github.com/adrianozp/platform/internal/eventbus"
+	"github.com/adrianozp/platform/internal/httpserver/wait"
 	"github.com/adrianozp/platform/internal/sweeper"
 	"github.com/adrianozp/platform/pkg/approval"
 	"go.uber.org/fx"
@@ -46,6 +47,7 @@ func approvalsInjections() fx.Option {
 		func(u deployments.DeploymentsUsecase) approvalsDeploy.Deployments { return u },
 		func(u queues.QueuesUsecase) approvalsQueue.Queues { return u },
 		func(u requests.RequestsUsecase) requestsHandler.Requests { return u },
+		func(u requests.RequestsUsecase) wait.Requests { return u },
 	)
 }
 

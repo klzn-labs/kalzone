@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -34,6 +36,9 @@ func DecodeStrict(body io.Reader, out any) error {
 	raw, err := readOneValue(body)
 	if err != nil {
 		return decodeError(err, accepted)
+	}
+	if err := exactKeys(raw, accepted); err != nil {
+		return err
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
@@ -76,9 +81,31 @@ func decodeError(err error, accepted []string) error {
 		return typeError(typed, accepted)
 	}
 	if field, unknown := unknownField(err); unknown {
-		return withAccepted(apperror.Invalid(fmt.Sprintf("unknown field %q", field)).WithField(field), "remove "+field, accepted)
+		return unknownFieldError(field, accepted)
 	}
 	return apperror.Invalid("the request body is not valid JSON: " + err.Error())
+}
+
+func unknownFieldError(field string, accepted []string) error {
+	return withAccepted(apperror.Invalid(fmt.Sprintf("unknown field %q", field)).WithField(field), "remove "+field, accepted)
+}
+
+func exactKeys(raw json.RawMessage, accepted []string) error {
+	var fields map[string]json.RawMessage
+	if json.Unmarshal(raw, &fields) != nil {
+		return nil
+	}
+	for _, key := range slices.Sorted(maps.Keys(fields)) {
+		if miscased(key, accepted) {
+			return unknownFieldError(key, accepted)
+		}
+	}
+	return nil
+}
+
+func miscased(key string, accepted []string) bool {
+	sameIgnoringCase := func(name string) bool { return strings.EqualFold(name, key) }
+	return !slices.Contains(accepted, key) && slices.ContainsFunc(accepted, sameIgnoringCase)
 }
 
 func typeError(typed *json.UnmarshalTypeError, accepted []string) error {

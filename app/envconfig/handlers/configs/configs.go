@@ -2,6 +2,7 @@ package configs
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/adrianozp/platform/app/envconfig/entities"
@@ -10,6 +11,7 @@ import (
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/adrianozp/platform/pkg/page"
 	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
@@ -19,10 +21,16 @@ type Configs interface {
 	CurrentFor(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.Revision, error)
 	RevisionsFor(ctx context.Context, a actor.Actor, serviceSlug, environment string, p page.Request) (page.Page[entities.Revision], error)
 	Revise(ctx context.Context, a actor.Actor, serviceSlug, environment string, cs entities.ChangeSet) (entities.Revision, error)
+	Patch(ctx context.Context, a actor.Actor, serviceSlug, environment string, patch []byte) (entities.Revision, error)
 	SetSecret(ctx context.Context, a actor.Actor, serviceSlug, environment, name, value string) (entities.Revision, error)
 	UnsetSecret(ctx context.Context, a actor.Actor, serviceSlug, environment, name string) (entities.Revision, error)
 	SecretsFor(ctx context.Context, a actor.Actor, serviceSlug, environment string) ([]entities.SecretInfo, error)
 }
+
+const mergePatch = "application/merge-patch+json"
+
+var errMediaType = apperror.New(apperror.CodeMediaType, "a config patch must be sent as "+mergePatch).
+	WithHint("send Content-Type: " + mergePatch + "; to replace the whole spec, POST a revision instead")
 
 type ConfigsHandler struct {
 	configs Configs
@@ -50,6 +58,20 @@ func (h ConfigsHandler) Revise(c *gin.Context) {
 		return
 	}
 	rev, err := h.configs.Revise(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"), c.Param("env"), body.toEntity())
+	apispec.Respond(c, http.StatusCreated, toDTO(rev), err)
+}
+
+func (h ConfigsHandler) Patch(c *gin.Context) {
+	if c.ContentType() != mergePatch {
+		httperror.Abort(c, errMediaType)
+		return
+	}
+	patch, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		httperror.Abort(c, apperror.Invalid("the request body could not be read"))
+		return
+	}
+	rev, err := h.configs.Patch(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"), c.Param("env"), patch)
 	apispec.Respond(c, http.StatusCreated, toDTO(rev), err)
 }
 
@@ -82,6 +104,8 @@ func RegisterConfigsRoutes(api httpserver.API, h ConfigsHandler) {
 			Scope: scope.Read, Params: pagedParams{}, Status: http.StatusOK, Response: apispec.Page[revisionDTO]{}, Handler: h.History},
 		apispec.Operation{ID: "reviseConfig", Method: http.MethodPost, Path: "/config/:service/:env/revisions", Summary: "Write a new revision; a spec replaces the whole spec",
 			Scope: scope.Config, Gated: true, Params: configParams{}, Body: changeDTO{}, Status: http.StatusCreated, Response: revisionDTO{}, Handler: h.Revise},
+		apispec.Operation{ID: "patchConfig", Method: http.MethodPatch, Path: "/config/:service/:env", Summary: "Write a new revision from a JSON merge patch over spec and env; null removes",
+			Scope: scope.Config, Gated: true, Params: configParams{}, Body: patchDTO{}, BodyType: mergePatch, Status: http.StatusCreated, Response: revisionDTO{}, Handler: h.Patch},
 		apispec.Operation{ID: "listSecrets", Method: http.MethodGet, Path: "/config/:service/:env/secrets", Summary: "List secret names and who set them",
 			Scope: scope.Read, Params: pagedParams{}, Status: http.StatusOK, Response: apispec.Page[secretInfoDTO]{}, Handler: h.Secrets},
 		apispec.Operation{ID: "setSecret", Method: http.MethodPut, Path: "/config/:service/:env/secrets/:name", Summary: "Set a secret; its value never comes back",

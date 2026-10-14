@@ -16,6 +16,7 @@ import (
 	"github.com/adrianozp/platform/internal/fakegrafana"
 	"github.com/adrianozp/platform/internal/fakeoidc"
 	"github.com/adrianozp/platform/internal/fakeregistry"
+	"github.com/adrianozp/platform/internal/httpserver/wait"
 	"github.com/adrianozp/platform/internal/testdb"
 	"github.com/adrianozp/platform/pkg/config"
 	"github.com/gin-gonic/gin"
@@ -40,6 +41,7 @@ type Suite struct {
 	Grafana  *fakegrafana.Grafana
 	Engine   *gin.Engine
 	Catalog  *apispec.Catalog
+	Drain    *wait.Drain
 	db       *gorm.DB
 	contract *contract
 	nextID   int64
@@ -55,7 +57,7 @@ func NewSuite(t *testing.T) *Suite {
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
 		fx.Decorate(func(config.Config) config.Config { return testConfig(t, s) }),
 		fx.Decorate(func(registry.Resolver) registry.Resolver { return registry.WithBaseURL(s.Registry.URL) }),
-		fx.Populate(&s.Engine, &s.db, &s.Catalog),
+		fx.Populate(&s.Engine, &s.db, &s.Catalog, &s.Drain),
 	)
 	app.RequireStart()
 	s.contract = loadContract(t, s.Catalog)

@@ -22,6 +22,7 @@ func Test_Resolve(t *testing.T) {
 		apperror.Conflict("x"):                             http.StatusConflict,
 		apperror.Stale("x"):                                http.StatusConflict,
 		apperror.New(apperror.CodeUnauthenticated, "x"):    http.StatusUnauthorized,
+		apperror.New(apperror.CodeMediaType, "x"):          http.StatusUnsupportedMediaType,
 		errors.Join(apperror.Invalid("x"), errors.New("")): http.StatusBadRequest,
 		errors.New("boom"):                                 http.StatusInternalServerError,
 	}
