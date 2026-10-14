@@ -26,6 +26,34 @@ type DeploymentDTO struct {
 	StartedAt      *time.Time  `json:"started_at,omitempty"`
 	FinishedAt     *time.Time  `json:"finished_at,omitempty"`
 	EventsSummary  *summaryDTO `json:"events_summary,omitempty"`
+	Failure        *failureDTO `json:"failure,omitempty"`
+}
+
+type failureDTO struct {
+	Class     string   `json:"class" enum:"timeout,oom_killed,unhealthy,crashed,start_failed,smoke_failed,gate_failed,platform_error"`
+	Hint      string   `json:"hint"`
+	Container string   `json:"container"`
+	ExitCode  int      `json:"exit_code"`
+	OOMKilled bool     `json:"oom_killed"`
+	HealthLog []string `json:"health_log"`
+	Logs      []string `json:"logs"`
+}
+
+func toFailureDTO(f *entities.Failure) *failureDTO {
+	if f == nil {
+		return nil
+	}
+	return &failureDTO{
+		Class: f.Class, Hint: f.Hint(), Container: f.Container, ExitCode: f.ExitCode, OOMKilled: f.OOMKilled,
+		HealthLog: nonNil(f.HealthLog), Logs: nonNil(f.Logs),
+	}
+}
+
+func nonNil(lines []string) []string {
+	if lines == nil {
+		return []string{}
+	}
+	return lines
 }
 
 func ToDTO(d entities.Deployment) DeploymentDTO {
@@ -33,6 +61,7 @@ func ToDTO(d entities.Deployment) DeploymentDTO {
 		ID: d.ID, Environment: d.Environment, Number: d.Number, ReleaseID: d.ReleaseID, ReleaseNumber: d.ReleaseNumber,
 		ImageRef: d.ImageRef, ConfigRevision: d.ConfigRevision, Strategy: string(d.Strategy), Trigger: string(d.Trigger),
 		Status: string(d.Status), Agent: d.Agent, Message: d.Message, CreatedAt: d.CreatedAt, StartedAt: d.StartedAt, FinishedAt: d.FinishedAt,
+		Failure: toFailureDTO(d.Failure),
 	}
 }
 

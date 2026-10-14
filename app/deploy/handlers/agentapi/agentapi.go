@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/adrianozp/platform/app/deploy/entities"
 	"github.com/adrianozp/platform/internal/httperror"
@@ -33,6 +34,7 @@ type Agents interface {
 	Finish(ctx context.Context, agent, deploymentID string, succeeded bool, message string, failure *entities.Failure) (entities.Deployment, error)
 	Desired(ctx context.Context) ([]entities.Desired, error)
 	Drift(ctx context.Context, agent string, drift entities.Drift) (entities.Deployment, bool, error)
+	ReportStatus(ctx context.Context, agent string, at time.Time, snapshots []entities.Snapshot) error
 }
 
 type AgentAPIHandler struct {
@@ -100,7 +102,7 @@ func (h AgentAPIHandler) Finish(c *gin.Context) {
 	if !httperror.BindJSON(c, &body) {
 		return
 	}
-	if _, err := h.agents.Finish(c.Request.Context(), agentName(c), c.Param("id"), body.Succeeded, body.Message, nil); err != nil {
+	if _, err := h.agents.Finish(c.Request.Context(), agentName(c), c.Param("id"), body.Succeeded, body.Message, failureOf(body.Failure)); err != nil {
 		httperror.Abort(c, err)
 		return
 	}
@@ -149,4 +151,5 @@ func RegisterAgentAPIRoutes(public httpserver.Public, h AgentAPIHandler) {
 	group.POST("/deployments/:id/finish", h.Finish)
 	group.GET("/desired", h.Desired)
 	group.POST("/drift", h.Drift)
+	group.POST("/status", h.Status)
 }

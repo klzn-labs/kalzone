@@ -9,17 +9,22 @@ import (
 
 type Grafana struct {
 	*httptest.Server
-	mu         sync.Mutex
-	folder     bool
-	dashboards map[string]bool
+	mu          sync.Mutex
+	folder      bool
+	dashboards  map[string]bool
+	usage       map[string]usage
+	lines       []LokiLine
+	lokiQueries []string
 }
 
 func New() *Grafana {
-	g := &Grafana{dashboards: map[string]bool{}}
+	g := &Grafana{dashboards: map[string]bool{}, usage: map[string]usage{}}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /grafana/api/folders/platform", g.getFolder)
 	mux.HandleFunc("POST /grafana/api/folders", g.createFolder)
 	mux.HandleFunc("POST /grafana/api/dashboards/db", g.dashboard)
+	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/prometheus/api/v1/query", g.prometheus)
+	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/loki/loki/api/v1/query_range", g.loki)
 	mux.HandleFunc("/grafana/", echo)
 	g.Server = httptest.NewServer(mux)
 	return g
