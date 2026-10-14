@@ -30,7 +30,7 @@ type Agents interface {
 	Heartbeat(ctx context.Context, name, version string) error
 	Claim(ctx context.Context, agent string) (entities.Workload, bool, error)
 	Report(ctx context.Context, agent, deploymentID string, lines []string) error
-	Finish(ctx context.Context, agent, deploymentID string, succeeded bool, message string) (entities.Deployment, error)
+	Finish(ctx context.Context, agent, deploymentID string, succeeded bool, message string, failure *entities.Failure) (entities.Deployment, error)
 	Desired(ctx context.Context) ([]entities.Desired, error)
 	Drift(ctx context.Context, agent string, drift entities.Drift) (entities.Deployment, bool, error)
 }
@@ -100,7 +100,7 @@ func (h AgentAPIHandler) Finish(c *gin.Context) {
 	if !httperror.BindJSON(c, &body) {
 		return
 	}
-	if _, err := h.agents.Finish(c.Request.Context(), agentName(c), c.Param("id"), body.Succeeded, body.Message); err != nil {
+	if _, err := h.agents.Finish(c.Request.Context(), agentName(c), c.Param("id"), body.Succeeded, body.Message, nil); err != nil {
 		httperror.Abort(c, err)
 		return
 	}

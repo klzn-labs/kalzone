@@ -39,8 +39,10 @@ type Queues struct {
 }
 
 type Grafana struct {
-	URL   string `mapstructure:"url"`
-	Token string `mapstructure:"token"`
+	URL           string `mapstructure:"url"`
+	Token         string `mapstructure:"token"`
+	PrometheusUID string `mapstructure:"prometheus_uid" default:"prometheus"`
+	LokiUID       string `mapstructure:"loki_uid" default:"loki"`
 }
 
 type Deploy struct {
@@ -132,7 +134,7 @@ var envKeys = []string{
 	"admins", "secrets.key", "secrets.key_id", "allowed_domains",
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
-	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token", "grafana.url", "grafana.token",
+	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
 	"queues.gateway_url", "queues.token", "approvals.webhook_url",
 }
 

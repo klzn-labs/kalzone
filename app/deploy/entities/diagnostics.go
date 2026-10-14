@@ -88,6 +88,12 @@ func (s RuntimeStatus) Stale(now time.Time) bool {
 	return now.Sub(s.ObservedAt) > StaleAfter
 }
 
+type Snapshot struct {
+	Service     string
+	Environment string
+	Status      RuntimeStatus
+}
+
 type Usage struct {
 	CPUMillis      int
 	CPULimitMillis int

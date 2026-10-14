@@ -28,6 +28,7 @@ type Store interface {
 	StaleInProgress(ctx context.Context, startedBefore time.Time) ([]entities.Deployment, error)
 	AppendEvents(ctx context.Context, deploymentID string, at time.Time, lines []string) error
 	TouchAgent(ctx context.Context, a entities.Agent) error
+	SaveRuntime(ctx context.Context, statuses []entities.RuntimeStatus) error
 	Agents(ctx context.Context) ([]entities.Agent, error)
 }
 
