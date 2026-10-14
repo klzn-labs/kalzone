@@ -23,9 +23,9 @@ on:
         default: ""
     secrets:
       DOCKER_USERNAME:
-        required: true
+        required: false
       DOCKER_PASSWORD:
-        required: true
+        required: false
 
 permissions:
   contents: read
@@ -58,10 +58,15 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in with the registry credentials the platform hands to this build
+        run: |
+          token=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AUDIENCE" | jq -r .value)
+          echo "::add-mask::$token"
+          creds=$(curl -fsS -X POST "$RELEASE_URL/registry-credentials" -H "Authorization: Bearer $token")
+          password=$(jq -r .password <<<"$creds")
+          echo "::add-mask::$password"
+          printf '%s' "$password" | docker login "$(jq -r .registry <<<"$creds")" -u "$(jq -r .username <<<"$creds")" --password-stdin
 
       - name: Choose the tag
         id: tag
