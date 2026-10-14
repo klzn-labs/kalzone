@@ -76,9 +76,14 @@ func queryParam(t *testing.T, raw, name string) string {
 
 func (c *Client) Do(t *testing.T, method, path string, body any) Response {
 	t.Helper()
+	return c.Send(t, method, path, "application/json", body)
+}
+
+func (c *Client) Send(t *testing.T, method, path, contentType string, body any) Response {
+	t.Helper()
 	req, err := http.NewRequest(method, c.suite.Server.URL+path, encode(t, body))
 	require.NoError(t, err)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", contentType)
 	if c.CSRFToken != "" {
 		req.Header.Set("X-CSRF-Token", c.CSRFToken)
 	}

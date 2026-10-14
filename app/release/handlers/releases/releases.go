@@ -9,6 +9,7 @@ import (
 	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/adrianozp/platform/internal/httperror"
 	"github.com/adrianozp/platform/internal/httpserver"
+	"github.com/adrianozp/platform/internal/httpserver/wait"
 	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/page"
@@ -19,16 +20,18 @@ import (
 type Releases interface {
 	PageFor(ctx context.Context, a actor.Actor, serviceSlug string, p page.Request) (page.Page[entities.Release], error)
 	GetFor(ctx context.Context, a actor.Actor, id string) (entities.Release, error)
+	ResolveFor(ctx context.Context, a actor.Actor, serviceSlug, ref string) (entities.Release, error)
 	Request(ctx context.Context, a actor.Actor, serviceSlug, ref string) (entities.Release, error)
 	Register(ctx context.Context, a actor.Actor, serviceSlug, tag string) (entities.Release, error)
 }
 
 type ReleasesHandler struct {
 	releases Releases
+	waiter   wait.Waiter
 }
 
-func NewReleasesHandler(releases Releases) ReleasesHandler {
-	return ReleasesHandler{releases: releases}
+func NewReleasesHandler(releases Releases, waiter wait.Waiter) ReleasesHandler {
+	return ReleasesHandler{releases: releases, waiter: waiter}
 }
 
 type ReleaseDTO struct {
@@ -73,7 +76,8 @@ type listParams struct {
 }
 
 type releaseParams struct {
-	ID string `path:"id"`
+	ID      string `path:"id" description:"a release id, or with service: latest, r42, sha:<7 to 40 hex> or a tag"`
+	Service string `query:"service" description:"the service slug that id is resolved in"`
 }
 
 func (h ReleasesHandler) List(c *gin.Context) {
@@ -84,17 +88,47 @@ func (h ReleasesHandler) List(c *gin.Context) {
 }
 
 func (h ReleasesHandler) Get(c *gin.Context) {
-	rel, err := h.releases.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("id"))
-	apispec.Respond(c, http.StatusOK, ToDTO(rel), err)
+	d, ok := wait.Duration(c)
+	if !ok {
+		return
+	}
+	id, err := h.releaseID(c)
+	if err != nil {
+		httperror.Abort(c, err)
+		return
+	}
+	wait.Read(c, h.waiter, d, h.reread(c, id), finalRelease)
+}
+
+func (h ReleasesHandler) releaseID(c *gin.Context) (string, error) {
+	service := c.Query("service")
+	if service == "" {
+		return c.Param("id"), nil
+	}
+	rel, err := h.releases.ResolveFor(c.Request.Context(), requestctx.ActorFrom(c), service, c.Param("id"))
+	return rel.ID, err
 }
 
 func (h ReleasesHandler) Request(c *gin.Context) {
+	d, ok := wait.Duration(c)
 	var body requestDTO
-	if !httperror.BindStrict(c, &body) {
+	if !ok || !httperror.BindStrict(c, &body) {
 		return
 	}
 	rel, err := h.releases.Request(c.Request.Context(), requestctx.ActorFrom(c), body.Service, body.Ref)
-	apispec.Respond(c, http.StatusAccepted, ToDTO(rel), err)
+	wait.Started(c, h.waiter, d, ToDTO(rel), err, h.reread(c, rel.ID), finalRelease)
+}
+
+func (h ReleasesHandler) reread(c *gin.Context, id string) wait.Load[ReleaseDTO] {
+	a := requestctx.ActorFrom(c)
+	return func(ctx context.Context) (ReleaseDTO, error) {
+		rel, err := h.releases.GetFor(ctx, a, id)
+		return ToDTO(rel), err
+	}
+}
+
+func finalRelease(dto ReleaseDTO) bool {
+	return entities.Release{Status: entities.Status(dto.Status)}.Final()
 }
 
 func (h ReleasesHandler) Register(c *gin.Context) {
@@ -111,10 +145,10 @@ func RegisterReleasesRoutes(api httpserver.API, h ReleasesHandler) {
 		apispec.Operation{ID: "listReleases", Method: http.MethodGet, Path: "/releases", Summary: "List a service's releases, newest first",
 			Scope: scope.Read, Params: listParams{}, Status: http.StatusOK, Response: apispec.Page[ReleaseDTO]{}, Handler: h.List},
 		apispec.Operation{ID: "requestRelease", Method: http.MethodPost, Path: "/releases", Summary: "Build a git ref into a release; poll it until built or failed",
-			Scope: scope.Builds, Body: requestDTO{}, Status: http.StatusAccepted, Response: ReleaseDTO{}, Handler: h.Request},
+			Scope: scope.Builds, Waits: true, Body: requestDTO{}, Status: http.StatusAccepted, Response: ReleaseDTO{}, Handler: h.Request},
 		apispec.Operation{ID: "registerRelease", Method: http.MethodPost, Path: "/releases/registrations", Summary: "Register an image tag that was built elsewhere",
 			Scope: scope.Builds, Body: registerDTO{}, Status: http.StatusCreated, Response: ReleaseDTO{}, Handler: h.Register},
-		apispec.Operation{ID: "getRelease", Method: http.MethodGet, Path: "/releases/:id", Summary: "Show a release",
-			Scope: scope.Read, Params: releaseParams{}, Status: http.StatusOK, Response: ReleaseDTO{}, Handler: h.Get},
+		apispec.Operation{ID: "getRelease", Method: http.MethodGet, Path: "/releases/:id", Summary: "Show a release by id, or by latest, r42, sha:<prefix> or tag within ?service",
+			Scope: scope.Read, Waits: true, Params: releaseParams{}, Status: http.StatusOK, Response: ReleaseDTO{}, Handler: h.Get},
 	)
 }

@@ -105,3 +105,12 @@ func Test_DecodeStrict_RefusesANullBody(t *testing.T) {
 	require.Equal(t, "the request body must be a JSON object", err.Message)
 	require.Equal(t, "send a JSON object; this body accepts: service, release, strategy, teams", err.Hint)
 }
+
+func Test_DecodeStrict_MatchesFieldNamesExactly(t *testing.T) {
+	_, err := decode(`{"service":"api","Release":"r1"}`)
+
+	require.Equal(t, apperror.CodeInvalidInput, err.Code)
+	require.Equal(t, `unknown field "Release"`, err.Message)
+	require.Equal(t, "Release", err.Field)
+	require.Equal(t, "remove Release; this body accepts: service, release, strategy, teams", err.Hint)
+}

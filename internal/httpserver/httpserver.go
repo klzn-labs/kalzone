@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/adrianozp/platform/internal/httpserver/wait"
 	"github.com/adrianozp/platform/pkg/config"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -24,8 +25,9 @@ func NewEngine() *gin.Engine {
 	return engine
 }
 
-func Run(lc fx.Lifecycle, cfg config.Config, engine *gin.Engine) {
+func Run(lc fx.Lifecycle, cfg config.Config, engine *gin.Engine, drain *wait.Drain) {
 	server := &http.Server{Addr: cfg.HTTP.Addr, Handler: engine, ReadHeaderTimeout: 10 * time.Second}
+	server.RegisterOnShutdown(drain.Close)
 	lc.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			go serve(server)

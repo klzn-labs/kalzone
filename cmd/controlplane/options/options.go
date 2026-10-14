@@ -6,6 +6,7 @@ import (
 	"github.com/adrianozp/platform/internal/db"
 	"github.com/adrianozp/platform/internal/eventbus"
 	"github.com/adrianozp/platform/internal/httpserver"
+	"github.com/adrianozp/platform/internal/httpserver/wait"
 	"github.com/adrianozp/platform/internal/migrator"
 	"github.com/adrianozp/platform/internal/secretbox"
 	"github.com/adrianozp/platform/pkg/config"
@@ -39,6 +40,8 @@ func Infrastructure() fx.Option {
 			httpserver.NewEngine,
 			apispec.NewCatalog,
 			httpserver.NewRoutes,
+			wait.NewDrain,
+			wait.NewWaiter,
 			eventbus.New,
 			secretbox.New,
 		),

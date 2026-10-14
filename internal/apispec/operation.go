@@ -19,8 +19,10 @@ type Operation struct {
 	Scope    scope.Scope
 	Session  bool
 	Gated    bool
+	Waits    bool
 	Params   any
 	Body     any
+	BodyType string
 	Status   int
 	Response any
 	Handler  gin.HandlerFunc
@@ -47,6 +49,13 @@ type OrChangeRequest[T any] struct{}
 func (OrChangeRequest[T]) JSONSchemaOneOf() []any {
 	var answer T
 	return []any{answer, approval.Pending{}}
+}
+
+type BatchOrChangeRequest[T any] struct{}
+
+func (BatchOrChangeRequest[T]) JSONSchemaOneOf() []any {
+	var one T
+	return []any{one, Page[T]{}, approval.Pending{}}
 }
 
 type Page[T any] struct {

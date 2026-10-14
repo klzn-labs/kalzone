@@ -66,6 +66,12 @@ func (d changeDTO) toEntity() entities.ChangeSet {
 	return cs
 }
 
+type patchDTO struct {
+	Spec    map[string]any     `json:"spec,omitempty" description:"spec fields to change, merged into the current spec; null removes an optional field"`
+	Env     map[string]*string `json:"env,omitempty" description:"variables to set; null removes one"`
+	Message string             `json:"message,omitempty"`
+}
+
 type secretDTO struct {
 	Value string `json:"value" binding:"required"`
 }

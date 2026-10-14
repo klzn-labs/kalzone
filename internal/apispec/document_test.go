@@ -124,3 +124,60 @@ func Test_Build_NeedsAGatedAcceptedAnswerToIncludeTheChangeRequest(t *testing.T)
 	require.Error(t, refused)
 	require.Len(t, at(schemas, "Apispec_testThingOrChangeRequest", "oneOf"), 2)
 }
+
+func Test_Build_DocumentsWaitOnBothSidesOfTheAnswer(t *testing.T) {
+	c := apispec.NewCatalog()
+	c.Add(apispec.Operation{ID: "getThing", Method: http.MethodGet, Path: "/things/:id", Summary: "Show a thing", Waits: true, Params: thingParams{}, Status: http.StatusOK, Response: thingDTO{}})
+	c.Add(apispec.Operation{ID: "startThing", Method: http.MethodPost, Path: "/things", Summary: "Start a thing", Gated: true, Waits: true, Status: http.StatusAccepted, Response: apispec.OrChangeRequest[thingDTO]{}})
+	doc := build(t, c)
+	get := at(doc, "paths", "/api/v1/things/{id}", "get").(map[string]any)
+	start := at(doc, "paths", "/api/v1/things", "post").(map[string]any)
+
+	require.NotNil(t, at(get, "responses", "202"))
+	require.NotNil(t, at(start, "responses", "200"))
+	require.Equal(t, "wait", at(start, "parameters").([]any)[0].(map[string]any)["name"])
+	require.Contains(t, get["description"], "Retry-After")
+	require.Contains(t, start["description"], "change request")
+}
+
+func Test_Build_DescribesABatchAnswerAsOneOfThree(t *testing.T) {
+	c := apispec.NewCatalog()
+	c.Add(apispec.Operation{ID: "startThings", Method: http.MethodPost, Path: "/things", Summary: "Start things", Gated: true, Status: http.StatusAccepted, Response: apispec.BatchOrChangeRequest[thingDTO]{}})
+
+	schemas := at(build(t, c), "components", "schemas").(map[string]any)
+
+	require.Len(t, at(schemas, "Apispec_testThingBatchOrChangeRequest", "oneOf"), 3)
+	require.Contains(t, schemas, "Apispec_testThingPage")
+}
+
+func Test_Build_DeclaresRetryAfterOnEveryWaited202(t *testing.T) {
+	c := apispec.NewCatalog()
+	c.Add(apispec.Operation{ID: "getThing", Method: http.MethodGet, Path: "/things/:id", Summary: "Show a thing", Waits: true, Params: thingParams{}, Status: http.StatusOK, Response: thingDTO{}})
+	c.Add(apispec.Operation{ID: "startThing", Method: http.MethodPost, Path: "/things", Summary: "Start a thing", Gated: true, Waits: true, Status: http.StatusAccepted, Response: apispec.OrChangeRequest[thingDTO]{}})
+	doc := build(t, c)
+
+	require.NotNil(t, at(doc, "paths", "/api/v1/things/{id}", "get", "responses", "202", "headers", "Retry-After"))
+	require.NotNil(t, at(doc, "paths", "/api/v1/things", "post", "responses", "202", "headers", "Retry-After"))
+	require.Nil(t, at(doc, "paths", "/api/v1/things", "post", "responses", "200", "headers"))
+}
+
+func Test_Build_KeepsTheChangeRequestOfAWaitedGatedCall(t *testing.T) {
+	c := apispec.NewCatalog()
+	c.Add(apispec.Operation{ID: "updateThing", Method: http.MethodPatch, Path: "/things/:id", Summary: "Change a thing", Gated: true, Waits: true, Params: thingParams{}, Status: http.StatusOK, Response: thingDTO{}})
+	update := at(build(t, c), "paths", "/api/v1/things/{id}", "patch").(map[string]any)
+
+	require.Contains(t, at(update, "responses", "202", "content", "application/json", "schema", "$ref"), "Pending")
+	require.NotNil(t, at(update, "responses", "202", "headers", "Retry-After"))
+	require.Contains(t, update["description"], "follows the change request")
+}
+
+func Test_Build_DocumentsTheBodysContentType(t *testing.T) {
+	c := apispec.NewCatalog()
+	c.Add(apispec.Operation{ID: "patchThing", Method: http.MethodPatch, Path: "/things/:id", Summary: "Patch a thing", Params: thingParams{},
+		Body: thingBody{}, BodyType: "application/merge-patch+json", Status: http.StatusOK, Response: thingDTO{}})
+
+	content := at(build(t, c), "paths", "/api/v1/things/{id}", "patch", "requestBody", "content").(map[string]any)
+
+	require.Contains(t, content, "application/merge-patch+json")
+	require.NotContains(t, content, "application/json")
+}
