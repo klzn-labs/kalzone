@@ -70,6 +70,7 @@ func classifyCases(t *testing.T) []classifyCase {
 		{"crashed", exitError(t, "10"), nil, crashed, "crashed"},
 		{"start", exitError(t, "10"), nil, agentapi.Container{Found: true, State: "running"}, "start_failed"},
 		{"smoke", exitError(t, "11"), nil, agentapi.Container{}, "smoke_failed"},
+		{"ready", exitError(t, "14"), nil, agentapi.Container{Found: true, State: "running"}, "unhealthy"},
 		{"gate", exitError(t, "12"), nil, agentapi.Container{}, "gate_failed"},
 		{"other", exitError(t, "13"), nil, agentapi.Container{}, "platform_error"},
 		{"plain", errors.New("deployctl missing"), nil, agentapi.Container{}, "platform_error"},

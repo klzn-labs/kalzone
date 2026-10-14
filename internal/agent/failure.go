@@ -15,7 +15,7 @@ const (
 	evidenceTimeout = 15 * time.Second
 )
 
-var stepClasses = map[int]string{11: "smoke_failed", 12: "gate_failed"}
+var stepClasses = map[int]string{11: "smoke_failed", 12: "gate_failed", 14: "unhealthy"}
 
 func (a Agent) evidence(ctx context.Context, w agentapi.Workload, applyErr error) agentapi.Failure {
 	inspectCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), evidenceTimeout)
