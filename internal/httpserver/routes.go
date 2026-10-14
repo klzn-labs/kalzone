@@ -25,6 +25,7 @@ type Guards struct {
 	API     gin.HandlerFunc
 	Web     gin.HandlerFunc
 	Session gin.HandlerFunc
+	Token   gin.HandlerFunc
 }
 
 type Session struct{ *gin.RouterGroup }

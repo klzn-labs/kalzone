@@ -7,6 +7,7 @@ import (
 	"github.com/adrianozp/platform/internal/eventbus"
 	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/adrianozp/platform/internal/httpserver/wait"
+	"github.com/adrianozp/platform/internal/mcpserver"
 	"github.com/adrianozp/platform/internal/migrator"
 	"github.com/adrianozp/platform/internal/secretbox"
 	"github.com/adrianozp/platform/pkg/config"
@@ -45,6 +46,6 @@ func Infrastructure() fx.Option {
 			eventbus.New,
 			secretbox.New,
 		),
-		fx.Invoke(migrator.MigrateOnStart, httpserver.RegisterDocumentRoutes),
+		fx.Invoke(migrator.MigrateOnStart, httpserver.RegisterDocumentRoutes, mcpserver.RegisterMCPRoutes),
 	)
 }
