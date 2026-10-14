@@ -136,6 +136,27 @@ from the handlers' declarations, so it is always the API that runs.
   `GET /api/v1/deployments/:id/events`, oldest first. `?tail=N` (1-100) answers the
   last N lines instead and cannot be combined with `cursor`. While a deployment
   runs, `next_cursor` stays so the log can be followed.
+- `?wait=30s` (above 0, at most `120s`) on `GET` of a release, deployment or change
+  request, and on the calls that start a build, deploy, promotion, config apply or
+  rollback, answers when the status is final with `200`, or when the wait ends with
+  `202`, the current state and `Retry-After: 5`. A call that became a change request
+  waits for the request instead.
+- A release is named by its id or, within a service, by `latest` (the last built),
+  `r42`, `sha:<7 to 40 hex>` (the newest build of that commit; a prefix shared by two
+  commits is refused) or a tag: in `release` of `POST /api/v1/deployments`, and in
+  `GET /api/v1/releases/<ref>?service=<slug>`.
+- `POST /api/v1/deployments` and `POST /api/v1/deployments/promotions` take
+  `targets` (1 to 10 `{"service", "environment"}`) instead of one service: every
+  target is checked first, then all are deployed in one transaction, or none is. The
+  answer is `{"items": [...]}` in target order. A batch with a target that needs
+  approval is refused; send those targets one at a time.
+- `PATCH /api/v1/config/:service/:env` with `Content-Type: application/merge-patch+json`
+  writes a revision that changes only what the patch names in `spec` and `env`;
+  `null` removes a field or a variable, and `spec: null` or `env: null` is a `400`.
+  Secrets keep their own endpoints.
+- `GET /api/v1/config/search?key=LOG_LEVEL` lists where a variable or secret is set in
+  the current configs of the services the caller sees, narrowed by `env` and `team`;
+  the key is matched exactly and secrets are listed by name only.
 
 ## Approvals
 
