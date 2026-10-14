@@ -207,6 +207,30 @@ claude mcp add --transport http platform https://platform.kalz.one/mcp \
 - Grafana's datasource uids are `PLATFORM_GRAFANA_PROMETHEUS_UID` (`prometheus`) and
   `PLATFORM_GRAFANA_LOKI_UID` (`loki`).
 
+## Onboarding a service
+
+- `GET /api/v1/services/:service/onboarding` (`getOnboarding`) checks what the
+  service still needs and answers each check with `status` (`ok`, `failed`,
+  `skipped`), a detail and a hint: `github_app` (the GitHub App sees the
+  repository), `workflow` (`.github/workflows/<build_workflow>` on the default branch
+  calls `adrianozp/platform/.github/workflows/build.yml`), `dockerfile`, `registry`
+  (the platform's credentials can push to `image_repository`) and `config` (dev has a
+  port and a health path). `ready` is true when all pass.
+- `POST /api/v1/services/:service/onboarding/pull-request`
+  (`createOnboardingPullRequest`, scope `services`) opens, or returns the open, pull
+  request on branch `platform-onboarding` that adds the build workflow. The GitHub
+  App needs Contents, Pull requests and Workflows write for it.
+- Builds need no Docker secrets: the reusable workflow asks
+  `POST /api/v1/releases/:id/registry-credentials` with its GitHub OIDC token, and
+  the platform answers its registry credentials (`PLATFORM_REGISTRY_USERNAME`,
+  `PLATFORM_REGISTRY_TOKEN`) only to the service's own repository, running
+  `PLATFORM_BUILD_WORKFLOW`, while the release is being built. Each hand-out is
+  audited as `registry.credentials_issued`.
+- Images need no `wget`: deployctl checks `http://<container ip>:<port><health_path>`
+  from the host until it answers 2xx (60s), then smoke-checks routed services
+  through Traefik. A container that never answers fails with exit 14, class
+  `unhealthy`.
+
 ## Approvals
 
 A token with `protected` but without bypass does not change a protected environment
