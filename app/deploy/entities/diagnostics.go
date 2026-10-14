@@ -22,7 +22,7 @@ const (
 var FailureClasses = []string{FailureTimeout, FailureOOM, FailureUnhealthy, FailureCrashed, FailureStart, FailureSmoke, FailureGate, FailurePlatform}
 
 var hints = map[string]string{
-	FailureUnhealthy: "the health check at health_path kept failing: read failure.health_log and failure.logs, and check that the path answers 2xx inside the container",
+	FailureUnhealthy: "the container never answered 2xx on health_path: read failure.logs and the deployment log, and check port and health_path in the config spec",
 	FailureCrashed:   "the process exited with exit_code: read failure.logs",
 	FailureOOM:       "the container ran out of memory: raise memory_mb in the config spec or lower the usage",
 	FailureStart:     "the container did not start: read the deployment log for the compose error (image pull, ports, command)",

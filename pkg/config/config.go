@@ -25,6 +25,7 @@ type Config struct {
 	Deploy         Deploy    `mapstructure:"deploy"`
 	Agent          Agent     `mapstructure:"agent"`
 	Grafana        Grafana   `mapstructure:"grafana"`
+	Registry       Registry  `mapstructure:"registry"`
 	Queues         Queues    `mapstructure:"queues"`
 	Approvals      Approvals `mapstructure:"approvals"`
 }
@@ -59,7 +60,14 @@ type OIDC struct {
 }
 
 type Build struct {
-	Timeout time.Duration `mapstructure:"timeout" default:"60m" validate:"gt=0"`
+	Timeout  time.Duration `mapstructure:"timeout" default:"60m" validate:"gt=0"`
+	Workflow string        `mapstructure:"workflow" default:"adrianozp/platform/.github/workflows/build.yml"`
+}
+
+type Registry struct {
+	Username string `mapstructure:"username"`
+	Token    string `mapstructure:"token"`
+	AuthURL  string `mapstructure:"auth_url" default:"https://auth.docker.io/token"`
 }
 
 type HTTP struct {
@@ -134,7 +142,7 @@ var envKeys = []string{
 	"admins", "secrets.key", "secrets.key_id", "allowed_domains",
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
-	"oidc.issuer", "oidc.audience", "build.timeout", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
+	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
 	"queues.gateway_url", "queues.token", "approvals.webhook_url",
 }
 
