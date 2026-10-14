@@ -34,15 +34,20 @@ Lists come in pages of `{"items", "next_cursor"}`, and a refused call says in
 1. Build `api` or `web`: `POST /api/v1/releases` with `{"service", "ref"}`, or the
    Releases tab, or auto-build on push. A build of `api` is shared with `worker` and
    `importer`, which get a release with the same digest and their own number.
-2. Wait until `GET /api/v1/releases/<id>` says `built`.
-3. Deploy each service to dev: `POST /api/v1/deployments` with
-   `{"service", "environment": "dev", "release"}`; follow
-   `GET /api/v1/deployments/<id>` until `succeeded`, and read its `events_summary`
-   when it fails.
+2. Wait for it: `GET /api/v1/releases/<id>?wait=120s` answers `200` once it is
+   `built` or `failed`, or `202` to call again.
+3. Deploy the services to dev in one call:
+   `POST /api/v1/deployments?wait=120s` with
+   `{"targets": [{"service": "api", "environment": "dev"}, {"service": "worker", "environment": "dev"}, {"service": "importer", "environment": "dev"}], "release": "sha:<commit>"}`;
+   the release is resolved per service. Read a failed deployment's `events_summary`
+   with `GET /api/v1/deployments/<id>`.
 4. Promote to prod: `POST /api/v1/deployments/promotions` with
-   `{"service", "from": "dev", "to": "prod"}`. A token without bypass gets `202`
-   with a change request; a maintainer approves it in the browser, and
-   `GET /api/v1/requests/<id>` says `executed` with the deployment.
+   `{"service", "from": "dev", "to": "prod"}`, one service per call. A token without
+   bypass gets `202` with a change request; a maintainer approves it in the browser,
+   and `GET /api/v1/requests/<id>?wait=120s` says `executed` with the deployment.
+5. Change config with `PATCH /api/v1/config/<service>/<env>` and
+   `Content-Type: application/merge-patch+json`, naming only what changes;
+   `GET /api/v1/config/search?key=<NAME>` shows where a variable is set.
 
 ## How the cutover went
 
