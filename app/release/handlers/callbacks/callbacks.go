@@ -24,6 +24,7 @@ type Builds interface {
 	Started(ctx context.Context, caller entities.BuildCaller, releaseID, runURL string) (entities.Release, error)
 	Built(ctx context.Context, caller entities.BuildCaller, releaseID string, report entities.BuildReport) (entities.Release, error)
 	Failed(ctx context.Context, caller entities.BuildCaller, releaseID string, report entities.BuildReport) (entities.Release, error)
+	RegistryCredentials(ctx context.Context, caller entities.BuildCaller, releaseID string) (entities.RegistryCredentials, error)
 }
 
 var errNoToken = apperror.New(apperror.CodeUnauthenticated, "send a GitHub Actions OIDC token as a bearer token")
@@ -60,7 +61,7 @@ func (h CallbacksHandler) authenticate(c *gin.Context) {
 		httperror.Abort(c, apperror.New(apperror.CodeUnauthenticated, "invalid OIDC token: "+err.Error()))
 		return
 	}
-	c.Set(callerKey, entities.BuildCaller{Repository: claims.Repository})
+	c.Set(callerKey, entities.BuildCaller{Repository: claims.Repository, WorkflowRef: claims.JobWorkflowRef})
 }
 
 func (h CallbacksHandler) Started(c *gin.Context) {
@@ -114,4 +115,21 @@ func RegisterCallbacksRoutes(public httpserver.Public, h CallbacksHandler) {
 	group.POST("/started", h.Started)
 	group.POST("/built", h.Built)
 	group.POST("/failed", h.Failed)
+	group.POST("/registry-credentials", h.RegistryCredentials)
+}
+
+type credentialsDTO struct {
+	Registry string `json:"registry"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (h CallbacksHandler) RegistryCredentials(c *gin.Context) {
+	creds, err := h.builds.RegistryCredentials(c.Request.Context(), callerFrom(c), c.Param("id"))
+	if err != nil {
+		httperror.Abort(c, err)
+		return
+	}
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, credentialsDTO(creds))
 }

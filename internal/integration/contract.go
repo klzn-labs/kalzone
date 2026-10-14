@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var buildCallback = regexp.MustCompile("^" + apispec.BasePath + "/releases/[^/]+/(started|built|failed)$")
+var buildCallback = regexp.MustCompile("^" + apispec.BasePath + "/releases/[^/]+/(started|built|failed|registry-credentials)$")
 
 type contract struct {
 	router routers.Router

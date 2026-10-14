@@ -37,6 +37,13 @@ func (s *Server) installation(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+	s.mu.Lock()
+	uninstalled := s.uninstalled[repoName(r)]
+	s.mu.Unlock()
+	if uninstalled {
+		http.NotFound(w, r)
+		return
+	}
 	writeJSON(w, map[string]int64{"id": 77})
 }
 

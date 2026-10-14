@@ -26,9 +26,10 @@ var ErrUnknownKey = errors.New("oidc: token signed with an unknown key")
 
 type Claims struct {
 	jwt.RegisteredClaims
-	Repository  string `json:"repository"`
-	WorkflowRef string `json:"workflow_ref"`
-	RunID       string `json:"run_id"`
+	Repository     string `json:"repository"`
+	WorkflowRef    string `json:"workflow_ref"`
+	JobWorkflowRef string `json:"job_workflow_ref"`
+	RunID          string `json:"run_id"`
 }
 
 type Verifier struct {

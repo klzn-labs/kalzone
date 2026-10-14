@@ -12,9 +12,10 @@ import (
 )
 
 var outsideTheDocument = map[string]bool{
-	"POST /api/v1/releases/:id/started": true,
-	"POST /api/v1/releases/:id/built":   true,
-	"POST /api/v1/releases/:id/failed":  true,
+	"POST /api/v1/releases/:id/started":              true,
+	"POST /api/v1/releases/:id/built":                true,
+	"POST /api/v1/releases/:id/registry-credentials": true,
+	"POST /api/v1/releases/:id/failed":               true,
 }
 
 type apiError struct {

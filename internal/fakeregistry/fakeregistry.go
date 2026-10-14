@@ -8,14 +8,16 @@ import (
 
 type Registry struct {
 	*httptest.Server
-	mu      sync.Mutex
-	digests map[string]string
+	mu       sync.Mutex
+	digests  map[string]string
+	pushable map[string]bool
 }
 
 func New() *Registry {
-	r := &Registry{digests: map[string]string{}}
+	r := &Registry{digests: map[string]string{}, pushable: map[string]bool{}}
 	mux := http.NewServeMux()
 	mux.HandleFunc("HEAD /v2/{owner}/{name}/manifests/{tag}", r.manifest)
+	mux.HandleFunc("GET /token", r.token)
 	r.Server = httptest.NewServer(mux)
 	return r
 }
