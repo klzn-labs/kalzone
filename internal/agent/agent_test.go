@@ -20,6 +20,8 @@ type plane struct {
 	finished map[string]string
 	desired  []agentapi.Desired
 	drifts   []agentapi.Drift
+	failures map[string]*agentapi.Failure
+	reports  [][]agentapi.Snapshot
 }
 
 func (p *plane) Claim(context.Context) (agentapi.Workload, bool, error) {
@@ -36,8 +38,16 @@ func (p *plane) Events(_ context.Context, _ string, lines []string) error {
 	return nil
 }
 
-func (p *plane) Finish(_ context.Context, id string, ok bool, message string) error {
+func (p *plane) Finish(_ context.Context, id string, ok bool, message string, failure *agentapi.Failure) error {
 	p.finished[id] = fmt.Sprintf("%v %s", ok, message)
+	if p.failures != nil {
+		p.failures[id] = failure
+	}
+	return nil
+}
+
+func (p *plane) Status(_ context.Context, snapshots []agentapi.Snapshot) error {
+	p.reports = append(p.reports, snapshots)
 	return nil
 }
 
@@ -49,16 +59,30 @@ func (p *plane) Drift(_ context.Context, d agentapi.Drift) error {
 }
 
 type runtime struct {
-	fail     bool
-	observed map[string]agent.Observed
+	fail       bool
+	failWith   error
+	observed   map[string]agent.Observed
+	containers map[string]agentapi.Container
+	logs       []string
 }
 
 func (r runtime) Apply(_ context.Context, w agentapi.Workload, out io.Writer) error {
 	fmt.Fprintf(out, "pulling %s\nswitching traffic\nhalf a line", w.ImageRef)
+	if r.failWith != nil {
+		return r.failWith
+	}
 	if r.fail {
 		return errors.New("rollback: 5xx above threshold")
 	}
 	return nil
+}
+
+func (r runtime) Inspect(_ context.Context, container string) (agentapi.Container, error) {
+	return r.containers[container], nil
+}
+
+func (r runtime) Logs(context.Context, string, int) ([]string, error) {
+	return r.logs, nil
 }
 
 func (r runtime) Observe(_ context.Context, name string) (agent.Observed, error) {

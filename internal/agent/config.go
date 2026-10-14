@@ -18,6 +18,7 @@ type Config struct {
 	Docker      string
 	Poll        time.Duration
 	DriftEvery  time.Duration
+	StatusEvery time.Duration
 
 	InternalEntrypoints map[string]string
 }
@@ -32,14 +33,15 @@ func LoadConfig(version string) (Config, error) {
 		Root: env("AGENT_ROOT", "/opt/plateful"), Deployctl: env("AGENT_DEPLOYCTL", "/opt/plateful/bin/deployctl"),
 		Docker: env("AGENT_DOCKER", "docker"),
 	}
-	var pollErr, driftErr, entrypointsErr error
+	var pollErr, driftErr, statusErr, entrypointsErr error
 	cfg.Poll, pollErr = time.ParseDuration(env("AGENT_POLL", "5s"))
 	cfg.DriftEvery, driftErr = time.ParseDuration(env("AGENT_DRIFT_EVERY", "60s"))
+	cfg.StatusEvery, statusErr = time.ParseDuration(env("AGENT_STATUS_EVERY", "15s"))
 	cfg.InternalEntrypoints, entrypointsErr = parseEntrypoints(os.Getenv("AGENT_INTERNAL_ENTRYPOINTS"))
 	if cfg.PlatformURL == "" || cfg.Token == "" {
 		return Config{}, errMissing
 	}
-	return cfg, errors.Join(pollErr, driftErr, entrypointsErr)
+	return cfg, errors.Join(pollErr, driftErr, statusErr, entrypointsErr)
 }
 
 func parseEntrypoints(raw string) (map[string]string, error) {

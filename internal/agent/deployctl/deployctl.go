@@ -63,15 +63,6 @@ func (r Runtime) Observe(ctx context.Context, name string) (agent.Observed, erro
 	if err := json.Unmarshal(raw, &live); err != nil {
 		return agent.Observed{}, err
 	}
-	running, err := r.running(ctx, name+"-"+live.Colour)
-	return agent.Observed{Known: true, Running: running, Image: live.Image}, err
-}
-
-func (r Runtime) running(ctx context.Context, container string) (bool, error) {
-	out, err := exec.CommandContext(ctx, r.Docker, "inspect", "-f", "{{.State.Running}}", container).Output()
-	var exit *exec.ExitError
-	if errors.As(err, &exit) {
-		return false, nil
-	}
-	return strings.TrimSpace(string(out)) == "true", err
+	c, err := r.Inspect(ctx, name+"-"+live.Colour)
+	return agent.Observed{Known: true, Running: c.Found && c.State == "running", Image: live.Image, Container: c}, err
 }

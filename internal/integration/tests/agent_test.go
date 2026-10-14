@@ -28,6 +28,17 @@ func (r *recordingRuntime) Observe(context.Context, string) (agent.Observed, err
 	return r.observed, nil
 }
 
+func (r *recordingRuntime) Inspect(_ context.Context, container string) (agentapi.Container, error) {
+	if container == r.observed.Container.Name {
+		return r.observed.Container, nil
+	}
+	return agentapi.Container{}, nil
+}
+
+func (r *recordingRuntime) Logs(context.Context, string, int) ([]string, error) {
+	return []string{"boot", "crash"}, nil
+}
+
 func realAgent(s *integration.Suite, runtime agent.Runtime) agent.Agent {
 	cfg := agent.Config{PlatformURL: s.Server.URL, Token: integration.AgentToken, Name: "vps-1", Version: "test"}
 	return agent.New(cfg, agent.NewClient(cfg), runtime)

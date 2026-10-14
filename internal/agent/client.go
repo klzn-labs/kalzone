@@ -39,8 +39,14 @@ func (c Client) Events(ctx context.Context, deploymentID string, lines []string)
 	return err
 }
 
-func (c Client) Finish(ctx context.Context, deploymentID string, succeeded bool, message string) error {
-	_, err := c.call(ctx, http.MethodPost, agentapi.FinishPath(deploymentID), agentapi.Finish{Succeeded: succeeded, Message: message}, nil)
+func (c Client) Finish(ctx context.Context, deploymentID string, succeeded bool, message string, failure *agentapi.Failure) error {
+	body := agentapi.Finish{Succeeded: succeeded, Message: message, Failure: failure}
+	_, err := c.call(ctx, http.MethodPost, agentapi.FinishPath(deploymentID), body, nil)
+	return err
+}
+
+func (c Client) Status(ctx context.Context, snapshots []agentapi.Snapshot) error {
+	_, err := c.call(ctx, http.MethodPost, agentapi.StatusPath, agentapi.StatusReport{Workloads: snapshots}, nil)
 	return err
 }
 
