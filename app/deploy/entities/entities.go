@@ -47,6 +47,7 @@ type Deployment struct {
 	CreatedAt      time.Time
 	StartedAt      *time.Time
 	FinishedAt     *time.Time
+	Failure        *Failure
 }
 
 func (d Deployment) Active() bool {

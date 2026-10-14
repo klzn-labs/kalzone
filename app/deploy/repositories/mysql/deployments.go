@@ -64,7 +64,7 @@ func nextNumberIn(tx *gorm.DB, serviceID, environment string) (int, error) {
 
 func (r DeploymentRepository) Transition(ctx context.Context, d entities.Deployment, from entities.Status) error {
 	result := r.db.WithContext(ctx).Model(&deployment{}).Where("id = ? AND status = ?", d.ID, from).
-		Select("status", "agent", "message", "started_at", "finished_at").Updates(fromDeployment(d))
+		Select("status", "agent", "message", "started_at", "finished_at", "failure").Updates(fromDeployment(d))
 	if result.Error == nil && result.RowsAffected == 0 {
 		return errDeploymentChanged
 	}
