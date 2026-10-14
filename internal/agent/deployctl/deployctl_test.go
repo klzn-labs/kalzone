@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/adrianozp/platform/internal/agent/deployctl"
 	"github.com/adrianozp/platform/pkg/agentapi"
@@ -20,15 +21,33 @@ exit "${FAKE_EXIT:-0}"
 `
 
 const fakeDocker = `#!/bin/sh
-[ "$4" = "api-dev-blue" ] && echo true && exit 0
+dir="$(dirname "$0")"
+case "$1" in
+inspect)
+  [ -f "$dir/$2.json" ] && cat "$dir/$2.json" && exit 0
+  echo "[]"
+  echo "Error: No such object: $2" >&2
+  exit 1;;
+logs)
+  shift 4
+  [ -f "$dir/$1.log" ] && cat "$dir/$1.log"
+  exit 0;;
+esac
 exit 1
 `
+
+const liveInspect = `[{"Name":"/api-dev-blue","Created":"2026-10-14T10:00:00.5Z","Config":{"Image":"img@sha256:1"},
+"State":{"Status":"running","Running":true,"OOMKilled":false,"ExitCode":0,"StartedAt":"2026-10-14T10:00:01Z",
+"Health":{"Status":"healthy","Log":[{"Output":"one\n"},{"Output":"two"},{"Output":"three"},{"Output":"four\n"}]}},
+"RestartCount":2,"HostConfig":{"Memory":134217728,"NanoCpus":250000000}}]`
 
 func setup(t *testing.T) (deployctl.Runtime, string) {
 	t.Helper()
 	root, bin := t.TempDir(), t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "deployctl"), []byte(fakeDeployctl), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(bin, "docker"), []byte(fakeDocker), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(bin, "api-dev-blue.json"), []byte(liveInspect), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(bin, "api-dev-blue.log"), []byte("2026-10-14T10:00:02Z listening\n2026-10-14T10:00:03Z ready\n"), 0o644))
 	runtime := deployctl.Runtime{
 		Root: root, Deployctl: filepath.Join(bin, "deployctl"), Docker: filepath.Join(bin, "docker"),
 		RunURL:              func(w agentapi.Workload) string { return "https://platform/" + w.Name },
@@ -141,4 +160,52 @@ func Test_Observe(t *testing.T) {
 	require.Equal(t, "img@sha256:1", live.Image)
 	require.True(t, stopped.Known)
 	require.False(t, stopped.Running)
+}
+
+func Test_Inspect_ReadsStateHealthAndLimits(t *testing.T) {
+	runtime, _ := setup(t)
+
+	c, err := runtime.Inspect(context.Background(), "api-dev-blue")
+
+	require.NoError(t, err)
+	require.True(t, c.Found)
+	require.Equal(t, "api-dev-blue", c.Name)
+	require.Equal(t, "img@sha256:1", c.Image)
+	require.Equal(t, "running", c.State)
+	require.Equal(t, "healthy", c.Health)
+	require.Equal(t, []string{"two", "three", "four"}, c.HealthLog)
+	require.Equal(t, 2, c.Restarts)
+	require.Equal(t, 128, c.MemoryLimitMB)
+	require.Equal(t, 250, c.CPULimitMillis)
+	require.Equal(t, time.Date(2026, 10, 14, 10, 0, 0, 500000000, time.UTC), c.CreatedAt)
+}
+
+func Test_Inspect_AMissingContainerIsNotFound(t *testing.T) {
+	runtime, _ := setup(t)
+
+	c, err := runtime.Inspect(context.Background(), "api-dev-green")
+
+	require.NoError(t, err)
+	require.False(t, c.Found)
+}
+
+func Test_Logs_ReadsTheLastLines(t *testing.T) {
+	runtime, _ := setup(t)
+
+	lines, err := runtime.Logs(context.Background(), "api-dev-blue", 50)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"2026-10-14T10:00:02Z listening", "2026-10-14T10:00:03Z ready"}, lines)
+}
+
+func Test_Observe_CarriesTheLiveContainer(t *testing.T) {
+	runtime, _ := setup(t)
+	require.NoError(t, os.MkdirAll(filepath.Join(runtime.Root, "state"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(runtime.Root, "state", "api-dev.json"), []byte(`{"colour":"blue","image":"img@sha256:1"}`), 0o644))
+
+	live, err := runtime.Observe(context.Background(), "api-dev")
+
+	require.NoError(t, err)
+	require.Equal(t, "api-dev-blue", live.Container.Name)
+	require.Equal(t, "healthy", live.Container.Health)
 }

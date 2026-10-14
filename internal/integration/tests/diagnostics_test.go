@@ -1,10 +1,14 @@
 package tests
 
 import (
+	"context"
+	"io"
 	"net/http"
+	"os/exec"
 	"testing"
 	"time"
 
+	"github.com/adrianozp/platform/internal/agent"
 	"github.com/adrianozp/platform/internal/fakegrafana"
 	"github.com/adrianozp/platform/internal/integration"
 	"github.com/adrianozp/platform/pkg/agentapi"
@@ -156,4 +160,44 @@ func Test_TheDiagnosticsToolsFollowTheTokenScopes(t *testing.T) {
 	require.Contains(t, reader, "getRuntime")
 	require.NotContains(t, reader, "listLogs")
 	require.Contains(t, logs, "listLogs")
+}
+
+type failingRuntime struct {
+	recordingRuntime
+	exit string
+}
+
+func (r *failingRuntime) Apply(context.Context, agentapi.Workload, io.Writer) error {
+	return exec.Command("sh", "-c", "exit "+r.exit).Run()
+}
+
+func Test_TheRealAgentSendsTheFailedCandidatesEvidence(t *testing.T) {
+	s, p := setupPlaces(t)
+	d := deployDev(t, s, p)
+	crashed := agentapi.Container{Found: true, Name: "places-api-dev-green", State: "exited", ExitCode: 3, CreatedAt: time.Now()}
+	runtime := &failingRuntime{recordingRuntime: recordingRuntime{observed: agent.Observed{Known: true, Container: crashed}}, exit: "10"}
+	var view failureView
+
+	require.True(t, realAgent(s, runtime).WorkOnce(context.Background()))
+	p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil, http.StatusOK, &view)
+
+	require.Equal(t, "crashed", view.Failure.Class)
+	require.Equal(t, "places-api-dev-green", view.Failure.Container)
+	require.Equal(t, []string{"boot", "crash"}, view.Failure.Logs)
+}
+
+func Test_TheRealAgentReportsTheLiveContainer(t *testing.T) {
+	s, p := setupPlaces(t)
+	deployDev(t, s, p)
+	runToSuccess(t, s)
+	live := liveContainer()
+	a := realAgent(s, &recordingRuntime{observed: agent.Observed{Known: true, Running: true, Container: live}})
+	var view runtimeView
+
+	reported := a.StatusOnce(context.Background())
+	p.eve.MustJSON(t, http.MethodGet, "/api/v1/runtime/places-api/dev", nil, http.StatusOK, &view)
+
+	require.Equal(t, 1, reported)
+	require.Equal(t, "places-api-dev-blue", view.Container)
+	require.Equal(t, "running", view.State)
 }
