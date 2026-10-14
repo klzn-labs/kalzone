@@ -31,6 +31,8 @@ const (
 	WebhookSecret = "webhook-secret"
 	AgentToken    = "agent-token"
 	QueuedToken   = "queued-test-token"
+	BuildWorkflow = "adrianozp/platform/.github/workflows/build.yml"
+	RegistryToken = "dckr_pat_test"
 )
 
 type Suite struct {
@@ -81,6 +83,8 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.GitHub.AppID, cfg.GitHub.AppPrivateKey, cfg.GitHub.WebhookSecret = 1, appKey(t), WebhookSecret
 	cfg.OIDC = config.OIDC{Issuer: s.OIDC.URL, Audience: Audience}
 	cfg.Build.Timeout = time.Hour
+	cfg.Build.Workflow = BuildWorkflow
+	cfg.Registry = config.Registry{Username: "bot", Token: RegistryToken, AuthURL: s.Registry.URL + "/token"}
 	cfg.Deploy.Timeout = time.Hour
 	cfg.Agent.Token = AgentToken
 	cfg.Queues = config.Queues{GatewayURL: "http://queued:8080", Token: QueuedToken}

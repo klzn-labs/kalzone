@@ -34,16 +34,17 @@ func New() *Issuer {
 }
 
 type Token struct {
-	Audience   string
-	Repository string
-	Expires    time.Duration
-	Issuer     string
-	Key        *rsa.PrivateKey
+	Audience    string
+	Repository  string
+	WorkflowRef string
+	Expires     time.Duration
+	Issuer      string
+	Key         *rsa.PrivateKey
 }
 
 func (i *Issuer) Mint(t Token) string {
 	claims := jwt.MapClaims{
-		"iss": firstNonEmpty(t.Issuer, i.URL), "aud": t.Audience, "repository": t.Repository,
+		"iss": firstNonEmpty(t.Issuer, i.URL), "aud": t.Audience, "repository": t.Repository, "job_workflow_ref": t.WorkflowRef,
 		"iat": time.Now().Unix(), "nbf": time.Now().Unix(), "exp": time.Now().Add(t.Expires).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)

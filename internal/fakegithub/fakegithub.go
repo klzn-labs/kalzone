@@ -20,14 +20,17 @@ type Server struct {
 	byCode       map[string]User
 	dispatches   []Dispatch
 	tokensIssued int
+	repos        map[string]*repository
+	uninstalled  map[string]bool
 }
 
 func New() *Server {
-	s := &Server{byCode: map[string]User{}}
+	s := &Server{byCode: map[string]User{}, repos: map[string]*repository{}, uninstalled: map[string]bool{}}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /login/oauth/access_token", s.token)
 	mux.HandleFunc("GET /user", s.user)
 	s.routeApp(mux)
+	s.routeRepos(mux)
 	s.Server = httptest.NewServer(mux)
 	return s
 }
