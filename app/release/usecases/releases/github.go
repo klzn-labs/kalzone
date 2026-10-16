@@ -24,7 +24,7 @@ func (u ReleasesUsecase) OnPush(ctx context.Context, push entities.PushEvent) ([
 	}
 	started := []entities.Release{}
 	for _, service := range oneAutoBuildPerImage(services) {
-		rel, err := u.build(ctx, GitHubActor, service, push.After, entities.TriggerPush)
+		rel, err := u.build(ctx, GitHubActor, service, push.DefaultBranch, entities.TriggerPush)
 		if err != nil {
 			log.Printf("auto-build of %s at %s did not start: %v", service.Slug, push.After, err)
 		}

@@ -3,6 +3,7 @@ package fakegithub
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -56,6 +57,8 @@ func (s *Server) accessToken(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]any{"token": "ghs_installation", "expires_at": time.Now().Add(time.Hour)})
 }
 
+var commitSHA = regexp.MustCompile(`^[0-9a-f]{40}$`)
+
 func (s *Server) dispatch(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Authorization") != "token ghs_installation" {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -66,6 +69,11 @@ func (s *Server) dispatch(w http.ResponseWriter, r *http.Request) {
 		Inputs map[string]string `json:"inputs"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
+	if commitSHA.MatchString(body.Ref) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(`{"message":"No ref found for: ` + body.Ref + `"}`))
+		return
+	}
 	repository := r.PathValue("owner") + "/" + r.PathValue("repo")
 	s.mu.Lock()
 	s.dispatches = append(s.dispatches, Dispatch{Repository: repository, Workflow: r.PathValue("workflow"), Ref: body.Ref, Inputs: body.Inputs})
