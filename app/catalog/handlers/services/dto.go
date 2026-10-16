@@ -18,6 +18,7 @@ type ServiceDTO struct {
 	AutoBuild       bool      `json:"auto_build"`
 	AutoDeployDev   bool      `json:"auto_deploy_dev"`
 	BuildWorkflow   string    `json:"build_workflow"`
+	Status          string    `json:"status" enum:"active,decommissioning"`
 	CreatedAt       time.Time `json:"created_at"`
 }
 
@@ -25,7 +26,7 @@ func ToDTO(s entities.Service) ServiceDTO {
 	return ServiceDTO{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
 		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
-		BuildWorkflow: s.BuildWorkflow, CreatedAt: s.CreatedAt,
+		BuildWorkflow: s.BuildWorkflow, Status: string(s.Status), CreatedAt: s.CreatedAt,
 	}
 }
 
@@ -73,4 +74,28 @@ type serviceParams struct {
 type listParams struct {
 	Team string `query:"team" description:"only this team's services"`
 	apispec.ListParams
+}
+
+type teardownDTO struct {
+	Environment  string `json:"environment"`
+	Status       string `json:"status" enum:"removed,removing,awaiting_approval"`
+	DeploymentID string `json:"deployment_id,omitempty"`
+	RequestID    string `json:"request_id,omitempty"`
+	ApproveURL   string `json:"approve_url,omitempty"`
+}
+
+type decommissionDTO struct {
+	Service  ServiceDTO    `json:"service"`
+	Deleted  bool          `json:"deleted"`
+	Teardown []teardownDTO `json:"teardown"`
+}
+
+func toDecommissionDTO(d entities.Decommission) decommissionDTO {
+	steps := make([]teardownDTO, 0, len(d.Steps))
+	for _, s := range d.Steps {
+		steps = append(steps, teardownDTO{
+			Environment: s.Environment, Status: string(s.Status), DeploymentID: s.DeploymentID, RequestID: s.RequestID, ApproveURL: s.ApproveURL,
+		})
+	}
+	return decommissionDTO{Service: ToDTO(d.Service), Deleted: d.Deleted, Teardown: steps}
 }

@@ -15,7 +15,8 @@ func hostChange(host string) map[string]any {
 func deleteService(t *testing.T, c *integration.Client, slug string) {
 	t.Helper()
 	resp := c.Do(t, http.MethodDelete, "/api/v1/services/"+slug, nil)
-	require.Equal(t, http.StatusNoContent, resp.Status, resp.Body)
+	require.Equal(t, http.StatusAccepted, resp.Status, resp.Body)
+	require.Contains(t, resp.Body, `"deleted":true`)
 }
 
 func Test_ADeletedServiceGivesUpItsHost(t *testing.T) {

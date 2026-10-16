@@ -11,6 +11,8 @@ const (
 	StatusPath    = "/agent/v1/status"
 )
 
+const StrategyRemove = "remove"
+
 func EventsPath(deploymentID string) string {
 	return "/agent/v1/deployments/" + deploymentID + "/events"
 }

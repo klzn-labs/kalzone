@@ -135,7 +135,7 @@ func Test_ATeamWithServicesCannotBeDeleted(t *testing.T) {
 	_, p := setupPlaces(t)
 
 	busy := p.root.Do(t, http.MethodDelete, "/api/v1/teams/places", nil)
-	p.mia.MustJSON(t, http.MethodDelete, "/api/v1/services/places-api", nil, http.StatusNoContent, nil)
+	p.mia.MustJSON(t, http.MethodDelete, "/api/v1/services/places-api", nil, http.StatusAccepted, nil)
 	idle := p.root.Do(t, http.MethodDelete, "/api/v1/teams/places", nil)
 
 	require.Equal(t, http.StatusConflict, busy.Status)

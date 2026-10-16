@@ -231,7 +231,31 @@ claude mcp add --transport http platform https://platform.kalz.one/mcp \
   through Traefik. A container that never answers fails with exit 14, class
   `unhealthy`.
 
-## Approvals
+## Deleting a service
+
+`DELETE /api/v1/services/:service` (scope `services:admin`) starts a teardown and
+answers `202` with the service, `deleted`, and one `teardown` step per
+environment the service ever ran in (`removed`, `removing`, or
+`awaiting_approval` with its `approve_url`).
+
+- The service becomes `decommissioning` and is frozen: deployments, config and
+  secrets, builds, tag registrations, auto-build, auto-deploy, edits and
+  transfers are refused. Pending deployments and change requests are cancelled
+  and unfinished builds fail. A running deployment makes the call `409`; call
+  again once it ends.
+- Each environment gets a removal: a deployment with strategy `remove` that the
+  agent runs as `deployctl remove`, which takes the route down first, then the
+  containers, their images, the deployctl state and metrics; the agent deletes
+  the workload's compose and env files. It is gated like a deploy, so a token
+  without bypass turns a prod removal into a change request.
+- When every removal has succeeded, the queues the service consumes are
+  deleted, it is removed from other queues' publishers, its queue tokens are
+  revoked, its runtime rows and Grafana dashboard are dropped, and it is marked
+  deleted. Its slug is then free for a new service; history stays in the audit
+  log.
+- Calling `DELETE` again resumes a teardown: removals already running or done
+  are left alone and failed ones are scheduled again.
+
 
 A token with `protected` but without bypass does not change a protected environment
 directly. Config revisions, secrets, deploys, promotions, rollbacks, config

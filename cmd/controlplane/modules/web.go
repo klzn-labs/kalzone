@@ -5,6 +5,7 @@ import (
 	auditLookups "github.com/adrianozp/platform/app/audit/repositories/lookups"
 	"github.com/adrianozp/platform/app/audit/usecases/query"
 	"github.com/adrianozp/platform/app/authz"
+	"github.com/adrianozp/platform/app/catalog/usecases/decommission"
 	"github.com/adrianozp/platform/app/catalog/usecases/environments"
 	"github.com/adrianozp/platform/app/catalog/usecases/services"
 	"github.com/adrianozp/platform/app/deploy/usecases/agents"
@@ -84,10 +85,7 @@ func catalogPageInjections() fx.Option {
 	return fx.Provide(
 		func(u services.ServicesUsecase) servicesPage.Services { return u },
 		func(u teams.TeamsUsecase) servicesPage.Teams { return u },
-		func(u services.ServicesUsecase) servicePage.Services { return u },
-		func(u teams.TeamsUsecase) servicePage.Teams { return u },
-		func(u configs.ConfigUsecase) servicePage.Configs { return u },
-		func(u query.QueryUsecase) servicePage.Events { return u },
+		serviceDeps,
 		func(u services.ServicesUsecase) environmentPage.Services { return u },
 		func(u configs.ConfigUsecase) environmentPage.Configs { return u },
 		func(u deployments.DeploymentsUsecase) environmentPage.Deployments { return u },
@@ -135,4 +133,8 @@ func pageRoutes() fx.Option {
 		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes,
 		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes,
 	)
+}
+
+func serviceDeps(s services.ServicesUsecase, d decommission.DecommissionUsecase, t teams.TeamsUsecase, c configs.ConfigUsecase, q query.QueryUsecase) servicePage.Deps {
+	return servicePage.Deps{Services: s, Decommission: d, Teams: t, Configs: c, Events: q}
 }

@@ -129,16 +129,6 @@ func Test_Transfer_IsCheckedAgainstTheCurrentOwnerAndTheDestination(t *testing.T
 	require.Equal(t, "service.transferred", p.events[0].Action)
 }
 
-func Test_Delete_HidesTheService(t *testing.T) {
-	_, c, _, usecase := setup(entities.Service{ID: "s1", Slug: "api", Name: "API", OwnerTeamID: "t1"})
-
-	require.NoError(t, usecase.Delete(ctx, ana, "api"))
-
-	_, err := usecase.Get(ctx, "api")
-	require.ErrorIs(t, err, apperror.NotFound(""))
-	require.Equal(t, authz.DeleteService, c.actions[0])
-}
-
 func Test_Update_ValidatesTheResult(t *testing.T) {
 	_, _, _, usecase := setup(entities.Service{ID: "s1", Slug: "api", Name: "API", OwnerTeamID: "t1"})
 	bad := "not a repo"

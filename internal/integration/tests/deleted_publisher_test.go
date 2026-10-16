@@ -13,12 +13,12 @@ func Test_ADeletedPublishersQueueTokenStopsWorking(t *testing.T) {
 	s, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)
 	p.bob.MustJSON(t, http.MethodPost, "/api/v1/deployments", map[string]string{"service": "places-api", "environment": "dev", "release": builtRelease(t, s, p)}, http.StatusAccepted, nil)
-	_, claimed := claim(t, s)
-	require.Equal(t, http.StatusOK, claimed)
+	runToSuccess(t, s)
 	publisherHashes(t, s)
 
 	beforeDelete := publisherHashes(t, s)
-	deleteService(t, p.mia, "places-api")
+	p.mia.MustJSON(t, http.MethodDelete, "/api/v1/services/places-api", nil, http.StatusAccepted, nil)
+	runToSuccess(t, s)
 	afterDelete := publisherHashes(t, s)
 
 	require.Len(t, beforeDelete, 2)

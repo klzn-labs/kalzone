@@ -62,7 +62,7 @@ func submitInjections() fx.Option {
 func executors(c approvalsConfig.Executor, d approvalsDeploy.Executor, q approvalsQueue.Executor) requests.Executors {
 	return requests.Executors{
 		approval.KindConfigRevise: c, approval.KindSecretSet: c, approval.KindSecretUnset: c,
-		approval.KindDeploy: d, approval.KindPromote: d, approval.KindRollback: d, approval.KindConfigApply: d,
+		approval.KindDeploy: d, approval.KindPromote: d, approval.KindRollback: d, approval.KindConfigApply: d, approval.KindRemove: d,
 		approval.KindQueueCreate: q, approval.KindQueueUpdate: q, approval.KindQueueDelete: q,
 	}
 }
