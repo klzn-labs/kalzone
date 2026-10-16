@@ -117,11 +117,28 @@ func (u GatewayUsecase) target(ctx context.Context, consumer queues.ServiceRef, 
 
 func (u GatewayUsecase) tokenHashes(ctx context.Context) (map[string]string, error) {
 	all, err := u.queues.AllCredentials(ctx)
+	if err != nil {
+		return nil, err
+	}
 	hashes := make(map[string]string, len(all))
 	for _, c := range all {
-		hashes[c.ServiceID+"|"+c.Environment] = c.TokenHash
+		live, err := u.serviceExists(ctx, c.ServiceID)
+		if err != nil {
+			return nil, err
+		}
+		if live {
+			hashes[c.ServiceID+"|"+c.Environment] = c.TokenHash
+		}
 	}
-	return hashes, err
+	return hashes, nil
+}
+
+func (u GatewayUsecase) serviceExists(ctx context.Context, id string) (bool, error) {
+	_, err := u.services.FindServiceByID(ctx, id)
+	if errors.Is(err, apperror.NotFound("")) {
+		return false, nil
+	}
+	return err == nil, err
 }
 
 func publisherHashes(q entities.Queue, hashes map[string]string) []string {
