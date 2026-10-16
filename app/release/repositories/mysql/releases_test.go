@@ -82,3 +82,19 @@ func Test_ListByService_ContinuesBelowANumber(t *testing.T) {
 	require.Len(t, rest, 1)
 	require.Equal(t, "a1", rest[0].ID)
 }
+
+func Test_UnfinishedFor_ListsOnlyTheServicesOpenBuilds(t *testing.T) {
+	repo := mysql.NewReleaseRepository(testdb.Open(t))
+	now := time.Now().UTC()
+	open, _ := repo.Create(ctx, requested("a1", "a", now))
+	done, _ := repo.Create(ctx, requested("a2", "a", now))
+	done.Status = entities.StatusFailed
+	require.NoError(t, repo.Transition(ctx, done, entities.StatusRequested))
+	_, _ = repo.Create(ctx, requested("b1", "b", now))
+
+	unfinished, err := repo.UnfinishedFor(ctx, "a")
+
+	require.NoError(t, err)
+	require.Len(t, unfinished, 1)
+	require.Equal(t, open.ID, unfinished[0].ID)
+}

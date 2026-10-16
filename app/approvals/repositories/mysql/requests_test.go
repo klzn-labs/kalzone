@@ -176,3 +176,18 @@ func Test_Requests_KeysetPagesStayWithinTheTeams(t *testing.T) {
 	require.Len(t, rest, 1)
 	require.Equal(t, "c1", rest[0].ID)
 }
+
+func Test_Requests_ListFiltersByService(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	api := request("c1", "t1", "deploy")
+	web := request("c2", "t1", "deploy")
+	web.ServiceID, web.ServiceSlug = "s2", "web"
+	require.NoError(t, repo.Create(ctx, api))
+	require.NoError(t, repo.Create(ctx, web))
+
+	found, err := repo.List(ctx, entities.Filter{Status: entities.StatusPending, ServiceID: "s2", Limit: 10})
+
+	require.NoError(t, err)
+	require.Len(t, found, 1)
+	require.Equal(t, "c2", found[0].ID)
+}

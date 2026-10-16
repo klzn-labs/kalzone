@@ -30,6 +30,7 @@ type service struct {
 	AutoBuild       bool
 	AutoDeployDev   bool
 	BuildWorkflow   string
+	Status          string
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
 }
@@ -40,8 +41,8 @@ func (s service) toEntity() entities.Service {
 	return entities.Service{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
 		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
-		BuildWorkflow: s.BuildWorkflow,
-		CreatedAt:     s.CreatedAt, DeletedAt: s.DeletedAt,
+		BuildWorkflow: s.BuildWorkflow, Status: entities.Status(s.Status),
+		CreatedAt: s.CreatedAt, DeletedAt: s.DeletedAt,
 	}
 }
 
@@ -49,7 +50,14 @@ func fromService(s entities.Service) service {
 	return service{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
 		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
-		BuildWorkflow: s.BuildWorkflow,
-		CreatedAt:     s.CreatedAt, DeletedAt: s.DeletedAt,
+		BuildWorkflow: s.BuildWorkflow, Status: string(statusOrActive(s.Status)),
+		CreatedAt: s.CreatedAt, DeletedAt: s.DeletedAt,
 	}
+}
+
+func statusOrActive(s entities.Status) entities.Status {
+	if s == "" {
+		return entities.StatusActive
+	}
+	return s
 }

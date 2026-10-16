@@ -55,11 +55,12 @@ type Request struct {
 }
 
 type Filter struct {
-	Status   Status
-	TeamIDs  []string
-	Before   *time.Time
-	BeforeID string
-	Limit    int
+	Status    Status
+	ServiceID string
+	TeamIDs   []string
+	Before    *time.Time
+	BeforeID  string
+	Limit     int
 }
 
 func (r Request) Pending() bool {

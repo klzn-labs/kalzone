@@ -14,7 +14,7 @@ const duplicateEntry = 1062
 
 var (
 	errServiceNotFound = apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")
-	errServiceTaken    = apperror.Conflict("a service with this slug already exists or existed")
+	errServiceTaken    = apperror.Conflict("a service with this slug already exists")
 )
 
 type ServiceRepository struct {

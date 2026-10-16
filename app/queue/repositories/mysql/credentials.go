@@ -27,6 +27,10 @@ func (r QueueRepository) SaveCredentials(ctx context.Context, c entities.Credent
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{UpdateAll: true}).Create(ptr(fromCredentials(c))).Error
 }
 
+func (r QueueRepository) DeleteCredentials(ctx context.Context, serviceID string) error {
+	return r.db.WithContext(ctx).Where("service_id = ?", serviceID).Delete(&credentialsModel{}).Error
+}
+
 func (r QueueRepository) AllCredentials(ctx context.Context) ([]entities.Credentials, error) {
 	var models []credentialsModel
 	if err := r.db.WithContext(ctx).Find(&models).Error; err != nil {

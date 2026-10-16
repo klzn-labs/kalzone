@@ -26,7 +26,7 @@ func slugs(services []entities.Service) []string {
 	return result
 }
 
-func Test_SoftDeletedServicesAreHiddenButKeepTheirSlug(t *testing.T) {
+func Test_SoftDeletedServicesAreHiddenAndFreeTheirSlug(t *testing.T) {
 	repo := mysql.NewServiceRepository(testdb.Open(t))
 	gone := service("s1", "api", "t1")
 	require.NoError(t, repo.Create(ctx, gone))
@@ -35,10 +35,30 @@ func Test_SoftDeletedServicesAreHiddenButKeepTheirSlug(t *testing.T) {
 	require.NoError(t, repo.Update(ctx, gone))
 
 	_, findErr := repo.FindBySlug(ctx, "api")
-	createErr := repo.Create(ctx, service("s2", "api", "t1"))
+	reuseErr := repo.Create(ctx, service("s2", "api", "t1"))
+	reused, reusedErr := repo.FindBySlug(ctx, "api")
+	takenErr := repo.Create(ctx, service("s3", "api", "t1"))
 
 	require.ErrorIs(t, findErr, apperror.NotFound(""))
-	require.ErrorIs(t, createErr, apperror.Conflict(""))
+	require.NoError(t, reuseErr)
+	require.NoError(t, reusedErr)
+	require.Equal(t, "s2", reused.ID)
+	require.ErrorIs(t, takenErr, apperror.Conflict(""))
+}
+
+func Test_ADecommissioningServiceStaysVisibleWithItsStatus(t *testing.T) {
+	repo := mysql.NewServiceRepository(testdb.Open(t))
+	api := service("s1", "api", "t1")
+	require.NoError(t, repo.Create(ctx, api))
+	created, _ := repo.FindByID(ctx, "s1")
+	api.Status = entities.StatusDecommissioning
+	require.NoError(t, repo.Update(ctx, api))
+
+	found, err := repo.FindBySlug(ctx, "api")
+
+	require.NoError(t, err)
+	require.Equal(t, entities.StatusActive, created.Status)
+	require.True(t, found.Decommissioning())
 }
 
 func Test_List_FiltersByOwnerTeams(t *testing.T) {

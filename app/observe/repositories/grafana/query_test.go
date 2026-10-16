@@ -79,3 +79,15 @@ func Test_Queries_FailAsUpstreamOrNotConfigured(t *testing.T) {
 	require.Equal(t, apperror.CodeUpstream, apperror.CodeOf(upstream))
 	require.Equal(t, apperror.CodeNotConfigured, apperror.CodeOf(missing))
 }
+
+func Test_DeleteDashboard_RemovesByUIDAndToleratesAMissingOne(t *testing.T) {
+	var seen url.URL
+	deleted := server(t, `{"title":"api"}`, http.StatusOK, &seen)
+	missing := server(t, `{"message":"Dashboard not found"}`, http.StatusNotFound, &seen)
+	broken := server(t, `{}`, http.StatusForbidden, &seen)
+
+	require.NoError(t, deleted.DeleteDashboard(context.Background(), "platform-api"))
+	require.Equal(t, "/grafana/api/dashboards/uid/platform-api", seen.Path)
+	require.NoError(t, missing.DeleteDashboard(context.Background(), "platform-api"))
+	require.Error(t, broken.DeleteDashboard(context.Background(), "platform-api"))
+}

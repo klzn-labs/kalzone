@@ -15,12 +15,13 @@ const (
 type Trigger string
 
 const (
-	TriggerManual    Trigger = "manual"
-	TriggerPromote   Trigger = "promote"
-	TriggerRollback  Trigger = "rollback"
-	TriggerConfig    Trigger = "config"
-	TriggerReconcile Trigger = "reconcile"
-	TriggerPush      Trigger = "push"
+	TriggerManual       Trigger = "manual"
+	TriggerPromote      Trigger = "promote"
+	TriggerRollback     Trigger = "rollback"
+	TriggerConfig       Trigger = "config"
+	TriggerReconcile    Trigger = "reconcile"
+	TriggerPush         Trigger = "push"
+	TriggerDecommission Trigger = "decommission"
 )
 
 type Strategy string
@@ -28,6 +29,7 @@ type Strategy string
 const (
 	StrategyBlueGreen Strategy = "bluegreen"
 	StrategyCanary    Strategy = "canary"
+	StrategyRemove    Strategy = "remove"
 )
 
 type Deployment struct {
