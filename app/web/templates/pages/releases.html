@@ -64,12 +64,14 @@
           <dt>Image</dt><dd>{{if $d.Service.ImageRepository}}<span class="mono">{{$d.Service.ImageRepository}}</span>{{else}}<span class="muted">not set</span>{{end}}</dd>
           <dt>Workflow</dt><dd class="mono">.github/workflows/{{$d.Service.BuildWorkflow}}</dd>
           <dt>Auto-build</dt><dd>{{if $d.Service.AutoBuild}}<span class="badge badge-ok">{{icon "zap"}}on every push</span>{{else}}<span class="badge">off</span>{{end}}</dd>
+          <dt>Auto-deploy</dt><dd>{{if $d.Service.AutoDeployDev}}<span class="badge badge-ok">{{icon "zap"}}to dev on every push build</span>{{else}}<span class="badge">off</span>{{end}}</dd>
         </dl>
         {{if $d.CanEdit}}
         <form class="inline-panel" method="post" action="/services/{{$slug}}/build-settings" hx-post="/services/{{$slug}}/build-settings" hx-target="find .form-error">
           {{template "csrf" $csrf}}
           <div class="form-error"></div>
           <label class="switch"><input type="checkbox" name="auto_build" {{if $d.Service.AutoBuild}}checked{{end}}>Build every push to the default branch</label>
+          <div style="margin-top:10px"><label class="switch"><input type="checkbox" name="auto_deploy_dev" {{if $d.Service.AutoDeployDev}}checked{{end}}>Deploy those builds to dev</label></div>
           <div class="field" style="margin-top:14px"><label for="wf">Workflow file</label><input id="wf" name="build_workflow" type="text" class="mono" value="{{$d.Service.BuildWorkflow}}"></div>
           <div class="form-actions"><button class="btn btn-primary btn-sm">Save</button></div>
         </form>

@@ -18,7 +18,7 @@ type DeploymentDTO struct {
 	ImageRef       string      `json:"image_ref"`
 	ConfigRevision int         `json:"config_revision"`
 	Strategy       string      `json:"strategy" enum:"bluegreen,canary"`
-	Trigger        string      `json:"trigger" enum:"manual,promote,rollback,config,reconcile"`
+	Trigger        string      `json:"trigger" enum:"manual,promote,rollback,config,reconcile,push"`
 	Status         string      `json:"status" enum:"pending,in_progress,succeeded,failed,cancelled"`
 	Agent          string      `json:"agent,omitempty"`
 	Message        string      `json:"message,omitempty"`
