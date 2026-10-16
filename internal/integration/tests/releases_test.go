@@ -131,7 +131,7 @@ func Test_APushToMainBuildsServicesWithAutoBuild(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, feature.Status)
 	require.Equal(t, http.StatusNoContent, main.Status)
 	require.Len(t, s.GitHub.Dispatches(), 1)
-	require.Equal(t, commit, s.GitHub.Dispatches()[0].Ref)
+	require.Equal(t, "main", s.GitHub.Dispatches()[0].Ref)
 }
 
 func Test_AWorkflowRunThatFailsFailsTheRelease(t *testing.T) {

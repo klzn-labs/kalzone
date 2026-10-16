@@ -141,7 +141,7 @@ func Test_OnPush_BuildsOnlyAutoBuildServicesOnTheDefaultBranch(t *testing.T) {
 	require.Len(t, started, 1, "api and worker share an image, so it is built once")
 	require.Len(t, f.builder.requests, 1)
 	require.Equal(t, entities.TriggerPush, started[0].Trigger)
-	require.Equal(t, sha, f.builder.requests[0].Ref)
+	require.Equal(t, "main", f.builder.requests[0].Ref, "GitHub only dispatches workflows on a branch or tag")
 	require.Empty(t, none)
 }
 
