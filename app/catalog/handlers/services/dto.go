@@ -16,6 +16,7 @@ type ServiceDTO struct {
 	GitHubRepo      string    `json:"github_repo"`
 	ImageRepository string    `json:"image_repository"`
 	AutoBuild       bool      `json:"auto_build"`
+	AutoDeployDev   bool      `json:"auto_deploy_dev"`
 	BuildWorkflow   string    `json:"build_workflow"`
 	CreatedAt       time.Time `json:"created_at"`
 }
@@ -23,8 +24,8 @@ type ServiceDTO struct {
 func ToDTO(s entities.Service) ServiceDTO {
 	return ServiceDTO{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
-		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, BuildWorkflow: s.BuildWorkflow,
-		CreatedAt: s.CreatedAt,
+		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
+		BuildWorkflow: s.BuildWorkflow, CreatedAt: s.CreatedAt,
 	}
 }
 
@@ -50,13 +51,14 @@ type updateDTO struct {
 	GitHubRepo      *string `json:"github_repo,omitempty"`
 	ImageRepository *string `json:"image_repository,omitempty"`
 	AutoBuild       *bool   `json:"auto_build,omitempty"`
+	AutoDeployDev   *bool   `json:"auto_deploy_dev,omitempty"`
 	BuildWorkflow   *string `json:"build_workflow,omitempty"`
 }
 
 func (d updateDTO) toEntity() entities.ServiceChanges {
 	return entities.ServiceChanges{
 		Name: d.Name, Description: d.Description, GitHubRepo: d.GitHubRepo, ImageRepository: d.ImageRepository,
-		AutoBuild: d.AutoBuild, BuildWorkflow: d.BuildWorkflow,
+		AutoBuild: d.AutoBuild, AutoDeployDev: d.AutoDeployDev, BuildWorkflow: d.BuildWorkflow,
 	}
 }
 

@@ -275,6 +275,11 @@ Queue pause, resume and dead-letter commands still answer `err_approval_required
    `build_args: VITE_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}`.
 4. Build a ref from the Releases tab, or switch on auto-build to build every
    push to the default branch.
+5. Switch on auto-deploy (`auto_deploy_dev`) to deploy each release built from a
+   push, and each release shared from one, to dev as soon as it is built. Manual
+   builds and registered tags are never deployed by themselves, and prod still goes
+   through promotion. If a deployment is already running on dev, that build is not
+   deployed; deploy it by hand.
 
 ## Queues
 

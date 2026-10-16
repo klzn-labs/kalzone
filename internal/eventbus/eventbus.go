@@ -22,6 +22,10 @@ func New(p Params) *Bus {
 	return &Bus{subscribers: p.Subscribers}
 }
 
+func (b *Bus) Subscribe(s events.Subscriber) {
+	b.subscribers = append(b.subscribers, s)
+}
+
 func (b *Bus) Publish(ctx context.Context, event events.Event) {
 	if event.At.IsZero() {
 		event.At = clock.Now().UTC()

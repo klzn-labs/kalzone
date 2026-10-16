@@ -14,6 +14,7 @@ import (
 	deployQueue "github.com/adrianozp/platform/app/deploy/repositories/queue"
 	deployRelease "github.com/adrianozp/platform/app/deploy/repositories/release"
 	"github.com/adrianozp/platform/app/deploy/usecases/agents"
+	"github.com/adrianozp/platform/app/deploy/usecases/autodeploy"
 	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
 	"github.com/adrianozp/platform/app/deploy/usecases/runtime"
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
@@ -32,11 +33,11 @@ func Deploy() fx.Option {
 			mysql.NewDeploymentRepository, deployCatalog.NewLookup, deployRelease.NewLookup, deployConfig.NewSource,
 			deployments.NewDeploymentsUsecase, agents.NewAgentsUsecase,
 			deploymentsHandler.NewDeploymentsHandler, agentapi.NewAgentAPIHandler,
-			runtime.NewRuntimeUsecase, runtimeHandler.NewRuntimeHandler,
+			runtime.NewRuntimeUsecase, runtimeHandler.NewRuntimeHandler, autodeploy.NewAutoDeployUsecase,
 		),
 		deployAdapterInjections(),
 		deployUsecaseInjections(),
-		fx.Invoke(deploymentsHandler.RegisterDeploymentsRoutes, agentapi.RegisterAgentAPIRoutes, runtimeHandler.RegisterRuntimeRoutes, startDeploySweeper),
+		fx.Invoke(deploymentsHandler.RegisterDeploymentsRoutes, agentapi.RegisterAgentAPIRoutes, runtimeHandler.RegisterRuntimeRoutes, startDeploySweeper, subscribeAutoDeploy),
 	)
 }
 
@@ -76,7 +77,13 @@ func deployUsecaseInjections() fx.Option {
 		func(l deployCatalog.Lookup) runtime.ServiceLookup { return l },
 		func(m metrics.Metrics) runtime.Meter { return m },
 		func(u runtime.RuntimeUsecase) runtimeHandler.Runtime { return u },
+		func(l deployCatalog.Lookup) autodeploy.ServiceLookup { return l },
+		func(u deployments.DeploymentsUsecase) autodeploy.Deployer { return u },
 	)
+}
+
+func subscribeAutoDeploy(b *eventbus.Bus, u autodeploy.AutoDeployUsecase) {
+	b.Subscribe(u)
 }
 
 func startDeploySweeper(lc fx.Lifecycle, u agents.AgentsUsecase) {

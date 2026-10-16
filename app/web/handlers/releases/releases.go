@@ -137,9 +137,9 @@ func (h ReleasesHandler) Register(c *gin.Context) {
 }
 
 func (h ReleasesHandler) Settings(c *gin.Context) {
-	autoBuild := c.PostForm("auto_build") == "on"
+	autoBuild, autoDeploy := c.PostForm("auto_build") == "on", c.PostForm("auto_deploy_dev") == "on"
 	workflow := strings.TrimSpace(c.PostForm("build_workflow"))
-	changes := catalog.ServiceChanges{AutoBuild: &autoBuild, BuildWorkflow: &workflow}
+	changes := catalog.ServiceChanges{AutoBuild: &autoBuild, AutoDeployDev: &autoDeploy, BuildWorkflow: &workflow}
 	_, err := h.services.Update(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"), changes)
 	h.finish(c, err, "Build settings saved")
 }
