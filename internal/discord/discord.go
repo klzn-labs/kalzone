@@ -42,7 +42,7 @@ func (n Notifier) Notify(text string) {
 
 func (n Notifier) send(text string) {
 	if err := n.post(text); err != nil {
-		log.Printf("approval notification not sent: %v", withoutURL(err))
+		log.Printf("discord notification not sent: %v", withoutURL(err))
 	}
 }
 

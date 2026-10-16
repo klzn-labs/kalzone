@@ -3,7 +3,6 @@ package modules
 import (
 	requestsHandler "github.com/adrianozp/platform/app/approvals/handlers/requests"
 	approvalsDeploy "github.com/adrianozp/platform/app/approvals/repositories/deploy"
-	"github.com/adrianozp/platform/app/approvals/repositories/discord"
 	approvalsConfig "github.com/adrianozp/platform/app/approvals/repositories/envconfig"
 	approvalsMysql "github.com/adrianozp/platform/app/approvals/repositories/mysql"
 	approvalsQueue "github.com/adrianozp/platform/app/approvals/repositories/queue"
@@ -14,6 +13,7 @@ import (
 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
 	"github.com/adrianozp/platform/app/identity/usecases/tokens"
 	"github.com/adrianozp/platform/app/queue/usecases/queues"
+	"github.com/adrianozp/platform/internal/discord"
 	"github.com/adrianozp/platform/internal/eventbus"
 	"github.com/adrianozp/platform/internal/httpserver/wait"
 	"github.com/adrianozp/platform/internal/sweeper"
