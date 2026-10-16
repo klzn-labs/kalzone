@@ -36,7 +36,7 @@ func (s *source) FinishCommand(_ context.Context, id string, _ time.Time) error 
 type services struct{}
 
 func (services) FindServiceByID(_ context.Context, id string) (queues.ServiceRef, error) {
-	if id == "s-worker" || id == "s-broken" {
+	if id == "s-worker" || id == "s-broken" || id == "s-importer" {
 		return queues.ServiceRef{ID: id, Slug: id}, nil
 	}
 	return queues.ServiceRef{}, apperror.NotFound("service not found")
@@ -95,6 +95,22 @@ func Test_Desired_SkipsDeletedServices(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, desired.Queues, 1)
 	require.Equal(t, "q-s-worker", desired.Queues[0].ID)
+}
+
+func Test_Desired_DropsTheTokensOfDeletedPublishers(t *testing.T) {
+	src := &source{
+		queues: []entities.Queue{placeImport("s-worker")},
+		creds: []entities.Credentials{
+			{ServiceID: "s-importer", Environment: "prod", TokenHash: "h-importer"},
+			{ServiceID: "s-new", Environment: "prod", TokenHash: "h-deleted"},
+		},
+	}
+	u := gateway.NewGatewayUsecase(src, services{}, ports{}, creds{}, gateway.NewStatsStore())
+
+	desired, err := u.Desired(ctx)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"h-importer"}, desired.Queues[0].PublisherHashes)
 }
 
 func Test_Desired_LeavesOutAQueueThatFailsAndKeepsTheRest(t *testing.T) {
