@@ -32,7 +32,7 @@ func (u ReleasesUsecase) siblings(ctx context.Context, service entities.ServiceR
 	}
 	result := []entities.ServiceRef{}
 	for _, candidate := range candidates {
-		if candidate.SharesImageWith(service) {
+		if candidate.SharesImageWith(service) && !candidate.Decommissioning {
 			result = append(result, candidate)
 		}
 	}

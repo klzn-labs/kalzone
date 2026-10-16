@@ -37,7 +37,7 @@ func (s *store) Get(_ context.Context, id string) (entities.Request, error) {
 func (s *store) List(_ context.Context, f entities.Filter) ([]entities.Request, error) {
 	found := []entities.Request{}
 	for _, r := range s.byID {
-		if f.Status == "" || r.Status == f.Status {
+		if (f.Status == "" || r.Status == f.Status) && (f.ServiceID == "" || r.ServiceID == f.ServiceID) {
 			found = append(found, r)
 		}
 	}

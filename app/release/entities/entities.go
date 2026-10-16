@@ -76,4 +76,5 @@ type ServiceRef struct {
 	ImageRepository string
 	BuildWorkflow   string
 	AutoBuild       bool
+	Decommissioning bool
 }

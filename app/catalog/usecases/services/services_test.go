@@ -36,8 +36,13 @@ func (s *store) FindBySlug(_ context.Context, slug string) (entities.Service, er
 	return svc, nil
 }
 
-func (s *store) FindByID(context.Context, string) (entities.Service, error) {
-	return entities.Service{}, nil
+func (s *store) FindByID(_ context.Context, id string) (entities.Service, error) {
+	for _, svc := range s.bySlug {
+		if svc.ID == id && svc.DeletedAt == nil {
+			return svc, nil
+		}
+	}
+	return entities.Service{}, apperror.NotFound("service not found")
 }
 func (s *store) List(context.Context, entities.ServiceFilter) ([]entities.Service, error) {
 	return nil, nil

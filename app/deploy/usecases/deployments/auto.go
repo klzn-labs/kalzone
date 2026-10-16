@@ -25,6 +25,9 @@ func (u DeploymentsUsecase) autoDeployPlan(ctx context.Context, serviceID, relea
 	if err != nil {
 		return plan{}, err
 	}
+	if service.Decommissioning {
+		return plan{}, errDecommissioning
+	}
 	p := plan{
 		actor: AutoDeployActor, gate: authz.Open, service: service, env: AutoDeployEnvironment,
 		strategy: entities.StrategyBlueGreen, trigger: entities.TriggerPush,

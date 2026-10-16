@@ -13,6 +13,7 @@ type Grafana interface {
 	Enabled() bool
 	EnsureFolder(ctx context.Context) error
 	UpsertDashboard(ctx context.Context, dashboard map[string]any) error
+	DeleteDashboard(ctx context.Context, uid string) error
 }
 
 type DashboardsUsecase struct {
@@ -36,6 +37,13 @@ func (u DashboardsUsecase) Write(ctx context.Context, services []entities.Servic
 		}
 	}
 	return len(services), nil
+}
+
+func (u DashboardsUsecase) Delete(ctx context.Context, serviceSlug string) error {
+	if !u.grafana.Enabled() {
+		return nil
+	}
+	return u.grafana.DeleteDashboard(ctx, entities.DashboardUID(serviceSlug))
 }
 
 func (u DashboardsUsecase) Handle(ctx context.Context, e events.Event) error {

@@ -10,6 +10,7 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/adrianozp/platform/pkg/clock"
 )
 
@@ -120,4 +121,22 @@ func messageOf(err error) string {
 	}
 	log.Printf("change request failed: %v", err)
 	return "internal error, see the control plane logs"
+}
+
+const serviceDeleted = "the service is being deleted"
+
+func (u RequestsUsecase) CancelForService(ctx context.Context, a actor.Actor, serviceID string) error {
+	pending, err := u.store.List(ctx, entities.Filter{Status: entities.StatusPending, ServiceID: serviceID, Limit: listLimit})
+	if err != nil {
+		return err
+	}
+	for _, r := range pending {
+		if r.Kind == approval.KindRemove {
+			continue
+		}
+		if _, err := u.close(ctx, a, r, entities.StatusCancelled, serviceDeleted, "request.cancelled"); err != nil {
+			return err
+		}
+	}
+	return nil
 }

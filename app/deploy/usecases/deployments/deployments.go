@@ -21,6 +21,8 @@ type Store interface {
 	EventsAfter(ctx context.Context, deploymentID string, after int64, limit int) ([]entities.Event, error)
 	CountEvents(ctx context.Context, deploymentID string) (int, error)
 	ScheduleAll(ctx context.Context, ds []entities.Deployment) ([]entities.Deployment, error)
+	Environments(ctx context.Context, serviceID string) ([]string, error)
+	DeleteRuntime(ctx context.Context, serviceID string) error
 }
 
 type ServiceLookup interface {

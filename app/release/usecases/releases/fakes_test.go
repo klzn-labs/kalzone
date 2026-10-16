@@ -62,6 +62,16 @@ func (s *store) Unfinished(_ context.Context, before time.Time) ([]entities.Rele
 	return result, nil
 }
 
+func (s *store) UnfinishedFor(_ context.Context, serviceID string) ([]entities.Release, error) {
+	result := []entities.Release{}
+	for _, rel := range s.byID {
+		if !rel.Final() && rel.ServiceID == serviceID {
+			result = append(result, rel)
+		}
+	}
+	return result, nil
+}
+
 func (s *store) LatestBuilt(_ context.Context, serviceID string) (entities.Release, bool, error) {
 	return s.newest(func(r entities.Release) bool { return r.ServiceID == serviceID && r.Status == entities.StatusBuilt })
 }
@@ -106,6 +116,10 @@ var api = entities.ServiceRef{ID: "s1", Slug: "api", OwnerTeamID: "t1", GitHubRe
 var web = entities.ServiceRef{ID: "s2", Slug: "web", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/web", BuildWorkflow: "platform-build.yml"}
 var worker = entities.ServiceRef{ID: "s4", Slug: "worker", OwnerTeamID: "t1", GitHubRepo: "o/api", ImageRepository: "docker.io/o/api", BuildWorkflow: "platform-build.yml", AutoBuild: true}
 var bare = entities.ServiceRef{ID: "s3", Slug: "bare", OwnerTeamID: "t1", BuildWorkflow: "platform-build.yml"}
+var retired = entities.ServiceRef{
+	ID: "s5", Slug: "retired", OwnerTeamID: "t1", GitHubRepo: "o/retired", ImageRepository: "docker.io/o/retired",
+	BuildWorkflow: "platform-build.yml", AutoBuild: true, Decommissioning: true,
+}
 
 type services struct{}
 
@@ -118,11 +132,14 @@ func (services) FindServiceByID(_ context.Context, id string) (entities.ServiceR
 }
 
 func (services) ServicesForRepository(_ context.Context, repo string) ([]entities.ServiceRef, error) {
+	if repo == retired.GitHubRepo {
+		return []entities.ServiceRef{retired}, nil
+	}
 	return []entities.ServiceRef{api, web, worker}, nil
 }
 
 func byKey(match func(entities.ServiceRef) bool) (entities.ServiceRef, error) {
-	for _, s := range []entities.ServiceRef{api, web, worker, bare} {
+	for _, s := range []entities.ServiceRef{api, web, worker, bare, retired} {
 		if match(s) {
 			return s, nil
 		}

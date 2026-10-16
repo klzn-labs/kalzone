@@ -145,3 +145,14 @@ func Test_Revise_PublishesChangedKeysWithoutValues(t *testing.T) {
 	require.Equal(t, []string{"env.DB_HOST"}, event.Details["changed"])
 	require.NotContains(t, event.Details, "db.internal")
 }
+
+func Test_ADecommissioningServicesConfigIsFrozen(t *testing.T) {
+	f := newFixture(t)
+
+	_, revise := f.usecase.Revise(ctx, ana, "retired", "dev", entities.ChangeSet{SetEnv: map[string]string{"A": "1"}})
+	_, secret := f.usecase.SetSecret(ctx, ana, "retired", "dev", "TOKEN", "x")
+
+	require.ErrorIs(t, revise, apperror.Conflict(""))
+	require.ErrorIs(t, secret, apperror.Conflict(""))
+	require.Empty(t, f.store.revisions)
+}

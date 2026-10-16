@@ -10,6 +10,7 @@ const (
 	KindPromote      = "promote"
 	KindRollback     = "rollback"
 	KindConfigApply  = "config.apply"
+	KindRemove       = "remove"
 	KindQueueCreate  = "queue.create"
 	KindQueueUpdate  = "queue.update"
 	KindQueueDelete  = "queue.delete"

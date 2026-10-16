@@ -26,6 +26,7 @@ type Store interface {
 	Delete(ctx context.Context, queueID string, deletion entities.Command) error
 	Versions(ctx context.Context, queueID string, before, limit int) ([]entities.Version, error)
 	AddCommand(ctx context.Context, c entities.Command) error
+	DeleteCredentials(ctx context.Context, serviceID string) error
 }
 
 type ServiceLookup interface {

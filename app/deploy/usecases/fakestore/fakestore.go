@@ -102,6 +102,17 @@ func (s *Store) AllLive(ctx context.Context) ([]entities.Deployment, error) {
 	return result, nil
 }
 
+func (s *Store) Environments(_ context.Context, serviceID string) ([]string, error) {
+	environments := []string{}
+	for _, d := range s.ByID {
+		if d.ServiceID == serviceID && !slices.Contains(environments, d.Environment) {
+			environments = append(environments, d.Environment)
+		}
+	}
+	sort.Strings(environments)
+	return environments, nil
+}
+
 func (s *Store) OldestPending(context.Context) (entities.Deployment, bool, error) {
 	found := s.matching(func(d entities.Deployment) bool { return d.Status == entities.StatusPending })
 	if len(found) == 0 {

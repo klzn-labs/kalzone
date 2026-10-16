@@ -22,6 +22,12 @@ type store struct {
 	queues   map[string]entities.Queue
 	versions []entities.Version
 	commands []entities.Command
+	revoked  []string
+}
+
+func (s *store) DeleteCredentials(_ context.Context, serviceID string) error {
+	s.revoked = append(s.revoked, serviceID)
+	return nil
 }
 
 func key(env, name string) string { return env + "/" + name }

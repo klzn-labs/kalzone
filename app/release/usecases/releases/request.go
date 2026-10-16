@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	errCannotBuild   = apperror.Invalid("set the service's GitHub repository and image repository before building")
-	errDispatchFails = apperror.New(apperror.CodeUpstream, "GitHub did not start the build")
+	errDecommissioning = apperror.Conflict("this service is being deleted").WithHint("its builds are frozen until the teardown finishes")
+	errCannotBuild     = apperror.Invalid("set the service's GitHub repository and image repository before building")
+	errDispatchFails   = apperror.New(apperror.CodeUpstream, "GitHub did not start the build")
 )
 
 var GitHubActor = actor.Actor{Login: "github"}
@@ -37,6 +38,9 @@ func (u ReleasesUsecase) Request(ctx context.Context, a actor.Actor, serviceSlug
 }
 
 func (u ReleasesUsecase) build(ctx context.Context, a actor.Actor, service entities.ServiceRef, ref string, trigger entities.Trigger) (entities.Release, error) {
+	if service.Decommissioning {
+		return entities.Release{}, errDecommissioning
+	}
 	if service.GitHubRepo == "" || service.ImageRepository == "" {
 		return entities.Release{}, errCannotBuild
 	}
@@ -81,4 +85,21 @@ func truncate(s string, max int) string {
 		return s
 	}
 	return s[:max]
+}
+
+func (u ReleasesUsecase) FailUnfinished(ctx context.Context, a actor.Actor, serviceID string) error {
+	service, err := u.services.FindServiceByID(ctx, serviceID)
+	if err != nil {
+		return err
+	}
+	open, err := u.store.UnfinishedFor(ctx, serviceID)
+	if err != nil {
+		return err
+	}
+	for _, rel := range open {
+		if _, err := u.fail(ctx, a, service, rel, "the service is being deleted"); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	errHostNotAllowed = apperror.Invalid("host must be under one of the platform's domains")
-	errHostTaken      = apperror.Conflict("another service or environment already uses this host")
-	errInternalTaken  = apperror.Conflict("another service is already this environment's internal service")
-	errNoChanges      = apperror.Invalid("nothing changed")
+	errHostNotAllowed  = apperror.Invalid("host must be under one of the platform's domains")
+	errHostTaken       = apperror.Conflict("another service or environment already uses this host")
+	errInternalTaken   = apperror.Conflict("another service is already this environment's internal service")
+	errNoChanges       = apperror.Invalid("nothing changed")
+	errDecommissioning = apperror.Conflict("this service is being deleted").WithHint("its config is frozen until the teardown finishes")
 )
 
 type edit struct {
@@ -40,6 +41,9 @@ func (u ConfigUsecase) editable(ctx context.Context, a actor.Actor, action authz
 	t, err := u.resolve(ctx, serviceSlug, environment)
 	if err != nil {
 		return edit{}, err
+	}
+	if t.service.Decommissioning {
+		return edit{}, errDecommissioning
 	}
 	gate, err := u.authz.Gate(ctx, a, action, t.resource())
 	if err != nil {

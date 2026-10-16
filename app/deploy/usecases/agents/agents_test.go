@@ -155,3 +155,36 @@ func Test_Sweep_FailsDeploymentsWhoseAgentWentQuiet(t *testing.T) {
 	require.Equal(t, 1, swept)
 	require.Equal(t, "the agent stopped reporting", store.ByID["d1"].Message)
 }
+
+func removal(store *fakestore.Store, id, env string, status entities.Status) {
+	d := pending(store, id, env, status)
+	d.Strategy, d.Trigger, d.ImageRef = entities.StrategyRemove, entities.TriggerDecommission, ""
+	store.ByID[id] = d
+}
+
+func Test_Claim_HandsOutARemovalWithoutConfigOrQueueAccess(t *testing.T) {
+	store, _, usecase := setup(true)
+	removal(store, "rm1", "dev", entities.StatusPending)
+
+	w, claimed, err := usecase.Claim(ctx, "vps-1")
+
+	require.NoError(t, err)
+	require.True(t, claimed)
+	require.Equal(t, "api-dev", w.Name)
+	require.Equal(t, entities.StrategyRemove, w.Deployment.Strategy)
+	require.Empty(t, w.Config.Secrets)
+	require.Empty(t, w.Config.Env)
+}
+
+func Test_Desired_DropsAWorkloadOnceItsRemovalSucceeded(t *testing.T) {
+	store, _, usecase := setup(false)
+	pending(store, "d1", "dev", entities.StatusSucceeded)
+	removal(store, "rm1", "dev", entities.StatusSucceeded)
+	pending(store, "p1", "prod", entities.StatusSucceeded)
+
+	desired, err := usecase.Desired(ctx)
+
+	require.NoError(t, err)
+	require.Len(t, desired, 1)
+	require.Equal(t, "prod", desired[0].Environment)
+}
