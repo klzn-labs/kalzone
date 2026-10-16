@@ -29,7 +29,7 @@ func NewLookup(services ServiceFinder, environments EnvironmentFinder) Lookup {
 
 func (l Lookup) FindService(ctx context.Context, slug string) (entities.ServiceRef, error) {
 	s, err := l.services.Get(ctx, slug)
-	return entities.ServiceRef{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID}, err
+	return entities.ServiceRef{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID, Decommissioning: s.Decommissioning()}, err
 }
 
 func (l Lookup) ServiceExists(ctx context.Context, id string) (bool, error) {

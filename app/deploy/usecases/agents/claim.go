@@ -56,6 +56,9 @@ func (u AgentsUsecase) workload(ctx context.Context, d entities.Deployment) (ent
 	if err != nil {
 		return entities.Workload{}, err
 	}
+	if d.Strategy == entities.StrategyRemove {
+		return removal(d, service), nil
+	}
 	resolved, err := u.configs.ResolveConfig(ctx, d.ServiceID, d.Environment, d.ConfigRevision)
 	if err != nil {
 		return entities.Workload{}, err
@@ -65,6 +68,12 @@ func (u AgentsUsecase) workload(ctx context.Context, d entities.Deployment) (ent
 		Deployment: d, Name: entities.WorkloadName(service.Slug, d.Environment), Service: service.Slug,
 		Version: entities.VersionLabel(d), Config: resolved,
 	}, err
+}
+
+func removal(d entities.Deployment, service entities.ServiceRef) entities.Workload {
+	return entities.Workload{
+		Deployment: d, Name: entities.WorkloadName(service.Slug, d.Environment), Service: service.Slug, Version: "removal",
+	}
 }
 
 func (u AgentsUsecase) withQueueAccess(ctx context.Context, resolved entities.ResolvedConfig, serviceID, environment string) (entities.ResolvedConfig, error) {

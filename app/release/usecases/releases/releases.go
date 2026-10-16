@@ -18,6 +18,7 @@ type Store interface {
 	FindByID(ctx context.Context, id string) (entities.Release, error)
 	ListByService(ctx context.Context, serviceID string, before, limit int) ([]entities.Release, error)
 	Unfinished(ctx context.Context, createdBefore time.Time) ([]entities.Release, error)
+	UnfinishedFor(ctx context.Context, serviceID string) ([]entities.Release, error)
 	LatestBuilt(ctx context.Context, serviceID string) (entities.Release, bool, error)
 	ByNumber(ctx context.Context, serviceID string, number int) (entities.Release, bool, error)
 	BuiltByCommitPrefix(ctx context.Context, serviceID, prefix string, limit int) ([]entities.Release, error)

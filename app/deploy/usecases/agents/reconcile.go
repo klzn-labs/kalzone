@@ -15,6 +15,9 @@ func (u AgentsUsecase) Desired(ctx context.Context) ([]entities.Desired, error) 
 	}
 	desired := make([]entities.Desired, 0, len(live))
 	for _, d := range live {
+		if d.Strategy == entities.StrategyRemove {
+			continue
+		}
 		service, err := u.services.FindServiceByID(ctx, d.ServiceID)
 		if err != nil {
 			continue

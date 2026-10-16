@@ -48,6 +48,8 @@ func summaryOf(kind string, p plan) string {
 		return fmt.Sprintf("roll %s back to release #%d with config #%d", p.env, p.release.Number, p.config)
 	case approval.KindConfigApply:
 		return fmt.Sprintf("apply config #%d to %s", p.config, p.env)
+	case approval.KindRemove:
+		return fmt.Sprintf("remove %s from %s", p.service.Slug, p.env)
 	}
 	return fmt.Sprintf("deploy release #%d to %s", p.release.Number, p.env)
 }
@@ -63,7 +65,7 @@ func (u DeploymentsUsecase) ApplyApproved(ctx context.Context, a actor.Actor, o 
 }
 
 func (u DeploymentsUsecase) approved(ctx context.Context, a actor.Actor, o Proposal) error {
-	p, err := u.authorize(ctx, a, o.Service, o.Environment)
+	p, err := u.authorizeAny(ctx, a, o.Service, o.Environment)
 	if err != nil {
 		return err
 	}
@@ -81,6 +83,8 @@ func (u DeploymentsUsecase) replay(ctx context.Context, a actor.Actor, o Proposa
 		return u.Rollback(ctx, a, o.DeploymentID)
 	case approval.KindConfigApply:
 		return u.ApplyConfig(ctx, a, o.Service, o.Environment)
+	case approval.KindRemove:
+		return u.Remove(ctx, a, o.Service, o.Environment)
 	}
 	return u.Deploy(ctx, a, Request{Service: o.Service, Environment: o.Environment, ReleaseID: o.ReleaseID, Strategy: o.Strategy})
 }
@@ -112,18 +116,26 @@ func (u DeploymentsUsecase) Preview(ctx context.Context, o Proposal) (approval.P
 	if err != nil {
 		return approval.Preview{}, err
 	}
-	target, err := u.targetOf(ctx, o, live)
+	lines, err := u.previewLines(ctx, o, live)
 	if err != nil {
 		return approval.Preview{}, err
 	}
-	preview := approval.Preview{Lines: []approval.Line{
-		{Key: "release", Before: liveNumber(live, live.ReleaseNumber), After: fmt.Sprintf("#%d", target.ReleaseNumber)},
-		{Key: "config", Before: liveNumber(live, live.ConfigRevision), After: fmt.Sprintf("#%d", target.ConfigRevision)},
-	}}
+	preview := approval.Preview{Lines: lines}
 	if live.ID != o.LiveID {
 		preview.Conflict = fmt.Sprintf("approving will fail: deployment #%d went live after the request", live.Number)
 	}
 	return preview, nil
+}
+
+func (u DeploymentsUsecase) previewLines(ctx context.Context, o Proposal, live entities.Deployment) ([]approval.Line, error) {
+	if o.Kind == approval.KindRemove {
+		return []approval.Line{{Key: "workload", Before: liveNumber(live, live.ReleaseNumber), After: "removed"}}, nil
+	}
+	target, err := u.targetOf(ctx, o, live)
+	return []approval.Line{
+		{Key: "release", Before: liveNumber(live, live.ReleaseNumber), After: fmt.Sprintf("#%d", target.ReleaseNumber)},
+		{Key: "config", Before: liveNumber(live, live.ConfigRevision), After: fmt.Sprintf("#%d", target.ConfigRevision)},
+	}, err
 }
 
 func (u DeploymentsUsecase) targetOf(ctx context.Context, o Proposal, live entities.Deployment) (entities.Deployment, error) {

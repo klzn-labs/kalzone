@@ -17,7 +17,9 @@ var (
 			WithHint("follow the running deployment with GET /api/v1/deployments?service=<slug>&env=<env>, then deploy again")
 	errNotBuilt = apperror.Invalid("only built releases can be deployed").
 			WithHint("wait until GET /api/v1/releases/<id> says built")
-	errOtherService = apperror.Invalid("that release belongs to another service")
+	errOtherService    = apperror.Invalid("that release belongs to another service")
+	errDecommissioning = apperror.Conflict("this service is being deleted").
+				WithHint("its deployments are frozen until the teardown finishes")
 )
 
 type plan struct {
@@ -36,6 +38,14 @@ func (p plan) resource() authz.Resource {
 }
 
 func (u DeploymentsUsecase) authorize(ctx context.Context, a actor.Actor, serviceSlug, environment string) (plan, error) {
+	p, err := u.authorizeAny(ctx, a, serviceSlug, environment)
+	if err == nil && p.service.Decommissioning {
+		return plan{}, errDecommissioning
+	}
+	return p, err
+}
+
+func (u DeploymentsUsecase) authorizeAny(ctx context.Context, a actor.Actor, serviceSlug, environment string) (plan, error) {
 	service, err := u.services.FindService(ctx, serviceSlug)
 	if err != nil {
 		return plan{}, err

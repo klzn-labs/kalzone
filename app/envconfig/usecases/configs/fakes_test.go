@@ -96,10 +96,13 @@ func (s *store) SecretVersions(_ context.Context, ids []string) ([]entities.Secr
 type services struct{}
 
 func (services) FindService(_ context.Context, slug string) (entities.ServiceRef, error) {
-	if slug != "api" {
-		return entities.ServiceRef{}, apperror.NotFound("service not found")
+	switch slug {
+	case "api":
+		return entities.ServiceRef{ID: "s1", Slug: "api", OwnerTeamID: "t1"}, nil
+	case "retired":
+		return entities.ServiceRef{ID: "s9", Slug: "retired", OwnerTeamID: "t1", Decommissioning: true}, nil
 	}
-	return entities.ServiceRef{ID: "s1", Slug: "api", OwnerTeamID: "t1"}, nil
+	return entities.ServiceRef{}, apperror.NotFound("service not found")
 }
 
 func (services) ServiceExists(_ context.Context, id string) (bool, error) {

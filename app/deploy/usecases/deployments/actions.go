@@ -111,7 +111,7 @@ func (u DeploymentsUsecase) Rollback(ctx context.Context, a actor.Actor, deploym
 	if err != nil {
 		return entities.Deployment{}, err
 	}
-	if target.Status != entities.StatusSucceeded {
+	if target.Status != entities.StatusSucceeded || target.Strategy == entities.StrategyRemove {
 		return entities.Deployment{}, errNotSucceeded
 	}
 	p.release = entities.ReleaseRef{ID: target.ReleaseID, ServiceID: service.ID, Number: target.ReleaseNumber, Built: true, Reference: target.ImageRef}

@@ -37,7 +37,7 @@ func oneAutoBuildPerImage(services []entities.ServiceRef) []entities.ServiceRef 
 	seen := map[string]bool{}
 	result := []entities.ServiceRef{}
 	for _, service := range services {
-		if !service.AutoBuild || seen[service.ImageRepository] {
+		if !service.AutoBuild || service.Decommissioning || seen[service.ImageRepository] {
 			continue
 		}
 		seen[service.ImageRepository] = true

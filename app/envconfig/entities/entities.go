@@ -84,9 +84,10 @@ type ChangeSet struct {
 }
 
 type ServiceRef struct {
-	ID          string
-	Slug        string
-	OwnerTeamID string
+	ID              string
+	Slug            string
+	OwnerTeamID     string
+	Decommissioning bool
 }
 
 type Resolved struct {

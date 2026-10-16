@@ -17,3 +17,12 @@ func (s *Store) Runtime(_ context.Context, serviceID, environment string) (entit
 	status, found := s.Runtimes[serviceID+"/"+environment]
 	return status, found, nil
 }
+
+func (s *Store) DeleteRuntime(_ context.Context, serviceID string) error {
+	for key, status := range s.Runtimes {
+		if status.ServiceID == serviceID {
+			delete(s.Runtimes, key)
+		}
+	}
+	return nil
+}

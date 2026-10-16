@@ -7,6 +7,7 @@ import (
 	"github.com/adrianozp/platform/app/authz"
 	"github.com/adrianozp/platform/app/catalog/entities"
 	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/adrianozp/platform/pkg/clock"
 	"github.com/adrianozp/platform/pkg/uuid"
 )
@@ -34,12 +35,12 @@ func newService(n entities.NewService, teamID string) entities.Service {
 	return entities.Service{
 		ID: uuid.NewUUID(), Slug: n.Slug, Name: strings.TrimSpace(n.Name), Description: strings.TrimSpace(n.Description),
 		OwnerTeamID: teamID, GitHubRepo: strings.TrimSpace(n.GitHubRepo), ImageRepository: strings.TrimSpace(n.ImageRepository),
-		BuildWorkflow: entities.DefaultBuildWorkflow, CreatedAt: clock.Now().UTC(),
+		BuildWorkflow: entities.DefaultBuildWorkflow, Status: entities.StatusActive, CreatedAt: clock.Now().UTC(),
 	}
 }
 
 func (u ServicesUsecase) Update(ctx context.Context, a actor.Actor, slug string, c entities.ServiceChanges) (entities.Service, error) {
-	s, err := u.authorized(ctx, a, slug, authz.EditService)
+	s, err := u.changeable(ctx, a, slug, authz.EditService)
 	if err != nil {
 		return entities.Service{}, err
 	}
@@ -73,6 +74,9 @@ func (u ServicesUsecase) transferable(ctx context.Context, a actor.Actor, slug, 
 	if err != nil {
 		return entities.Service{}, "", err
 	}
+	if s.Decommissioning() {
+		return entities.Service{}, "", errDecommissioning
+	}
 	teamID, err := u.teams.IDBySlug(ctx, teamSlug)
 	if err != nil {
 		return entities.Service{}, "", err
@@ -93,6 +97,43 @@ func (u ServicesUsecase) Delete(ctx context.Context, a actor.Actor, slug string)
 	}
 	u.publisher.Publish(ctx, serviceEvent(a, "service.deleted", s, nil))
 	return nil
+}
+
+func (u ServicesUsecase) MarkDecommissioning(ctx context.Context, a actor.Actor, slug string) (entities.Service, error) {
+	s, err := u.authorized(ctx, a, slug, authz.DeleteService)
+	if err != nil || s.Decommissioning() {
+		return s, err
+	}
+	s.Status = entities.StatusDecommissioning
+	if err := u.store.Update(ctx, s); err != nil {
+		return entities.Service{}, err
+	}
+	u.publisher.Publish(ctx, serviceEvent(a, "service.decommissioning", s, nil))
+	return s, nil
+}
+
+func (u ServicesUsecase) MarkDeleted(ctx context.Context, a actor.Actor, id string) error {
+	s, err := u.store.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	now := clock.Now().UTC()
+	s.DeletedAt = &now
+	if err := u.store.Update(ctx, s); err != nil {
+		return err
+	}
+	u.publisher.Publish(ctx, serviceEvent(a, "service.deleted", s, nil))
+	return nil
+}
+
+var errDecommissioning = apperror.Conflict("this service is being deleted").WithHint("it cannot change until the teardown finishes")
+
+func (u ServicesUsecase) changeable(ctx context.Context, a actor.Actor, slug string, action authz.Action) (entities.Service, error) {
+	s, err := u.authorized(ctx, a, slug, action)
+	if err == nil && s.Decommissioning() {
+		return entities.Service{}, errDecommissioning
+	}
+	return s, err
 }
 
 func (u ServicesUsecase) authorized(ctx context.Context, a actor.Actor, slug string, action authz.Action) (entities.Service, error) {
