@@ -12,6 +12,7 @@ const (
 	PanelMemory   = 4
 	PanelCPU      = 5
 	PanelLogs     = 6
+	PanelTraffic  = 7
 )
 
 type Service struct {
@@ -53,6 +54,8 @@ func panels(slug string) []any {
 			"histogram_quantile(0.95, sum by (le) (rate(traefik_service_request_duration_seconds_bucket{%s}[1m])))", traefik)),
 		timeseries(PanelMemory, "Memory", "bytes", 0, 8, fmt.Sprintf("sum by (name) (container_memory_working_set_bytes{%s})", container)),
 		timeseries(PanelCPU, "CPU", "percentunit", 8, 8, fmt.Sprintf("sum by (name) (rate(container_cpu_usage_seconds_total{%s}[1m]))", container)),
+		stepped(timeseries(PanelTraffic, "Traffic weight", "percent", 16, 8, fmt.Sprintf(
+			"max by (colour) (plateful_traffic_weight_percent{service=\"%s\"})", name))),
 		logs(PanelLogs, fmt.Sprintf(`{container=~"%s-(blue|green)"}`, name)),
 	}
 }
@@ -65,6 +68,14 @@ func timeseries(id int, title, unit string, x, y int, expr string) map[string]an
 		"fieldConfig": map[string]any{"defaults": map[string]any{"unit": unit}, "overrides": []any{}},
 		"targets":     []map[string]any{{"refId": "A", "expr": expr, "datasource": map[string]string{"type": "prometheus", "uid": "prometheus"}}},
 	}
+}
+
+func stepped(panel map[string]any) map[string]any {
+	defaults := panel["fieldConfig"].(map[string]any)["defaults"].(map[string]any)
+	defaults["min"], defaults["max"] = 0, 100
+	defaults["custom"] = map[string]any{"lineInterpolation": "stepAfter"}
+	panel["targets"].([]map[string]any)[0]["legendFormat"] = "{{colour}}"
+	return panel
 }
 
 func logs(id int, expr string) map[string]any {
