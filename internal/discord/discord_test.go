@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/repositories/discord"
+	"github.com/adrianozp/platform/internal/discord"
 	"github.com/adrianozp/platform/pkg/config"
 	"github.com/stretchr/testify/require"
 )
@@ -97,7 +97,7 @@ func capturedLog(t *testing.T) *logBuffer {
 }
 
 func logLines(captured *logBuffer) int {
-	return strings.Count(captured.String(), "approval notification not sent")
+	return strings.Count(captured.String(), "discord notification not sent")
 }
 
 func Test_Notify_LogsFailuresWithoutTheWebhookURL(t *testing.T) {
