@@ -71,6 +71,10 @@ func (r DeploymentRepository) SaveRuntime(ctx context.Context, statuses []entiti
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{UpdateAll: true}).Create(&models).Error
 }
 
+func (r DeploymentRepository) DeleteRuntime(ctx context.Context, serviceID string) error {
+	return r.db.WithContext(ctx).Where("service_id = ?", serviceID).Delete(&runtimeStatus{}).Error
+}
+
 func (r DeploymentRepository) Runtime(ctx context.Context, serviceID, environment string) (entities.RuntimeStatus, bool, error) {
 	var model runtimeStatus
 	err := r.db.WithContext(ctx).Where("service_id = ? AND environment = ?", serviceID, environment).Take(&model).Error

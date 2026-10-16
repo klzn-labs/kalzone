@@ -20,8 +20,20 @@ type Service struct {
 	AutoBuild       bool
 	AutoDeployDev   bool
 	BuildWorkflow   string
+	Status          Status
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
+}
+
+type Status string
+
+const (
+	StatusActive          Status = "active"
+	StatusDecommissioning Status = "decommissioning"
+)
+
+func (s Service) Decommissioning() bool {
+	return s.Status == StatusDecommissioning
 }
 
 type ServiceChanges struct {

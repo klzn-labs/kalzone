@@ -45,6 +45,9 @@ func (r RequestRepository) List(ctx context.Context, f entities.Filter) ([]entit
 	if len(f.TeamIDs) > 0 {
 		tx = tx.Where("team_id IN ?", f.TeamIDs)
 	}
+	if f.ServiceID != "" {
+		tx = tx.Where("service_id = ?", f.ServiceID)
+	}
 	return find(before(tx, f).Order("created_at DESC, id DESC").Limit(f.Limit))
 }
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -41,6 +42,14 @@ func (c Client) EnsureFolder(ctx context.Context) error {
 func (c Client) UpsertDashboard(ctx context.Context, dashboard map[string]any) error {
 	body := map[string]any{"dashboard": dashboard, "folderUid": entities.FolderUID, "overwrite": true, "message": "written by the platform"}
 	status, err := c.call(ctx, http.MethodPost, "/api/dashboards/db", body)
+	return expect(status, err, http.StatusOK)
+}
+
+func (c Client) DeleteDashboard(ctx context.Context, uid string) error {
+	status, err := c.call(ctx, http.MethodDelete, "/api/dashboards/uid/"+url.PathEscape(uid), nil)
+	if status == http.StatusNotFound {
+		return nil
+	}
 	return expect(status, err, http.StatusOK)
 }
 

@@ -91,6 +91,11 @@ func (r ReleaseRepository) Unfinished(ctx context.Context, createdBefore time.Ti
 		Clauses(clause.OrderBy{Expression: clause.Expr{SQL: "created_at"}}))
 }
 
+func (r ReleaseRepository) UnfinishedFor(ctx context.Context, serviceID string) ([]entities.Release, error) {
+	return r.list(r.db.WithContext(ctx).
+		Where("service_id = ? AND status IN ?", serviceID, []entities.Status{entities.StatusRequested, entities.StatusBuilding}))
+}
+
 func (r ReleaseRepository) list(tx *gorm.DB) ([]entities.Release, error) {
 	var models []release
 	if err := tx.Find(&models).Error; err != nil {

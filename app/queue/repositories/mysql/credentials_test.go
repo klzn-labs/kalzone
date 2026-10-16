@@ -48,3 +48,20 @@ func Test_CreateCredentials_KeepsTheFirstOfTwoConcurrentIssues(t *testing.T) {
 	require.False(t, again)
 	require.Equal(t, "h1", stored.TokenHash)
 }
+
+func Test_DeleteCredentials_RevokesEveryEnvironmentOfTheService(t *testing.T) {
+	repo := mysql.NewQueueRepository(testdb.Open(t))
+	for _, key := range [][2]string{{"svc", "dev"}, {"svc", "prod"}, {"other", "prod"}} {
+		require.NoError(t, repo.SaveCredentials(ctx, entities.Credentials{
+			ServiceID: key[0], Environment: key[1], TokenCiphertext: []byte("t"), TokenNonce: []byte("n"),
+			TokenHash: entities.HashToken(key[0] + key[1]), KeyCiphertext: []byte("k"), KeyNonce: []byte("n"), KeyID: "k1",
+		}))
+	}
+
+	require.NoError(t, repo.DeleteCredentials(ctx, "svc"))
+	all, err := repo.AllCredentials(ctx)
+
+	require.NoError(t, err)
+	require.Len(t, all, 1)
+	require.Equal(t, "other", all[0].ServiceID)
+}

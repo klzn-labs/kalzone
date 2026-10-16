@@ -100,6 +100,13 @@ func (r DeploymentRepository) LatestSucceeded(ctx context.Context, serviceID, en
 	return found[0], true, nil
 }
 
+func (r DeploymentRepository) Environments(ctx context.Context, serviceID string) ([]string, error) {
+	environments := []string{}
+	err := r.db.WithContext(ctx).Model(&deployment{}).Distinct().Where("service_id = ?", serviceID).
+		Order("environment").Pluck("environment", &environments).Error
+	return environments, err
+}
+
 func (r DeploymentRepository) AllLive(ctx context.Context) ([]entities.Deployment, error) {
 	return r.list(r.db.WithContext(ctx).Where(latestSucceeded).Order("service_id, environment"))
 }

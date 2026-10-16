@@ -121,3 +121,22 @@ func Test_EventsAfterReadsForwardAndCounts(t *testing.T) {
 	require.Equal(t, "three", rest[0].Message)
 	require.Equal(t, 3, total)
 }
+
+func Test_EnvironmentsListsEveryEnvironmentAServiceWasDeployedTo(t *testing.T) {
+	repo := mysql.NewDeploymentRepository(testdb.Open(t))
+	now := time.Now().UTC()
+	for _, d := range []entities.Deployment{
+		deployment("d1", "s", "prod", entities.StatusFailed, now),
+		deployment("d2", "s", "dev", entities.StatusSucceeded, now),
+		deployment("d3", "s", "dev", entities.StatusSucceeded, now),
+		deployment("o1", "other", "qa", entities.StatusSucceeded, now),
+	} {
+		_, err := repo.Create(ctx, d)
+		require.NoError(t, err)
+	}
+
+	environments, err := repo.Environments(ctx, "s")
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"dev", "prod"}, environments)
+}

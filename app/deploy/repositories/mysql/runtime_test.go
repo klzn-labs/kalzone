@@ -58,3 +58,16 @@ func Test_AFailedTransitionKeepsItsFailure(t *testing.T) {
 	require.Equal(t, failure, stored.Failure)
 	require.Nil(t, fresh.Failure)
 }
+
+func Test_DeleteRuntimeForgetsEveryEnvironmentOfTheService(t *testing.T) {
+	repo := mysql.NewDeploymentRepository(testdb.Open(t))
+	at := time.Now().UTC().Truncate(time.Millisecond)
+	require.NoError(t, repo.SaveRuntime(ctx, []entities.RuntimeStatus{status("dev", "running", at), status("prod", "running", at)}))
+
+	require.NoError(t, repo.DeleteRuntime(ctx, "s"))
+	_, devFound, _ := repo.Runtime(ctx, "s", "dev")
+	_, prodFound, _ := repo.Runtime(ctx, "s", "prod")
+
+	require.False(t, devFound)
+	require.False(t, prodFound)
+}
