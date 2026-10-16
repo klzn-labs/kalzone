@@ -81,7 +81,7 @@ as a callback URL.
 | `PLATFORM_DEPLOY_TIMEOUT` | `30m` | deployments an agent stopped reporting on are failed after this |
 | `PLATFORM_QUEUES_TOKEN` | | shared secret the queue gateway authenticates with; the gateway API answers 503 without it |
 | `PLATFORM_QUEUES_GATEWAY_URL` | `http://queued:8080` | gateway address handed to services as `PLATFORM_QUEUE_URL` |
-| `PLATFORM_APPROVALS_WEBHOOK_URL` | | Discord webhook told about every new change request; empty sends nothing |
+| `PLATFORM_APPROVALS_WEBHOOK_URL` | | Discord webhook told about every new change request and every deployment that succeeds on prod; empty sends nothing |
 
 Never run production with the default secrets key.
 

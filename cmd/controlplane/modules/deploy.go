@@ -14,6 +14,7 @@ import (
 	deployQueue "github.com/adrianozp/platform/app/deploy/repositories/queue"
 	deployRelease "github.com/adrianozp/platform/app/deploy/repositories/release"
 	"github.com/adrianozp/platform/app/deploy/usecases/agents"
+	"github.com/adrianozp/platform/app/deploy/usecases/announce"
 	"github.com/adrianozp/platform/app/deploy/usecases/autodeploy"
 	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
 	"github.com/adrianozp/platform/app/deploy/usecases/runtime"
@@ -21,9 +22,11 @@ import (
 	"github.com/adrianozp/platform/app/observe/repositories/grafana"
 	"github.com/adrianozp/platform/app/queue/usecases/credentials"
 	"github.com/adrianozp/platform/app/release/usecases/releases"
+	"github.com/adrianozp/platform/internal/discord"
 	"github.com/adrianozp/platform/internal/eventbus"
 	"github.com/adrianozp/platform/internal/sweeper"
 	"github.com/adrianozp/platform/pkg/config"
+	"github.com/adrianozp/platform/pkg/events"
 	"go.uber.org/fx"
 )
 
@@ -34,6 +37,7 @@ func Deploy() fx.Option {
 			deployments.NewDeploymentsUsecase, agents.NewAgentsUsecase,
 			deploymentsHandler.NewDeploymentsHandler, agentapi.NewAgentAPIHandler,
 			runtime.NewRuntimeUsecase, runtimeHandler.NewRuntimeHandler, autodeploy.NewAutoDeployUsecase,
+			announce.NewAnnounceUsecase,
 		),
 		deployAdapterInjections(),
 		deployUsecaseInjections(),
@@ -79,6 +83,8 @@ func deployUsecaseInjections() fx.Option {
 		func(u runtime.RuntimeUsecase) runtimeHandler.Runtime { return u },
 		func(l deployCatalog.Lookup) autodeploy.ServiceLookup { return l },
 		func(u deployments.DeploymentsUsecase) autodeploy.Deployer { return u },
+		func(n discord.Notifier) announce.Notifier { return n },
+		fx.Annotate(func(u announce.AnnounceUsecase) events.Subscriber { return u }, fx.ResultTags(`group:"subscribers"`)),
 	)
 }
 
