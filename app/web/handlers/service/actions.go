@@ -1,6 +1,8 @@
 package service
 
 import (
+	"strings"
+
 	catalog "github.com/adrianozp/platform/app/catalog/entities"
 	"github.com/adrianozp/platform/app/web"
 	"github.com/adrianozp/platform/internal/requestctx"
@@ -35,11 +37,24 @@ func (h ServiceHandler) Delete(c *gin.Context) {
 		web.Fail(c, errConfirm)
 		return
 	}
-	if err := h.services.Delete(c.Request.Context(), requestctx.ActorFrom(c), slug); err != nil {
+	result, err := h.decommission.Start(c.Request.Context(), requestctx.ActorFrom(c), slug)
+	if err != nil {
 		web.Fail(c, err)
 		return
 	}
-	web.Done(c, "/services", "Service "+slug+" deleted")
+	if result.Deleted {
+		web.Done(c, "/services", "Service "+slug+" deleted")
+		return
+	}
+	web.Done(c, "/services/"+slug, teardownNotice(slug, result.Steps))
+}
+
+func teardownNotice(slug string, steps []catalog.TeardownStep) string {
+	parts := []string{}
+	for _, s := range steps {
+		parts = append(parts, s.Environment+" "+strings.ReplaceAll(string(s.Status), "_", " "))
+	}
+	return "Deleting " + slug + ": " + strings.Join(parts, ", ")
 }
 
 func formValue(c *gin.Context, key string) *string {

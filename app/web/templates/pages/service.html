@@ -66,11 +66,15 @@
           <div class="form-error" style="width:100%"></div>
         </div>
         <div class="danger-row">
-          <div><h3>Delete this service</h3><p>It disappears from the catalog. Its slug stays reserved and its history stays in the audit log.</p></div>
+          {{if $d.Service.Decommissioning}}
+          <div><h3>Deletion in progress</h3><p>The service is frozen while it is removed from each environment; prod waits for approval when a token asked. Type the slug again to resume a teardown that failed or stalled.</p></div>
+          {{else}}
+          <div><h3>Delete this service</h3><p>It is frozen, removed from every environment it ran in (prod goes through approval like a deploy), its queues and dashboard are deleted, and then it leaves the catalog. Its slug becomes free again; its history stays in the audit log.</p></div>
+          {{end}}
           <form class="form-inline" method="post" action="/services/{{$d.Service.Slug}}/delete" hx-post="/services/{{$d.Service.Slug}}/delete" hx-target="next .form-error">
             {{template "csrf" $.Viewer.CSRFToken}}
             <input type="text" name="confirm" class="mono" placeholder="{{$d.Service.Slug}}" aria-label="Type the slug to confirm" style="width:200px">
-            <button class="btn btn-danger">{{icon "trash"}}Delete</button>
+            <button class="btn btn-danger">{{icon "trash"}}{{if $d.Service.Decommissioning}}Resume deletion{{else}}Delete{{end}}</button>
           </form>
           <div class="form-error" style="width:100%"></div>
         </div>

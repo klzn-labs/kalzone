@@ -9,6 +9,7 @@
         <div class="row" style="margin-top:4px">
           <span class="mono muted">{{.Service.Slug}}</span>
           <span class="badge badge-accent">{{icon "users"}}{{.Team.Name}}</span>
+          {{if .Service.Decommissioning}}<span class="badge badge-danger badge-pulse"><span class="dot"></span>being deleted</span>{{end}}
           {{if .Service.GitHubRepo}}<a class="badge badge-outline" href="https://github.com/{{.Service.GitHubRepo}}" target="_blank" rel="noopener">{{icon "github"}}{{.Service.GitHubRepo}}</a>{{end}}
         </div>
       </div>

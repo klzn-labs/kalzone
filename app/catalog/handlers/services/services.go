@@ -20,15 +20,19 @@ type Services interface {
 	Create(ctx context.Context, a actor.Actor, n entities.NewService) (entities.Service, error)
 	Update(ctx context.Context, a actor.Actor, slug string, c entities.ServiceChanges) (entities.Service, error)
 	Transfer(ctx context.Context, a actor.Actor, slug, teamSlug string) (entities.Service, error)
-	Delete(ctx context.Context, a actor.Actor, slug string) error
+}
+
+type Decommissioner interface {
+	Start(ctx context.Context, a actor.Actor, slug string) (entities.Decommission, error)
 }
 
 type ServicesHandler struct {
-	services Services
+	services     Services
+	decommission Decommissioner
 }
 
-func NewServicesHandler(services Services) ServicesHandler {
-	return ServicesHandler{services: services}
+func NewServicesHandler(services Services, decommission Decommissioner) ServicesHandler {
+	return ServicesHandler{services: services, decommission: decommission}
 }
 
 func (h ServicesHandler) List(c *gin.Context) {
@@ -75,11 +79,8 @@ func (h ServicesHandler) Transfer(c *gin.Context) {
 }
 
 func (h ServicesHandler) Delete(c *gin.Context) {
-	if err := h.services.Delete(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service")); err != nil {
-		httperror.Abort(c, err)
-		return
-	}
-	c.Status(http.StatusNoContent)
+	result, err := h.decommission.Start(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"))
+	apispec.Respond(c, http.StatusAccepted, toDecommissionDTO(result), err)
 }
 
 func RegisterServicesRoutes(api httpserver.API, h ServicesHandler) {
@@ -92,8 +93,9 @@ func RegisterServicesRoutes(api httpserver.API, h ServicesHandler) {
 			Scope: scope.Read, Params: serviceParams{}, Status: http.StatusOK, Response: ServiceDTO{}, Handler: h.Get},
 		apispec.Operation{ID: "updateService", Method: http.MethodPatch, Path: "/services/:service", Summary: "Change a service's settings; fields left out stay",
 			Scope: scope.Services, Params: serviceParams{}, Body: updateDTO{}, Status: http.StatusOK, Response: ServiceDTO{}, Handler: h.Update},
-		apispec.Operation{ID: "deleteService", Method: http.MethodDelete, Path: "/services/:service", Summary: "Delete a service",
-			Scope: scope.ServicesAdmin, Params: serviceParams{}, Status: http.StatusNoContent, Handler: h.Delete},
+		apispec.Operation{ID: "deleteService", Method: http.MethodDelete, Path: "/services/:service",
+			Summary: "Delete a service: freeze it, remove it from every environment, then drop it; call again to resume",
+			Scope:   scope.ServicesAdmin, Params: serviceParams{}, Status: http.StatusAccepted, Response: decommissionDTO{}, Handler: h.Delete},
 		apispec.Operation{ID: "transferService", Method: http.MethodPost, Path: "/services/:service/transfer", Summary: "Give a service to another team",
 			Scope: scope.ServicesAdmin, Params: serviceParams{}, Body: transferDTO{}, Status: http.StatusOK, Response: ServiceDTO{}, Handler: h.Transfer},
 	)

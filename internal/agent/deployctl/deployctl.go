@@ -33,6 +33,9 @@ func New(cfg agent.Config) Runtime {
 }
 
 func (r Runtime) Apply(ctx context.Context, w agentapi.Workload, out io.Writer) error {
+	if w.Strategy == agentapi.StrategyRemove {
+		return r.remove(ctx, w, out)
+	}
 	if err := r.writeFiles(w); err != nil {
 		return err
 	}
@@ -44,6 +47,32 @@ func (r Runtime) Apply(ctx context.Context, w agentapi.Workload, out io.Writer) 
 		return fmt.Errorf("deployctl: %w", err)
 	}
 	return nil
+}
+
+func (r Runtime) remove(ctx context.Context, w agentapi.Workload, out io.Writer) error {
+	cmd := exec.CommandContext(ctx, r.Deployctl, "remove", "-root", r.Root, "-service", w.Name)
+	cmd.Stdout, cmd.Stderr = out, out
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("deployctl: %w", err)
+	}
+	return r.removeFiles(w.Name)
+}
+
+func (r Runtime) removeFiles(name string) error {
+	for _, path := range r.workloadFiles(name) {
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r Runtime) workloadFiles(name string) []string {
+	return []string{
+		filepath.Join(r.Root, "stack", "deploy", name+".yml"),
+		filepath.Join(r.Root, "config", name+".env"),
+		filepath.Join(r.Root, "secrets", name+".env"),
+	}
 }
 
 type state struct {

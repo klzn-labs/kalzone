@@ -209,3 +209,30 @@ func Test_Observe_CarriesTheLiveContainer(t *testing.T) {
 	require.Equal(t, "api-dev-blue", live.Container.Name)
 	require.Equal(t, "healthy", live.Container.Health)
 }
+
+func Test_ApplyARemovalRunsDeployctlRemoveAndDropsTheWorkloadsFiles(t *testing.T) {
+	runtime, bin := setup(t)
+	require.NoError(t, runtime.Apply(context.Background(), workload("api.dev.kalz.one", ""), &bytes.Buffer{}))
+	removal := agentapi.Workload{DeploymentID: "rm1", Name: "api-dev", Service: "api", Environment: "dev", Strategy: agentapi.StrategyRemove}
+
+	err := runtime.Apply(context.Background(), removal, &bytes.Buffer{})
+
+	require.NoError(t, err)
+	require.Equal(t, "remove -root "+runtime.Root+" -service api-dev", strings.TrimSpace(read(t, filepath.Join(bin, "args"))))
+	for _, path := range []string{"stack/deploy/api-dev.yml", "config/api-dev.env", "secrets/api-dev.env"} {
+		_, statErr := os.Stat(filepath.Join(runtime.Root, path))
+		require.True(t, os.IsNotExist(statErr), path)
+	}
+}
+
+func Test_AFailedRemovalKeepsTheWorkloadsFiles(t *testing.T) {
+	runtime, _ := setup(t)
+	require.NoError(t, runtime.Apply(context.Background(), workload("api.dev.kalz.one", ""), &bytes.Buffer{}))
+	t.Setenv("FAKE_EXIT", "13")
+
+	err := runtime.Apply(context.Background(), agentapi.Workload{Name: "api-dev", Strategy: agentapi.StrategyRemove}, &bytes.Buffer{})
+
+	require.Error(t, err)
+	_, statErr := os.Stat(filepath.Join(runtime.Root, "secrets", "api-dev.env"))
+	require.NoError(t, statErr)
+}

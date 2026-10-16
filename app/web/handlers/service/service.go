@@ -20,7 +20,10 @@ type Services interface {
 	Get(ctx context.Context, slug string) (catalog.Service, error)
 	Update(ctx context.Context, a actor.Actor, slug string, c catalog.ServiceChanges) (catalog.Service, error)
 	Transfer(ctx context.Context, a actor.Actor, slug, teamSlug string) (catalog.Service, error)
-	Delete(ctx context.Context, a actor.Actor, slug string) error
+}
+
+type Decommissioner interface {
+	Start(ctx context.Context, a actor.Actor, slug string) (catalog.Decommission, error)
 }
 
 type Teams interface {
@@ -51,16 +54,28 @@ type data struct {
 }
 
 type ServiceHandler struct {
-	renderer *web.Renderer
-	views    web.Views
-	services Services
-	teams    Teams
-	configs  Configs
-	events   Events
+	renderer     *web.Renderer
+	views        web.Views
+	services     Services
+	decommission Decommissioner
+	teams        Teams
+	configs      Configs
+	events       Events
 }
 
-func NewServiceHandler(renderer *web.Renderer, views web.Views, services Services, teams Teams, configs Configs, events Events) ServiceHandler {
-	return ServiceHandler{renderer: renderer, views: views, services: services, teams: teams, configs: configs, events: events}
+type Deps struct {
+	Services     Services
+	Decommission Decommissioner
+	Teams        Teams
+	Configs      Configs
+	Events       Events
+}
+
+func NewServiceHandler(renderer *web.Renderer, views web.Views, d Deps) ServiceHandler {
+	return ServiceHandler{
+		renderer: renderer, views: views, services: d.Services, decommission: d.Decommission,
+		teams: d.Teams, configs: d.Configs, events: d.Events,
+	}
 }
 
 func (h ServiceHandler) Show(c *gin.Context) {

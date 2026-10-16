@@ -68,11 +68,18 @@ func (a Agent) run(ctx context.Context, w agentapi.Workload) {
 	err := a.runtime.Apply(ctx, w, sink)
 	sink.Flush()
 	if err == nil {
-		a.finish(ctx, w, true, "live", nil)
+		a.finish(ctx, w, true, doneMessage(w), nil)
 		return
 	}
 	failure := a.evidence(ctx, w, err)
 	a.finish(ctx, w, false, err.Error()+": "+strings.Join(sink.Tail(), " | "), &failure)
+}
+
+func doneMessage(w agentapi.Workload) string {
+	if w.Strategy == agentapi.StrategyRemove {
+		return "removed"
+	}
+	return "live"
 }
 
 func (a Agent) finish(ctx context.Context, w agentapi.Workload, succeeded bool, message string, failure *agentapi.Failure) {

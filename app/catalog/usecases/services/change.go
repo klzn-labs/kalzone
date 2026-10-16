@@ -85,20 +85,6 @@ func (u ServicesUsecase) transferable(ctx context.Context, a actor.Actor, slug, 
 	return s, teamID, u.authz.Can(ctx, a, authz.TransferService, resource)
 }
 
-func (u ServicesUsecase) Delete(ctx context.Context, a actor.Actor, slug string) error {
-	s, err := u.authorized(ctx, a, slug, authz.DeleteService)
-	if err != nil {
-		return err
-	}
-	now := clock.Now().UTC()
-	s.DeletedAt = &now
-	if err := u.store.Update(ctx, s); err != nil {
-		return err
-	}
-	u.publisher.Publish(ctx, serviceEvent(a, "service.deleted", s, nil))
-	return nil
-}
-
 func (u ServicesUsecase) MarkDecommissioning(ctx context.Context, a actor.Actor, slug string) (entities.Service, error) {
 	s, err := u.authorized(ctx, a, slug, authz.DeleteService)
 	if err != nil || s.Decommissioning() {
