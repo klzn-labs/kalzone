@@ -18,6 +18,7 @@ type Service struct {
 	GitHubRepo      string
 	ImageRepository string
 	AutoBuild       bool
+	AutoDeployDev   bool
 	BuildWorkflow   string
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
@@ -29,6 +30,7 @@ type ServiceChanges struct {
 	GitHubRepo      *string
 	ImageRepository *string
 	AutoBuild       *bool
+	AutoDeployDev   *bool
 	BuildWorkflow   *string
 }
 

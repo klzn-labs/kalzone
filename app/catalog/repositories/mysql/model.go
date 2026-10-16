@@ -28,6 +28,7 @@ type service struct {
 	GitHubRepo      string `gorm:"column:github_repo"`
 	ImageRepository string
 	AutoBuild       bool
+	AutoDeployDev   bool
 	BuildWorkflow   string
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
@@ -38,15 +39,17 @@ func (service) TableName() string { return "services" }
 func (s service) toEntity() entities.Service {
 	return entities.Service{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
-		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, BuildWorkflow: s.BuildWorkflow,
-		CreatedAt: s.CreatedAt, DeletedAt: s.DeletedAt,
+		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
+		BuildWorkflow: s.BuildWorkflow,
+		CreatedAt:     s.CreatedAt, DeletedAt: s.DeletedAt,
 	}
 }
 
 func fromService(s entities.Service) service {
 	return service{
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
-		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, BuildWorkflow: s.BuildWorkflow,
-		CreatedAt: s.CreatedAt, DeletedAt: s.DeletedAt,
+		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
+		BuildWorkflow: s.BuildWorkflow,
+		CreatedAt:     s.CreatedAt, DeletedAt: s.DeletedAt,
 	}
 }

@@ -37,6 +37,9 @@ func (s Service) validateBuild() error {
 	if s.AutoBuild && !s.CanBuild() {
 		return apperror.Invalid("auto-build needs a GitHub repository and an image repository")
 	}
+	if s.AutoDeployDev && !s.CanBuild() {
+		return apperror.Invalid("auto-deploy needs a GitHub repository and an image repository")
+	}
 	return nil
 }
 
@@ -60,10 +63,16 @@ func (c ServiceChanges) ApplyTo(s Service) Service {
 	s.GitHubRepo = valueOr(c.GitHubRepo, s.GitHubRepo)
 	s.ImageRepository = valueOr(c.ImageRepository, s.ImageRepository)
 	s.BuildWorkflow = valueOr(c.BuildWorkflow, s.BuildWorkflow)
-	if c.AutoBuild != nil {
-		s.AutoBuild = *c.AutoBuild
-	}
+	s.AutoBuild = flagOr(c.AutoBuild, s.AutoBuild)
+	s.AutoDeployDev = flagOr(c.AutoDeployDev, s.AutoDeployDev)
 	return s
+}
+
+func flagOr(value *bool, fallback bool) bool {
+	if value == nil {
+		return fallback
+	}
+	return *value
 }
 
 func valueOr(value *string, fallback string) string {
