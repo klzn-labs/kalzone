@@ -72,7 +72,7 @@ func Test_Environments_AreSeededInOrder(t *testing.T) {
 func Test_List_FiltersByGitHubRepo(t *testing.T) {
 	repo := mysql.NewServiceRepository(testdb.Open(t))
 	api := service("s1", "api", "t1")
-	api.GitHubRepo, api.AutoBuild, api.BuildWorkflow = "o/r", true, "platform-build.yml"
+	api.GitHubRepo, api.AutoBuild, api.AutoDeployDev, api.BuildWorkflow = "o/r", true, true, "platform-build.yml"
 	require.NoError(t, repo.Create(ctx, api))
 	require.NoError(t, repo.Create(ctx, service("s2", "web", "t1")))
 
@@ -81,4 +81,5 @@ func Test_List_FiltersByGitHubRepo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"api"}, slugs(found))
 	require.True(t, found[0].AutoBuild)
+	require.True(t, found[0].AutoDeployDev)
 }
