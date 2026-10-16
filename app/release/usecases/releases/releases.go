@@ -85,7 +85,9 @@ func (u ReleasesUsecase) Get(ctx context.Context, id string) (entities.Release, 
 }
 
 func (u ReleasesUsecase) publish(ctx context.Context, a actor.Actor, action string, service entities.ServiceRef, rel entities.Release) {
-	details := map[string]any{"release": rel.Number, "status": string(rel.Status)}
+	details := map[string]any{
+		"release": rel.Number, "release_id": rel.ID, "status": string(rel.Status), "trigger": string(rel.Trigger),
+	}
 	if rel.GitRef != "" {
 		details["ref"] = rel.GitRef
 	}

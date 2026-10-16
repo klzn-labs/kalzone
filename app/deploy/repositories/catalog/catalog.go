@@ -27,12 +27,16 @@ func NewLookup(services ServiceFinder, environments EnvironmentFinder) Lookup {
 
 func (l Lookup) FindService(ctx context.Context, slug string) (entities.ServiceRef, error) {
 	s, err := l.services.Get(ctx, slug)
-	return entities.ServiceRef{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID}, err
+	return serviceRef(s), err
 }
 
 func (l Lookup) FindServiceByID(ctx context.Context, id string) (entities.ServiceRef, error) {
 	s, err := l.services.GetByID(ctx, id)
-	return entities.ServiceRef{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID}, err
+	return serviceRef(s), err
+}
+
+func serviceRef(s catalog.Service) entities.ServiceRef {
+	return entities.ServiceRef{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID, AutoDeployDev: s.AutoDeployDev}
 }
 
 func (l Lookup) EnvironmentExists(ctx context.Context, slug string) error {

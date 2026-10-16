@@ -7,9 +7,10 @@ import (
 )
 
 type ServiceRef struct {
-	ID          string
-	Slug        string
-	OwnerTeamID string
+	ID            string
+	Slug          string
+	OwnerTeamID   string
+	AutoDeployDev bool
 }
 
 type ReleaseRef struct {
