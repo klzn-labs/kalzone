@@ -83,19 +83,33 @@ func (u ConfigUsecase) hostsFree(ctx context.Context, t target, hosts []string) 
 			return errHostNotAllowed
 		}
 	}
-	taken, err := u.store.HostsTaken(ctx, hosts, t.service.ID, t.environment)
-	if err != nil || !taken {
-		return err
-	}
-	return errHostTaken
+	owners, err := u.store.HostOwners(ctx, hosts, t.service.ID, t.environment)
+	return u.freeUnlessHeld(ctx, owners, err, errHostTaken)
 }
 
 func (u ConfigUsecase) internalFree(ctx context.Context, t target) error {
-	taken, err := u.store.InternalTaken(ctx, t.service.ID, t.environment)
-	if err != nil || !taken {
+	owners, err := u.store.InternalOwners(ctx, t.service.ID, t.environment)
+	return u.freeUnlessHeld(ctx, owners, err, errInternalTaken)
+}
+
+func (u ConfigUsecase) freeUnlessHeld(ctx context.Context, owners []string, err error, held error) error {
+	if err != nil {
 		return err
 	}
-	return errInternalTaken
+	for _, id := range owners {
+		exists, err := u.services.ServiceExists(ctx, id)
+		if err != nil || exists {
+			return firstError(err, held)
+		}
+	}
+	return nil
+}
+
+func firstError(err, fallback error) error {
+	if err != nil {
+		return err
+	}
+	return fallback
 }
 
 func (u ConfigUsecase) commit(ctx context.Context, a actor.Actor, e edit, next entities.Revision, changes []entities.Change) (entities.Revision, error) {
