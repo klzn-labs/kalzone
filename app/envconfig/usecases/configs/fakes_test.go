@@ -19,7 +19,8 @@ type store struct {
 	revisions     []entities.Revision
 	versions      []entities.SecretVersion
 	takenHost     string
-	internalTaken bool
+	hostOwner     string
+	internalOwner string
 }
 
 func (s *store) Latest(_ context.Context, serviceID, env string) (entities.Revision, bool, error) {
@@ -56,12 +57,21 @@ func (s *store) ByNumber(_ context.Context, serviceID, env string, number int) (
 	return entities.Revision{}, apperror.NotFound("config revision not found")
 }
 
-func (s *store) HostsTaken(_ context.Context, hosts []string, _, _ string) (bool, error) {
-	return slices.Contains(hosts, s.takenHost), nil
+func (s *store) HostOwners(_ context.Context, hosts []string, _, _ string) ([]string, error) {
+	if !slices.Contains(hosts, s.takenHost) {
+		return nil, nil
+	}
+	if s.hostOwner == "" {
+		return []string{"s-other"}, nil
+	}
+	return []string{s.hostOwner}, nil
 }
 
-func (s *store) InternalTaken(context.Context, string, string) (bool, error) {
-	return s.internalTaken, nil
+func (s *store) InternalOwners(context.Context, string, string) ([]string, error) {
+	if s.internalOwner == "" {
+		return nil, nil
+	}
+	return []string{s.internalOwner}, nil
 }
 
 func (s *store) InsertSecretVersion(_ context.Context, v entities.SecretVersion) error {
@@ -90,6 +100,10 @@ func (services) FindService(_ context.Context, slug string) (entities.ServiceRef
 		return entities.ServiceRef{}, apperror.NotFound("service not found")
 	}
 	return entities.ServiceRef{ID: "s1", Slug: "api", OwnerTeamID: "t1"}, nil
+}
+
+func (services) ServiceExists(_ context.Context, id string) (bool, error) {
+	return id != "s-deleted", nil
 }
 
 type environments struct{}

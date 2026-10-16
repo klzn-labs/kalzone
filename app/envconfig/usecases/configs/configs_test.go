@@ -100,14 +100,25 @@ func Test_Revise_AllowsOneInternalServicePerEnvironment(t *testing.T) {
 	f := newFixture(t)
 	internal := entities.DefaultSpec()
 	internal.Internal = true
-	f.store.internalTaken = true
+	f.store.internalOwner = "s-other"
 
 	_, taken := f.usecase.Revise(ctx, ana, "api", "dev", entities.ChangeSet{Spec: &internal})
-	f.store.internalTaken = false
-	_, free := f.usecase.Revise(ctx, ana, "api", "dev", entities.ChangeSet{Spec: &internal})
+	f.store.internalOwner = "s-deleted"
+	_, heldByDeleted := f.usecase.Revise(ctx, ana, "api", "dev", entities.ChangeSet{Spec: &internal})
 
 	require.ErrorIs(t, taken, apperror.Conflict(""))
-	require.NoError(t, free)
+	require.NoError(t, heldByDeleted)
+}
+
+func Test_Revise_TakesAHostHeldOnlyByADeletedService(t *testing.T) {
+	f := newFixture(t)
+	f.store.takenHost, f.store.hostOwner = "old.kalz.one", "s-deleted"
+	spec := entities.DefaultSpec()
+	spec.Host = "old.kalz.one"
+
+	_, err := f.usecase.Revise(ctx, ana, "api", "dev", entities.ChangeSet{Spec: &spec})
+
+	require.NoError(t, err)
 }
 
 func Test_Revise_RejectsNoOpAndInvalidChanges(t *testing.T) {

@@ -15,8 +15,8 @@ type Store interface {
 	Latest(ctx context.Context, serviceID, environment string) (entities.Revision, bool, error)
 	History(ctx context.Context, serviceID, environment string, before, limit int) ([]entities.Revision, error)
 	Insert(ctx context.Context, rev entities.Revision) error
-	HostsTaken(ctx context.Context, hosts []string, serviceID, environment string) (bool, error)
-	InternalTaken(ctx context.Context, serviceID, environment string) (bool, error)
+	HostOwners(ctx context.Context, hosts []string, serviceID, environment string) ([]string, error)
+	InternalOwners(ctx context.Context, serviceID, environment string) ([]string, error)
 	ByNumber(ctx context.Context, serviceID, environment string, number int) (entities.Revision, error)
 	InsertSecretVersion(ctx context.Context, v entities.SecretVersion) error
 	SecretVersions(ctx context.Context, ids []string) ([]entities.SecretVersion, error)
@@ -24,6 +24,7 @@ type Store interface {
 
 type ServiceLookup interface {
 	FindService(ctx context.Context, slug string) (entities.ServiceRef, error)
+	ServiceExists(ctx context.Context, id string) (bool, error)
 }
 
 type EnvironmentLookup interface {
