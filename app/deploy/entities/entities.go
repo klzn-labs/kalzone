@@ -20,6 +20,7 @@ const (
 	TriggerRollback  Trigger = "rollback"
 	TriggerConfig    Trigger = "config"
 	TriggerReconcile Trigger = "reconcile"
+	TriggerPush      Trigger = "push"
 )
 
 type Strategy string
