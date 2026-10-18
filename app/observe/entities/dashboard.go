@@ -4,7 +4,7 @@ import "fmt"
 
 const (
 	FolderUID   = "platform"
-	FolderTitle = "Platform"
+	FolderTitle = "Kalzone"
 
 	PanelRequests = 1
 	PanelErrors   = 2

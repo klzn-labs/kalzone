@@ -1,7 +1,7 @@
 {{define "head"}}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{if .Title}}{{.Title}} · {{end}}Platform</title>
+<title>{{if .Title}}{{.Title}} · {{end}}Kalzone</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235b4cf5'/%3E%3Cstop offset='1' stop-color='%230ea5e9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 7 8 11.5v9L16 25l8-4.5v-9L16 7Z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/app.css">
 <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}],"includeIndicatorStyles":false}'>
@@ -14,7 +14,7 @@
 <body hx-headers='{"X-CSRF-Token": "{{.Viewer.CSRFToken}}"}'>
 <div class="shell">
   <aside class="sidebar">
-    <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span><span>Platform<small>Internal developer platform</small></span></a>
+    <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span><span>Kalzone<small>Internal developer platform</small></span></a>
     <div class="nav-label">Workspace</div>
     <a class="nav-link {{if eq .Nav "overview"}}active{{end}}" href="/">{{icon "home"}}Overview</a>
     <a class="nav-link {{if eq .Nav "services"}}active{{end}}" href="/services">{{icon "box"}}Services</a>
