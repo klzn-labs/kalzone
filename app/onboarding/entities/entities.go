@@ -76,7 +76,7 @@ type OpenedPullRequest struct {
 	Branch string
 }
 
-const workflowTemplate = `name: Platform build
+const workflowTemplate = `name: Kalzone build
 run-name: platform release ${{ inputs.release_id }}
 
 on:
