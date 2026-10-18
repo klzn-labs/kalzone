@@ -134,3 +134,12 @@ func Test_CatalogFiltersByTeam(t *testing.T) {
 	require.Contains(t, reviews.Body, "reviews-api")
 	require.NotContains(t, reviews.Body, "places-api")
 }
+
+func Test_TeamPageSuggestsSignedInPeopleToAdd(t *testing.T) {
+	_, p := setupPlaces(t)
+
+	page := p.mia.Do(t, http.MethodGet, "/teams/places", nil)
+
+	require.Contains(t, page.Body, `list="member-logins"`)
+	require.Contains(t, page.Body, `<option value="eve">`)
+}

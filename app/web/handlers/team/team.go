@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/klzn-labs/kalzone/app/authz"
 	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	identity "github.com/klzn-labs/kalzone/app/identity/entities"
 	entities "github.com/klzn-labs/kalzone/app/team/entities"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
@@ -29,10 +30,15 @@ type Services interface {
 	List(ctx context.Context, filter catalog.ServiceFilter) ([]catalog.Service, error)
 }
 
+type Users interface {
+	List(ctx context.Context) ([]identity.User, error)
+}
+
 type data struct {
 	Team      entities.Team
 	Members   []entities.Member
 	Services  []web.ServiceCard
+	People    []identity.User
 	CanManage bool
 	IsAdmin   bool
 }
@@ -43,10 +49,11 @@ type TeamHandler struct {
 	teams    Teams
 	members  Members
 	services Services
+	users    Users
 }
 
-func NewTeamHandler(renderer *web.Renderer, views web.Views, teams Teams, members Members, services Services) TeamHandler {
-	return TeamHandler{renderer: renderer, views: views, teams: teams, members: members, services: services}
+func NewTeamHandler(renderer *web.Renderer, views web.Views, teams Teams, members Members, services Services, users Users) TeamHandler {
+	return TeamHandler{renderer: renderer, views: views, teams: teams, members: members, services: services, users: users}
 }
 
 func (h TeamHandler) Show(c *gin.Context) {
@@ -72,8 +79,19 @@ func (h TeamHandler) build(ctx context.Context, a actor.Actor, slug string) (dat
 		return data{}, err
 	}
 	cards, err := h.views.ServiceCards(ctx, services)
+	if err != nil {
+		return data{}, err
+	}
 	canManage := h.views.Can(ctx, a, authz.ManageMembers, authz.Resource{TeamID: t.ID})
-	return data{Team: t, Members: members, Services: cards, CanManage: canManage, IsAdmin: a.Admin}, err
+	people, err := h.people(ctx, canManage)
+	return data{Team: t, Members: members, Services: cards, People: people, CanManage: canManage, IsAdmin: a.Admin}, err
+}
+
+func (h TeamHandler) people(ctx context.Context, canManage bool) ([]identity.User, error) {
+	if !canManage {
+		return nil, nil
+	}
+	return h.users.List(ctx)
 }
 
 func (h TeamHandler) PutMember(c *gin.Context) {

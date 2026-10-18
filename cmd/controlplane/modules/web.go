@@ -105,6 +105,7 @@ func teamPageInjections() fx.Option {
 		func(u members.MembersUsecase) teamPage.Members { return u },
 		func(u services.ServicesUsecase) teamPage.Services { return u },
 		func(u users.UsersUsecase) peoplePage.Users { return u },
+		func(u users.UsersUsecase) teamPage.Users { return u },
 	)
 }
 
