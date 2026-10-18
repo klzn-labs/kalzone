@@ -1,15 +1,15 @@
 package modules
 
 import (
-	auditHandler "github.com/adrianozp/platform/app/audit/handlers/audit"
-	"github.com/adrianozp/platform/app/audit/repositories/lookups"
-	"github.com/adrianozp/platform/app/audit/repositories/mysql"
-	"github.com/adrianozp/platform/app/audit/usecases/query"
-	"github.com/adrianozp/platform/app/audit/usecases/record"
-	"github.com/adrianozp/platform/app/catalog/usecases/services"
-	"github.com/adrianozp/platform/app/identity/usecases/users"
-	"github.com/adrianozp/platform/app/team/usecases/teams"
-	"github.com/adrianozp/platform/pkg/events"
+	auditHandler "github.com/klzn-labs/kalzone/app/audit/handlers/audit"
+	"github.com/klzn-labs/kalzone/app/audit/repositories/lookups"
+	"github.com/klzn-labs/kalzone/app/audit/repositories/mysql"
+	"github.com/klzn-labs/kalzone/app/audit/usecases/query"
+	"github.com/klzn-labs/kalzone/app/audit/usecases/record"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/users"
+	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"go.uber.org/fx"
 )
 

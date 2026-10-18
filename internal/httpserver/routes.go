@@ -1,8 +1,8 @@
 package httpserver
 
 import (
-	"github.com/adrianozp/platform/internal/apispec"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/apispec"
 )
 
 type API struct {

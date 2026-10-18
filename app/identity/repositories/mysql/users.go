@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"gorm.io/gorm"
 )
 

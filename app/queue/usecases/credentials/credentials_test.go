@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/credentials"
-	"github.com/adrianozp/platform/internal/secretbox"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/internal/secretbox"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 

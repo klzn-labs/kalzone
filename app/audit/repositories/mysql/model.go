@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/adrianozp/platform/app/audit/entities"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
 )
 
 type auditEvent struct {

@@ -3,8 +3,8 @@ package environment
 import (
 	"context"
 
-	envconfig "github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	envconfig "github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 const historyLimit = 20

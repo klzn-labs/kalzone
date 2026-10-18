@@ -3,8 +3,8 @@ package catalog
 import (
 	"context"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/app/release/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/release/entities"
 )
 
 type ServiceFinder interface {

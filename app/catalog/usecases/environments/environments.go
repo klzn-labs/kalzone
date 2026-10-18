@@ -3,7 +3,7 @@ package environments
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
 )
 
 type EnvironmentStore interface {

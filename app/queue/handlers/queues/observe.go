@@ -3,12 +3,12 @@ package queues
 import (
 	"net/http"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/internal/apispec"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/page"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/internal/apispec"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/page"
 )
 
 func (h QueuesHandler) Stats(c *gin.Context) {

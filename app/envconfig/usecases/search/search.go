@@ -5,9 +5,9 @@ import (
 	"context"
 	"slices"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errKey = apperror.Invalid("key must be a variable name in UPPER_SNAKE_CASE").WithField("key").

@@ -1,17 +1,17 @@
 package modules
 
 import (
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/catalog/usecases/services"
-	logsHandler "github.com/adrianozp/platform/app/observe/handlers/logs"
-	"github.com/adrianozp/platform/app/observe/handlers/proxy"
-	"github.com/adrianozp/platform/app/observe/handlers/sync"
-	observeCatalog "github.com/adrianozp/platform/app/observe/repositories/catalog"
-	"github.com/adrianozp/platform/app/observe/repositories/grafana"
-	"github.com/adrianozp/platform/app/observe/usecases/dashboards"
-	"github.com/adrianozp/platform/app/observe/usecases/logs"
-	"github.com/adrianozp/platform/pkg/config"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	logsHandler "github.com/klzn-labs/kalzone/app/observe/handlers/logs"
+	"github.com/klzn-labs/kalzone/app/observe/handlers/proxy"
+	"github.com/klzn-labs/kalzone/app/observe/handlers/sync"
+	observeCatalog "github.com/klzn-labs/kalzone/app/observe/repositories/catalog"
+	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
+	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"go.uber.org/fx"
 )
 

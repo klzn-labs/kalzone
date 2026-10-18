@@ -3,7 +3,7 @@ package mysql
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/release/entities"
+	"github.com/klzn-labs/kalzone/app/release/entities"
 )
 
 type release struct {

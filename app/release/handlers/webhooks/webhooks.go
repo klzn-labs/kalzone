@@ -11,10 +11,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/pkg/config"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 const maxPayload = 5 << 20

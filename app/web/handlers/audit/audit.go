@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"time"
 
-	entities "github.com/adrianozp/platform/app/audit/entities"
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	team "github.com/adrianozp/platform/app/team/entities"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/gin-gonic/gin"
+	entities "github.com/klzn-labs/kalzone/app/audit/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
 )
 
 const pageSize = 30

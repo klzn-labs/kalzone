@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/adrianozp/platform/app/release/entities"
+	"github.com/klzn-labs/kalzone/app/release/entities"
 	"gorm.io/gorm"
 )
 

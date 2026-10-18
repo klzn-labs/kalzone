@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/agent/deployctl"
-	"github.com/adrianozp/platform/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/internal/agent/deployctl"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
 	"github.com/stretchr/testify/require"
 )
 

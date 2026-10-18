@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 func (u AgentsUsecase) Report(ctx context.Context, agent, deploymentID string, lines []string) error {

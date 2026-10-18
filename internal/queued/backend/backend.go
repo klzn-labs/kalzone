@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued/model"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
 )
 
 var ErrDeadNotFound = errors.New("dead letter not found")

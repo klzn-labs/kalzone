@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/app/audit/usecases/query"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/page"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
+	"github.com/klzn-labs/kalzone/app/audit/usecases/query"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/page"
 	"github.com/stretchr/testify/require"
 )
 

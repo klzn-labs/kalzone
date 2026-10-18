@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/app/audit/usecases/record"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
+	"github.com/klzn-labs/kalzone/app/audit/usecases/record"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"github.com/stretchr/testify/require"
 )
 

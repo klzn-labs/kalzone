@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/queued/controlplane"
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/internal/queued/controlplane"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 	"github.com/stretchr/testify/require"
 )
 

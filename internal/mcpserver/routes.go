@@ -1,10 +1,10 @@
 package mcpserver
 
 import (
-	"github.com/adrianozp/platform/internal/apispec"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/pkg/config"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/apispec"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"go.uber.org/fx"
 )
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/page"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/page"
 )
 
 var errNotVisible = apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")

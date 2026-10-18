@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/adrianozp/platform/app/onboarding/repositories/registry"
+	"github.com/klzn-labs/kalzone/app/onboarding/repositories/registry"
 	"github.com/stretchr/testify/require"
 )
 

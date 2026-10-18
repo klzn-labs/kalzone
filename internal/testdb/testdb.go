@@ -7,10 +7,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/db"
-	"github.com/adrianozp/platform/internal/migrator"
-	"github.com/adrianozp/platform/pkg/config"
 	driver "github.com/go-sql-driver/mysql"
+	"github.com/klzn-labs/kalzone/internal/db"
+	"github.com/klzn-labs/kalzone/internal/migrator"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )

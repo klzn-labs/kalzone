@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued"
+	"github.com/klzn-labs/kalzone/internal/queued"
 	"github.com/nats-io/nats.go"
 )
 

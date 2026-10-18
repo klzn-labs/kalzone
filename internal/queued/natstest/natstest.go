@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued/model"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
 	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/require"

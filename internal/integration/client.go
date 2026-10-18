@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/fakegithub"
+	"github.com/klzn-labs/kalzone/internal/fakegithub"
 	"github.com/stretchr/testify/require"
 )
 

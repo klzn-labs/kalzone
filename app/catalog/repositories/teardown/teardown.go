@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	deploy "github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	deploy "github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Deployments interface {

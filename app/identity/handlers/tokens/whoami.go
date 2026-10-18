@@ -3,9 +3,9 @@ package tokens
 import (
 	"net/http"
 
-	"github.com/adrianozp/platform/internal/apispec"
-	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/apispec"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
 )
 
 func (h TokensHandler) Whoami(c *gin.Context) {

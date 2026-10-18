@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/adrianozp/platform/cmd/controlplane/options"
-	"github.com/adrianozp/platform/internal/httpserver"
+	"github.com/klzn-labs/kalzone/cmd/controlplane/options"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
 	"go.uber.org/fx"
 )
 

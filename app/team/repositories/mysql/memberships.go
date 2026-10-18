@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/adrianozp/platform/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/team/entities"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

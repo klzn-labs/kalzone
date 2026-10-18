@@ -3,7 +3,7 @@ package queues_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 	"github.com/stretchr/testify/require"
 )
 

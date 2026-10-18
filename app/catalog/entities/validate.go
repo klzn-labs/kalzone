@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/slug"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/slug"
 )
 
 var (

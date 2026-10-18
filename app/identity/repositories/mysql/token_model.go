@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
 )
 
 type accessToken struct {

@@ -1,18 +1,18 @@
 package modules
 
 import (
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/catalog/usecases/environments"
-	"github.com/adrianozp/platform/app/catalog/usecases/services"
-	configsHandler "github.com/adrianozp/platform/app/envconfig/handlers/configs"
-	searchHandler "github.com/adrianozp/platform/app/envconfig/handlers/search"
-	"github.com/adrianozp/platform/app/envconfig/repositories/catalog"
-	"github.com/adrianozp/platform/app/envconfig/repositories/mysql"
-	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
-	"github.com/adrianozp/platform/app/envconfig/usecases/search"
-	"github.com/adrianozp/platform/app/team/usecases/teams"
-	"github.com/adrianozp/platform/internal/eventbus"
-	"github.com/adrianozp/platform/internal/secretbox"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	configsHandler "github.com/klzn-labs/kalzone/app/envconfig/handlers/configs"
+	searchHandler "github.com/klzn-labs/kalzone/app/envconfig/handlers/search"
+	"github.com/klzn-labs/kalzone/app/envconfig/repositories/catalog"
+	"github.com/klzn-labs/kalzone/app/envconfig/repositories/mysql"
+	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+	"github.com/klzn-labs/kalzone/app/envconfig/usecases/search"
+	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
+	"github.com/klzn-labs/kalzone/internal/eventbus"
+	"github.com/klzn-labs/kalzone/internal/secretbox"
 	"go.uber.org/fx"
 )
 

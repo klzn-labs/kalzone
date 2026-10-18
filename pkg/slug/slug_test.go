@@ -3,7 +3,7 @@ package slug_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/pkg/slug"
+	"github.com/klzn-labs/kalzone/pkg/slug"
 	"github.com/stretchr/testify/require"
 )
 

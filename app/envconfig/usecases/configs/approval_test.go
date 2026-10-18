@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/stretchr/testify/require"
 )
 

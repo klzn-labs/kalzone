@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 const runTitlePrefix = "platform release "

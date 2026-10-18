@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 )
 
 const (

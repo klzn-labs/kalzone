@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 const (

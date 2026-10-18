@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
 )
 
 func (u ConfigUsecase) CurrentNumber(ctx context.Context, serviceSlug, environment string) (int, error) {

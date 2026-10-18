@@ -7,9 +7,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adrianozp/platform/internal/queued/backend"
-	"github.com/adrianozp/platform/internal/queued/model"
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/internal/queued/backend"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 )
 
 var errNotRunning = errors.New("the queue is desired but not running yet")

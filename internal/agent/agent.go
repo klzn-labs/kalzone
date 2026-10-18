@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
 )
 
 type ControlPlane interface {

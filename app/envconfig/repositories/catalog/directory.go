@@ -3,9 +3,9 @@ package catalog
 import (
 	"context"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	team "github.com/adrianozp/platform/app/team/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type ServiceLister interface {

@@ -3,11 +3,11 @@ package agentapi
 import (
 	"net/http"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/pkg/agentapi"
-	"github.com/adrianozp/platform/pkg/clock"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 func (h AgentAPIHandler) Status(c *gin.Context) {

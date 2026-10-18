@@ -4,7 +4,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 type Token struct {

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/integration"
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/internal/integration"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 	"github.com/stretchr/testify/require"
 )
 

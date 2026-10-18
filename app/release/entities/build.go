@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var (

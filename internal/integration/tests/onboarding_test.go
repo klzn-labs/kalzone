@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/fakeoidc"
-	"github.com/adrianozp/platform/internal/integration"
+	"github.com/klzn-labs/kalzone/internal/fakeoidc"
+	"github.com/klzn-labs/kalzone/internal/integration"
 	"github.com/stretchr/testify/require"
 )
 

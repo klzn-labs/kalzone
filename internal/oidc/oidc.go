@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/config"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 const (

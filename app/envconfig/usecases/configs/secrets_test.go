@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 

@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Queues interface {

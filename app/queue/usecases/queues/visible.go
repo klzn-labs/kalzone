@@ -5,10 +5,10 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/page"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/page"
 )
 
 var errNotVisible = apperror.NotFound("queue not found").WithHint("list queues with GET /api/v1/queues")

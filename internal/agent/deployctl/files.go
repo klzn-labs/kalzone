@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/adrianozp/platform/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
 	"gopkg.in/yaml.v3"
 )
 

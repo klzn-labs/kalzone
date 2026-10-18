@@ -3,7 +3,7 @@ package agent_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/internal/agent"
+	"github.com/klzn-labs/kalzone/internal/agent"
 	"github.com/stretchr/testify/require"
 )
 

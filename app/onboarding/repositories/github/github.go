@@ -3,8 +3,8 @@ package github
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/onboarding/entities"
-	"github.com/adrianozp/platform/app/release/repositories/githubapp"
+	"github.com/klzn-labs/kalzone/app/onboarding/entities"
+	"github.com/klzn-labs/kalzone/app/release/repositories/githubapp"
 )
 
 type App interface {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
 )
 
 type revision struct {

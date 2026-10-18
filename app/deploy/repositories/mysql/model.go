@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
 )
 
 type deployment struct {

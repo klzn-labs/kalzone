@@ -1,8 +1,8 @@
 package requestctx
 
 import (
-	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 const viewerKey = "platform.viewer"

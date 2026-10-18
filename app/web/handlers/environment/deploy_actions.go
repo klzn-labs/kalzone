@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
-	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
 )
 
 func (h EnvironmentHandler) Panel(c *gin.Context) {

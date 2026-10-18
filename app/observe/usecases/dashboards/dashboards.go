@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/adrianozp/platform/app/observe/entities"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/observe/entities"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 type Grafana interface {

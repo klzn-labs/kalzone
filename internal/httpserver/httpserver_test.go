@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/httpserver/wait"
-	"github.com/adrianozp/platform/pkg/config"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/httpserver/wait"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx/fxtest"
 )

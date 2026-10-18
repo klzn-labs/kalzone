@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"gorm.io/gorm"
 )
 

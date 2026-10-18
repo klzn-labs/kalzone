@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/app/catalog/usecases/services"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"github.com/stretchr/testify/require"
 )
 

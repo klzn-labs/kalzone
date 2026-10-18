@@ -3,9 +3,9 @@ package agents
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 func (u AgentsUsecase) Desired(ctx context.Context) ([]entities.Desired, error) {

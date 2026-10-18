@@ -3,7 +3,7 @@ package entities_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
 	"github.com/stretchr/testify/require"
 )
 

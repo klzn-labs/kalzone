@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 )
 
 type Client struct {

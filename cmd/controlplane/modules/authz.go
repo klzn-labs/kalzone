@@ -1,9 +1,9 @@
 package modules
 
 import (
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/catalog/usecases/environments"
-	"github.com/adrianozp/platform/app/team/usecases/source"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
+	"github.com/klzn-labs/kalzone/app/team/usecases/source"
 	"go.uber.org/fx"
 )
 

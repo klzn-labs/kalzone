@@ -3,8 +3,8 @@ package db
 import (
 	"time"
 
-	"github.com/adrianozp/platform/pkg/config"
 	driver "github.com/go-sql-driver/mysql"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

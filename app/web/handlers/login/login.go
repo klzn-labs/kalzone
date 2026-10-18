@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
 )
 
 var errorMessages = map[string]string{

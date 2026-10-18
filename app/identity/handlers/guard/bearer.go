@@ -4,13 +4,13 @@ import (
 	"context"
 	"strings"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 const bearerScheme = "bearer "

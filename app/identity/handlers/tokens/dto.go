@@ -3,8 +3,8 @@ package tokens
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 type createDTO struct {

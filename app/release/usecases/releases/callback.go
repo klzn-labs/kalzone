@@ -3,9 +3,9 @@ package releases
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 var errAlreadyFinal = apperror.Conflict("this release is already finished")

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 type ServiceFinder interface {

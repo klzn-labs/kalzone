@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued"
-	"github.com/adrianozp/platform/internal/queued/natstest"
-	"github.com/adrianozp/platform/internal/queued/signing"
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/internal/queued"
+	"github.com/klzn-labs/kalzone/internal/queued/natstest"
+	"github.com/klzn-labs/kalzone/internal/queued/signing"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 	"github.com/stretchr/testify/require"
 )
 

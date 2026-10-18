@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/stretchr/testify/require"
 )
 

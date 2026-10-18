@@ -1,17 +1,17 @@
 package modules
 
 import (
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/catalog/usecases/services"
-	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
-	onboardingHandler "github.com/adrianozp/platform/app/onboarding/handlers/onboarding"
-	onboardingCatalog "github.com/adrianozp/platform/app/onboarding/repositories/catalog"
-	onboardingConfig "github.com/adrianozp/platform/app/onboarding/repositories/envconfig"
-	onboardingGitHub "github.com/adrianozp/platform/app/onboarding/repositories/github"
-	"github.com/adrianozp/platform/app/onboarding/repositories/registry"
-	"github.com/adrianozp/platform/app/onboarding/usecases/onboarding"
-	"github.com/adrianozp/platform/app/release/repositories/githubapp"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+	onboardingHandler "github.com/klzn-labs/kalzone/app/onboarding/handlers/onboarding"
+	onboardingCatalog "github.com/klzn-labs/kalzone/app/onboarding/repositories/catalog"
+	onboardingConfig "github.com/klzn-labs/kalzone/app/onboarding/repositories/envconfig"
+	onboardingGitHub "github.com/klzn-labs/kalzone/app/onboarding/repositories/github"
+	"github.com/klzn-labs/kalzone/app/onboarding/repositories/registry"
+	"github.com/klzn-labs/kalzone/app/onboarding/usecases/onboarding"
+	"github.com/klzn-labs/kalzone/app/release/repositories/githubapp"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"go.uber.org/fx"
 )
 

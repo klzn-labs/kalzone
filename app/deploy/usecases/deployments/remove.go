@@ -3,9 +3,9 @@ package deployments
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 func (u DeploymentsUsecase) Remove(ctx context.Context, a actor.Actor, serviceSlug, environment string) (entities.Deployment, error) {

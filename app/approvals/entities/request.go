@@ -3,7 +3,7 @@ package entities
 import (
 	"time"
 
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 type Status string

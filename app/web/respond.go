@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 func IsHTMX(c *gin.Context) bool {

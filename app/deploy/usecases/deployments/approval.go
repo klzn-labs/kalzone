@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 var errNotApproved = apperror.Forbidden("only an approved request can apply this change")

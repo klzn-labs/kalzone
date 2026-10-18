@@ -8,11 +8,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/credentials"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 type QueueSource interface {

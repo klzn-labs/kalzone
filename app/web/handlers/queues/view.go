@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 const backingUpAfter = 5 * time.Minute

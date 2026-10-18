@@ -3,7 +3,7 @@ package mysql
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
 )
 
 func (r ConfigRepository) InsertSecretVersion(ctx context.Context, v entities.SecretVersion) error {

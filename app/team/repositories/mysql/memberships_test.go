@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/team/entities"
-	"github.com/adrianozp/platform/app/team/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/team/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 

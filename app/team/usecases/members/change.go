@@ -3,11 +3,11 @@ package members
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/team/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 type target struct {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/adrianozp/platform/app/deploy/repositories/metrics"
+	"github.com/klzn-labs/kalzone/app/deploy/repositories/metrics"
 	"github.com/stretchr/testify/require"
 )
 

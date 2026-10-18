@@ -3,8 +3,8 @@ package scope_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/stretchr/testify/require"
 )
 

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 

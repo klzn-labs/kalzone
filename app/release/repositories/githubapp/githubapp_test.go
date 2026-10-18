@@ -8,11 +8,11 @@ import (
 	"encoding/pem"
 	"testing"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/app/release/repositories/githubapp"
-	"github.com/adrianozp/platform/internal/fakegithub"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/app/release/repositories/githubapp"
+	"github.com/klzn-labs/kalzone/internal/fakegithub"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 

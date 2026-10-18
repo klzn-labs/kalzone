@@ -3,11 +3,11 @@ package queues
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 type ServiceRef struct {

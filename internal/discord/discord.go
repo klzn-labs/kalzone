@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 const timeout = 10 * time.Second

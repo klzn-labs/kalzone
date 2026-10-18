@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/swaggest/jsonschema-go"
 	"github.com/swaggest/openapi-go"
 	"github.com/swaggest/openapi-go/openapi31"

@@ -3,7 +3,7 @@ package mysql
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type team struct {

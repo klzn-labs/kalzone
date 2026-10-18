@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued/model"
-	"github.com/adrianozp/platform/internal/queued/signing"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
+	"github.com/klzn-labs/kalzone/internal/queued/signing"
 )
 
 const errorBodyLimit = 512

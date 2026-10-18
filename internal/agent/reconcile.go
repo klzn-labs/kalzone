@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/adrianozp/platform/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
 )
 
 func (a Agent) ReconcileOnce(ctx context.Context) int {

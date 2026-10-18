@@ -6,12 +6,12 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 func (u RequestsUsecase) Approve(ctx context.Context, a actor.Actor, id string) (entities.Request, error) {

@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/app/audit/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
-	"github.com/adrianozp/platform/pkg/page"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
+	"github.com/klzn-labs/kalzone/app/audit/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
+	"github.com/klzn-labs/kalzone/pkg/page"
 	"github.com/stretchr/testify/require"
 )
 

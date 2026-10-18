@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/adrianozp/platform/internal/agent"
-	"github.com/adrianozp/platform/internal/agent/deployctl"
+	"github.com/klzn-labs/kalzone/internal/agent"
+	"github.com/klzn-labs/kalzone/internal/agent/deployctl"
 )
 
 var Version = "dev"

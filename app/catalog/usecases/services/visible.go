@@ -4,9 +4,9 @@ import (
 	"context"
 	"slices"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errNotVisible = apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")

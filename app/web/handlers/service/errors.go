@@ -1,5 +1,5 @@
 package service
 
-import "github.com/adrianozp/platform/pkg/apperror"
+import "github.com/klzn-labs/kalzone/pkg/apperror"
 
 var errConfirm = apperror.Invalid("type the service slug to confirm")

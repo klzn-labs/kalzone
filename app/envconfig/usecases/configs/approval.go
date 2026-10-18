@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Proposal struct {

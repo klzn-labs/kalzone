@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/onboarding/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/onboarding/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 const pullRequestBody = "Opened by the platform's onboarding: builds of this repository run through the platform's reusable workflow, " +

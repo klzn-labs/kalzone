@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	deploy "github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/pkg/clock"
 	"github.com/gin-gonic/gin"
+	deploy "github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 const healthyWithin = time.Minute

@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 var (

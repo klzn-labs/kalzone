@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"go.uber.org/fx"
 )
 

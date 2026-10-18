@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/app/release/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/app/release/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
 	"github.com/stretchr/testify/require"
 )
 

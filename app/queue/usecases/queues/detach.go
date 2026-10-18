@@ -4,10 +4,10 @@ import (
 	"context"
 	"slices"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 const publisherRemoved = "publisher removed: the service was deleted"
