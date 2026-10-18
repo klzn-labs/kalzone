@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const buildWorkflow = "adrianozp/platform/.github/workflows/build.yml"
+const buildWorkflow = "klzn-labs/kalzone-actions/.github/workflows/build.yml"
 
 var buildCaller = entities.BuildCaller{Repository: "o/api", WorkflowRef: buildWorkflow + "@refs/heads/main"}
 

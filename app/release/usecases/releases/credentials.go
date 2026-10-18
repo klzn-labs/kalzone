@@ -13,7 +13,7 @@ const dockerHub = "docker.io"
 
 var (
 	errNotTheBuildWorkflow = apperror.Forbidden("only the platform's build workflow gets registry credentials").
-				WithHint("call adrianozp/platform/.github/workflows/build.yml from the repository's platform-build.yml")
+				WithHint("call klzn-labs/kalzone-actions/.github/workflows/build.yml from the repository's platform-build.yml")
 	errBuildFinished = apperror.Forbidden("this release is not being built").WithHint("request a new release")
 	errNoRegistry    = apperror.New(apperror.CodeNotConfigured, "the platform holds no registry credentials").
 				WithHint("set PLATFORM_REGISTRY_USERNAME and PLATFORM_REGISTRY_TOKEN, or log in to the registry in the workflow")

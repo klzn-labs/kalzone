@@ -61,7 +61,7 @@ type OIDC struct {
 
 type Build struct {
 	Timeout  time.Duration `mapstructure:"timeout" default:"60m" validate:"gt=0"`
-	Workflow string        `mapstructure:"workflow" default:"adrianozp/platform/.github/workflows/build.yml"`
+	Workflow string        `mapstructure:"workflow" default:"klzn-labs/kalzone-actions/.github/workflows/build.yml"`
 }
 
 type Registry struct {

@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build:
-    uses: adrianozp/platform/.github/workflows/build.yml@main
+    uses: klzn-labs/kalzone-actions/.github/workflows/build.yml@main
     with:
       release_id: ${{ inputs.release_id }}
       image: ${{ inputs.image }}

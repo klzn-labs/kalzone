@@ -213,7 +213,7 @@ claude mcp add --transport http platform https://platform.kalz.one/mcp \
   service still needs and answers each check with `status` (`ok`, `failed`,
   `skipped`), a detail and a hint: `github_app` (the GitHub App sees the
   repository), `workflow` (`.github/workflows/<build_workflow>` on the default branch
-  calls `adrianozp/platform/.github/workflows/build.yml`), `dockerfile`, `registry`
+  calls `klzn-labs/kalzone-actions/.github/workflows/build.yml`), `dockerfile`, `registry`
   (the platform's credentials can push to `image_repository`) and `config` (dev has a
   port and a health path). `ready` is true when all pass.
 - `POST /api/v1/services/:service/onboarding/pull-request`
@@ -287,19 +287,18 @@ Queue pause, resume and dead-letter commands still answer `err_approval_required
    subscribe it to **push** and **workflow run** events with the webhook URL
    `https://platform.<domain>/webhooks/github`, and install it on the service's
    repository.
-2. Allow the service's repository to use workflows from this repository
-   (Settings → Actions → General → Access) because this repository is private.
-3. Add `.github/workflows/platform-build.yml` to the service's repository. The
-   Releases tab of every service shows the file; it calls
-   [`build.yml`](.github/workflows/build.yml) here, which builds and pushes the
-   image and reports the digest with the job's OIDC token. The repository needs
-   `DOCKER_USERNAME` and `DOCKER_PASSWORD`; it never holds a platform secret.
+2. Add `.github/workflows/platform-build.yml` to the service's repository. The
+   Releases tab of every service shows the file; it calls the public
+   [`build.yml`](https://github.com/klzn-labs/kalzone-actions/blob/main/.github/workflows/build.yml)
+   in klzn-labs/kalzone-actions, which builds and pushes the image with registry
+   credentials Kalzone hands it over OIDC and reports the digest. The repository
+   holds no Kalzone or registry secret.
    The build always passes `VERSION=<commit>`; more Docker build args go in the
    `build_args` input, one `NAME=value` per line, for example
    `build_args: VITE_GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}`.
-4. Build a ref from the Releases tab, or switch on auto-build to build every
+3. Build a ref from the Releases tab, or switch on auto-build to build every
    push to the default branch.
-5. Switch on auto-deploy (`auto_deploy_dev`) to deploy each release built from a
+4. Switch on auto-deploy (`auto_deploy_dev`) to deploy each release built from a
    push, and each release shared from one, to dev as soon as it is built. Manual
    builds and registered tags are never deployed by themselves, and prod still goes
    through promotion. If a deployment is already running on dev, that build is not

@@ -31,7 +31,7 @@ const (
 	WebhookSecret = "webhook-secret"
 	AgentToken    = "agent-token"
 	QueuedToken   = "queued-test-token"
-	BuildWorkflow = "adrianozp/platform/.github/workflows/build.yml"
+	BuildWorkflow = "klzn-labs/kalzone-actions/.github/workflows/build.yml"
 	RegistryToken = "dckr_pat_test"
 )
 
