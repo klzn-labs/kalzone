@@ -1,8 +1,8 @@
 package entities
 
 import (
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 func (r Request) ApprovePath() string {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 func (u AgentsUsecase) ReportStatus(ctx context.Context, agent string, at time.Time, snapshots []entities.Snapshot) error {

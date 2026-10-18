@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/adrianozp/platform/app/onboarding/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/onboarding/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 const (

@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform-sdk-go/queue"
-	"github.com/adrianozp/platform/internal/queued/signing"
+	"github.com/klzn-labs/kalzone-sdk-go/queue"
+	"github.com/klzn-labs/kalzone/internal/queued/signing"
 	"github.com/stretchr/testify/require"
 )
 

@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	audit "github.com/adrianozp/platform/app/audit/entities"
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	team "github.com/adrianozp/platform/app/team/entities"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/gin-gonic/gin"
+	audit "github.com/klzn-labs/kalzone/app/audit/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
 )
 
 type Services interface {

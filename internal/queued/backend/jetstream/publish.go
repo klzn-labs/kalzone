@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued/model"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
 	"github.com/nats-io/nats.go"
 	js "github.com/nats-io/nats.go/jetstream"
 	"github.com/nats-io/nuid"

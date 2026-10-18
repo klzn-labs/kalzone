@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 type Event struct {

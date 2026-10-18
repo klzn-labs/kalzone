@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 const manifestTypes = "application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, " +

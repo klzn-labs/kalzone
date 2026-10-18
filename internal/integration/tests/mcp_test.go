@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/integration"
-	"github.com/adrianozp/platform/internal/mcpserver"
-	"github.com/adrianozp/platform/pkg/agentapi"
-	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/google/jsonschema-go/jsonschema"
+	"github.com/klzn-labs/kalzone/internal/integration"
+	"github.com/klzn-labs/kalzone/internal/mcpserver"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/require"
 )

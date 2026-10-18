@@ -3,9 +3,9 @@ package apispec
 import (
 	"net/http"
 
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/pkg/page"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/pkg/page"
 )
 
 type ListParams struct {

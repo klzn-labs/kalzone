@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/config"
-	"github.com/adrianozp/platform/pkg/events"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 type Store interface {

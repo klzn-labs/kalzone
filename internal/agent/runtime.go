@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/adrianozp/platform/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
 )
 
 type Observed struct {

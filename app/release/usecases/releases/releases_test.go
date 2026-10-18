@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 

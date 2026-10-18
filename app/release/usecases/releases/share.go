@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 func (u ReleasesUsecase) share(ctx context.Context, built entities.ServiceRef, rel entities.Release) {

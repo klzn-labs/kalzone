@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/adrianozp/platform/app/deploy/usecases/announce"
-	"github.com/adrianozp/platform/pkg/config"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/announce"
+	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"github.com/stretchr/testify/require"
 )
 

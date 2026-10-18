@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	audit "github.com/adrianozp/platform/app/audit/entities"
+	audit "github.com/klzn-labs/kalzone/app/audit/entities"
 )
 
 type Activity struct {

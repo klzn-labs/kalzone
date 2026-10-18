@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/adrianozp/platform/app/observe/usecases/dashboards"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
 	"github.com/stretchr/testify/require"
 )
 

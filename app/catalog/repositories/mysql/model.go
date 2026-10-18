@@ -3,7 +3,7 @@ package mysql
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
 )
 
 type environment struct {

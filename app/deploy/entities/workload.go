@@ -3,7 +3,7 @@ package entities
 import (
 	"fmt"
 
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 type ServiceRef struct {

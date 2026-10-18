@@ -3,8 +3,8 @@ package web
 import (
 	"context"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	team "github.com/adrianozp/platform/app/team/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type ServiceCard struct {

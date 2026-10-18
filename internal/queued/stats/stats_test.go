@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued/dispatch"
-	"github.com/adrianozp/platform/internal/queued/model"
-	"github.com/adrianozp/platform/internal/queued/natstest"
-	"github.com/adrianozp/platform/internal/queued/stats"
+	"github.com/klzn-labs/kalzone/internal/queued/dispatch"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
+	"github.com/klzn-labs/kalzone/internal/queued/natstest"
+	"github.com/klzn-labs/kalzone/internal/queued/stats"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )

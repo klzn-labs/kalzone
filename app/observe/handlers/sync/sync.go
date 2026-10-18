@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/app/observe/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/observe/entities"
 	"go.uber.org/fx"
 )
 

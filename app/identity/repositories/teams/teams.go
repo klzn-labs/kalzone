@@ -3,7 +3,7 @@ package teams
 import (
 	"context"
 
-	team "github.com/adrianozp/platform/app/team/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type TeamFinder interface {

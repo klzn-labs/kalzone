@@ -1,17 +1,17 @@
 package modules
 
 import (
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/catalog/usecases/ownership"
-	identityUsers "github.com/adrianozp/platform/app/identity/usecases/users"
-	membersHandler "github.com/adrianozp/platform/app/team/handlers/members"
-	teamsHandler "github.com/adrianozp/platform/app/team/handlers/teams"
-	"github.com/adrianozp/platform/app/team/repositories/mysql"
-	"github.com/adrianozp/platform/app/team/repositories/users"
-	"github.com/adrianozp/platform/app/team/usecases/members"
-	"github.com/adrianozp/platform/app/team/usecases/source"
-	"github.com/adrianozp/platform/app/team/usecases/teams"
-	"github.com/adrianozp/platform/internal/eventbus"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/ownership"
+	identityUsers "github.com/klzn-labs/kalzone/app/identity/usecases/users"
+	membersHandler "github.com/klzn-labs/kalzone/app/team/handlers/members"
+	teamsHandler "github.com/klzn-labs/kalzone/app/team/handlers/teams"
+	"github.com/klzn-labs/kalzone/app/team/repositories/mysql"
+	"github.com/klzn-labs/kalzone/app/team/repositories/users"
+	"github.com/klzn-labs/kalzone/app/team/usecases/members"
+	"github.com/klzn-labs/kalzone/app/team/usecases/source"
+	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
+	"github.com/klzn-labs/kalzone/internal/eventbus"
 	"go.uber.org/fx"
 )
 

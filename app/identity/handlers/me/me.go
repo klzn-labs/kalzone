@@ -3,10 +3,10 @@ package me
 import (
 	"net/http"
 
-	"github.com/adrianozp/platform/internal/apispec"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/requestctx"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/apispec"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
 )
 
 type response struct {

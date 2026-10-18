@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 const touchEvery = time.Minute

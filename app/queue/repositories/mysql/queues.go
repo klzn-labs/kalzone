@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/go-sql-driver/mysql"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"gorm.io/gorm"
 )
 

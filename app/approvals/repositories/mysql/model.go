@@ -3,7 +3,7 @@ package mysql
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
 )
 
 type changeRequest struct {

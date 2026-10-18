@@ -3,8 +3,8 @@ package envconfig
 import (
 	"context"
 
-	envconfig "github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/app/onboarding/entities"
+	envconfig "github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/onboarding/entities"
 )
 
 const devEnvironment = "dev"

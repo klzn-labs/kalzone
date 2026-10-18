@@ -185,8 +185,8 @@ package scope_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/stretchr/testify/require"
 )
 
@@ -221,7 +221,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/adrianozp/platform/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
 	"github.com/stretchr/testify/require"
 )
 
@@ -247,7 +247,7 @@ func Test_LooksLikeToken_RejectsOtherStrings(t *testing.T) {
 - [ ] **Step 3: Run them to verify they fail**
 
 Run: `go test ./pkg/scope/ ./app/identity/entities/`
-Expected: FAIL, `package github.com/adrianozp/platform/pkg/scope is not in std` / `undefined: entities.NewTokenSecret`.
+Expected: FAIL, `package github.com/klzn-labs/kalzone/pkg/scope is not in std` / `undefined: entities.NewTokenSecret`.
 
 - [ ] **Step 4: Implement scopes, token codes and the entity**
 
@@ -260,7 +260,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 type Scope string
@@ -315,8 +315,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 const (
@@ -387,11 +387,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/app/identity/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/identity/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/stretchr/testify/require"
 )
 
@@ -510,7 +510,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
 )
 
 type accessToken struct {
@@ -569,8 +569,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	driver "github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 )
@@ -769,7 +769,7 @@ var policy = authz.NewPolicy(
 )
 ```
 
-(import `github.com/adrianozp/platform/pkg/events`.)
+(import `github.com/klzn-labs/kalzone/pkg/events`.)
 
 `app/authz/token_test.go`:
 
@@ -780,10 +780,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/stretchr/testify/require"
 )
 
@@ -914,7 +914,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 type Token struct {
@@ -1064,7 +1064,7 @@ func (p Policy) requiredRole(ctx context.Context, action Action, r Resource) (Ro
 }
 ```
 
-(import `github.com/adrianozp/platform/pkg/events`.)
+(import `github.com/klzn-labs/kalzone/pkg/events`.)
 
 `app/authz/token.go`:
 
@@ -1074,10 +1074,10 @@ package authz
 import (
 	"context"
 
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/events"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 var scopeOf = map[Action]scope.Scope{
@@ -1142,7 +1142,7 @@ func CanRead(a actor.Actor) error {
 }
 ```
 
-`cmd/controlplane/modules/authz.go`: add `func(b *eventbus.Bus) authz.Publisher { return b },` to the `fx.Provide` list (import `github.com/adrianozp/platform/internal/eventbus`).
+`cmd/controlplane/modules/authz.go`: add `func(b *eventbus.Bus) authz.Publisher { return b },` to the `fx.Provide` list (import `github.com/klzn-labs/kalzone/internal/eventbus`).
 
 - [ ] **Step 5: Use the new actions**
 
@@ -1226,8 +1226,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1285,7 +1285,7 @@ Expected: FAIL, `undefined: entities.TokenDraft`.
 
 - [ ] **Step 3: Implement the draft and checks**
 
-Append to `app/identity/entities/access_token.go` (add imports `github.com/adrianozp/platform/pkg/actor`):
+Append to `app/identity/entities/access_token.go` (add imports `github.com/klzn-labs/kalzone/pkg/actor`):
 
 ```go
 func (t AccessToken) Check(now time.Time) error {
@@ -1321,9 +1321,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 const (
@@ -1401,14 +1401,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/app/identity/usecases/tokens"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/events"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 var (
@@ -1555,9 +1555,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1697,8 +1697,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1766,7 +1766,7 @@ package teams
 import (
 	"context"
 
-	team "github.com/adrianozp/platform/app/team/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type TeamFinder interface {
@@ -1811,12 +1811,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 type TokenStore interface {
@@ -1925,12 +1925,12 @@ import (
 	"context"
 	"slices"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 var (
@@ -2035,8 +2035,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 const touchEvery = time.Minute
@@ -2116,9 +2116,9 @@ package services_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -2144,9 +2144,9 @@ package queues_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -2171,7 +2171,7 @@ func Test_ReadsFor_SkipQueuesOfOtherTeams(t *testing.T) {
 }
 ```
 
-Append to `app/audit/usecases/query/query_test.go` (add imports `github.com/adrianozp/platform/pkg/actor`):
+Append to `app/audit/usecases/query/query_test.go` (add imports `github.com/klzn-labs/kalzone/pkg/actor`):
 
 ```go
 type capture struct{ last entities.Filter }
@@ -2212,9 +2212,9 @@ import (
 	"context"
 	"slices"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errNotVisible = apperror.NotFound("service not found")
@@ -2254,9 +2254,9 @@ package configs
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errNotVisible = apperror.NotFound("service not found")
@@ -2302,9 +2302,9 @@ package deployments
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errNotVisible = apperror.NotFound("not found")
@@ -2344,9 +2344,9 @@ package releases
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errNotVisible = apperror.NotFound("not found")
@@ -2387,9 +2387,9 @@ import (
 	"context"
 	"slices"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errNotVisible = apperror.NotFound("queue not found")
@@ -2436,8 +2436,8 @@ package query
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 func (u QueryUsecase) ListFor(ctx context.Context, a actor.Actor, filter entities.Filter) ([]entities.Event, error) {
@@ -2537,8 +2537,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/integration"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/internal/integration"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -2691,10 +2691,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/gin-gonic/gin"
 )
 
@@ -2826,7 +2826,7 @@ func tokenInjections() fx.Option {
 }
 ```
 
-Imports: `identityTeams "github.com/adrianozp/platform/app/identity/repositories/teams"`, `"github.com/adrianozp/platform/app/identity/usecases/tokens"`, `"github.com/adrianozp/platform/app/team/usecases/teams"`.
+Imports: `identityTeams "github.com/klzn-labs/kalzone/app/identity/repositories/teams"`, `"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"`, `"github.com/klzn-labs/kalzone/app/team/usecases/teams"`.
 
 - [ ] **Step 5: Build and run the existing suite**
 
@@ -2860,7 +2860,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/integration"
+	"github.com/klzn-labs/kalzone/internal/integration"
 	"github.com/stretchr/testify/require"
 )
 
@@ -3072,8 +3072,8 @@ package tokens
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/scope"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 type createDTO struct {
@@ -3159,11 +3159,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 	"github.com/gin-gonic/gin"
 )
 
@@ -3241,8 +3241,8 @@ package tokens
 import (
 	"net/http"
 
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/internal/requestctx"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -3256,7 +3256,7 @@ func (h TokensHandler) Whoami(c *gin.Context) {
 }
 ```
 
-`cmd/controlplane/modules/identity.go`: add `tokensHandler.NewTokensHandler` to `fx.Provide`, `tokensHandler.RegisterTokensRoutes` to `fx.Invoke`, and `func(u tokens.TokensUsecase) tokensHandler.Tokens { return u },` to `tokenInjections` (import `tokensHandler "github.com/adrianozp/platform/app/identity/handlers/tokens"`).
+`cmd/controlplane/modules/identity.go`: add `tokensHandler.NewTokensHandler` to `fx.Provide`, `tokensHandler.RegisterTokensRoutes` to `fx.Invoke`, and `func(u tokens.TokensUsecase) tokensHandler.Tokens { return u },` to `tokenInjections` (import `tokensHandler "github.com/klzn-labs/kalzone/app/identity/handlers/tokens"`).
 
 - [ ] **Step 4: Switch the JSON read handlers to the `…For` methods**
 
@@ -3438,14 +3438,14 @@ import (
 	"strings"
 	"time"
 
-	identity "github.com/adrianozp/platform/app/identity/entities"
-	team "github.com/adrianozp/platform/app/team/entities"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/scope"
+	identity "github.com/klzn-labs/kalzone/app/identity/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 	"github.com/gin-gonic/gin"
 )
 
@@ -3640,7 +3640,7 @@ func tokenPageInjections() fx.Option {
 }
 ```
 
-and register `tokensPage.RegisterTokensRoutes` wherever `pageRoutes()` invokes the other `Register…Routes` (imports `tokensPage "github.com/adrianozp/platform/app/web/handlers/tokens"`, `"github.com/adrianozp/platform/app/identity/usecases/tokens"`).
+and register `tokensPage.RegisterTokensRoutes` wherever `pageRoutes()` invokes the other `Register…Routes` (imports `tokensPage "github.com/klzn-labs/kalzone/app/web/handlers/tokens"`, `"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"`).
 
 - [ ] **Step 4: Write the template and the menu link**
 

@@ -1,16 +1,16 @@
 package options
 
 import (
-	"github.com/adrianozp/platform/cmd/controlplane/modules"
-	"github.com/adrianozp/platform/internal/apispec"
-	"github.com/adrianozp/platform/internal/db"
-	"github.com/adrianozp/platform/internal/eventbus"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/httpserver/wait"
-	"github.com/adrianozp/platform/internal/mcpserver"
-	"github.com/adrianozp/platform/internal/migrator"
-	"github.com/adrianozp/platform/internal/secretbox"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/cmd/controlplane/modules"
+	"github.com/klzn-labs/kalzone/internal/apispec"
+	"github.com/klzn-labs/kalzone/internal/db"
+	"github.com/klzn-labs/kalzone/internal/eventbus"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/httpserver/wait"
+	"github.com/klzn-labs/kalzone/internal/mcpserver"
+	"github.com/klzn-labs/kalzone/internal/migrator"
+	"github.com/klzn-labs/kalzone/internal/secretbox"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"go.uber.org/fx"
 )
 

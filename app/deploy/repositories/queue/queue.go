@@ -3,7 +3,7 @@ package queue
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
 )
 
 type Credentials interface {

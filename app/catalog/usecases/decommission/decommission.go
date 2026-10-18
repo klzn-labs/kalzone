@@ -6,9 +6,9 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 var Actor = actor.Actor{Login: "decommission"}

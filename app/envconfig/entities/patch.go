@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var patchKeys = []string{"spec", "env", "message"}

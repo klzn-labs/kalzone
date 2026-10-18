@@ -3,7 +3,7 @@ package mysql
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/audit/entities"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
 	"gorm.io/gorm"
 )
 

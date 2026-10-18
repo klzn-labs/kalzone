@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 	"github.com/stretchr/testify/require"
 )
 

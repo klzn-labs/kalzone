@@ -4,14 +4,14 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/adrianozp/platform/app/authz"
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	entities "github.com/adrianozp/platform/app/team/entities"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/authz"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	entities "github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 type Teams interface {

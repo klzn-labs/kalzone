@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/adrianozp/platform/migrations"
-	"github.com/adrianozp/platform/pkg/config"
 	driver "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/klzn-labs/kalzone/migrations"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 var ErrDirty = errors.New("migrator: database is dirty, fix the schema by hand and force the version")

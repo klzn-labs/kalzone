@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/approvals/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/page"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/approvals/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/page"
 	"github.com/stretchr/testify/require"
 )
 

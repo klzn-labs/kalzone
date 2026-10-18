@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/pkg/actor"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 type Queues interface {

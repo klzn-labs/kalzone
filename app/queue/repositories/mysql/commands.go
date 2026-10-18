@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 )
 
 func (r QueueRepository) AddCommand(ctx context.Context, c entities.Command) error {

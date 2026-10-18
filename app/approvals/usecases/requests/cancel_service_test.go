@@ -3,8 +3,8 @@ package requests_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/stretchr/testify/require"
 )
 

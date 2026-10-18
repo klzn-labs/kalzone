@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/app/identity/handlers/guard"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/config"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/identity/handlers/guard"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 const (

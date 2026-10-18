@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9-]{1,62}$`)

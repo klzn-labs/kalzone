@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued/model"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
 )
 
 type memory struct {

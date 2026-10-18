@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/secretbox"
+	"github.com/klzn-labs/kalzone/internal/secretbox"
 	"github.com/stretchr/testify/require"
 )
 

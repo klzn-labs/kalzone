@@ -3,9 +3,9 @@ package mysql_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/app/envconfig/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
 	"github.com/stretchr/testify/require"
 )
 

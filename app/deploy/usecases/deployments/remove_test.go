@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
-	"github.com/adrianozp/platform/app/deploy/usecases/fakestore"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/fakestore"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/stretchr/testify/require"
 )
 

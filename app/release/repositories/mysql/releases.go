@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/go-sql-driver/mysql"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

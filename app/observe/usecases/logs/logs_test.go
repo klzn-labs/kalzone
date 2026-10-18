@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/observe/entities"
-	"github.com/adrianozp/platform/app/observe/usecases/logs"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/observe/entities"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 

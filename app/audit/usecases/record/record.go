@@ -3,9 +3,9 @@ package record
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/pkg/events"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
+	"github.com/klzn-labs/kalzone/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 type EventStore interface {

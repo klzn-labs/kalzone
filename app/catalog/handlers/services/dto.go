@@ -3,8 +3,8 @@ package services
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/internal/apispec"
+	"github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/internal/apispec"
 )
 
 type ServiceDTO struct {

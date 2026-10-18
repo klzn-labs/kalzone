@@ -3,8 +3,8 @@ package queues
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 func (u QueuesUsecase) Replay(ctx context.Context, a actor.Actor, environment, name, messageID string) error {

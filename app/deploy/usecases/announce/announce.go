@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/adrianozp/platform/pkg/config"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 const announcedEnvironment = "prod"

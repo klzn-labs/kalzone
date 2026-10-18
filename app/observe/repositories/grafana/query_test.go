@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/observe/repositories/grafana"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 

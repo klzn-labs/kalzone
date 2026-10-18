@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 var ErrNoAccessToken = errors.New("github: no access token in response")

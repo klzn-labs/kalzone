@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/adrianozp/platform/app/observe/entities"
+	"github.com/klzn-labs/kalzone/app/observe/entities"
 	"github.com/stretchr/testify/require"
 )
 

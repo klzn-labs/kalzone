@@ -3,8 +3,8 @@ package envconfig
 import (
 	"context"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	envconfig "github.com/adrianozp/platform/app/envconfig/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	envconfig "github.com/klzn-labs/kalzone/app/envconfig/entities"
 )
 
 type ServiceFinder interface {

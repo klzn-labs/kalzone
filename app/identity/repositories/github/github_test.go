@@ -5,10 +5,10 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/app/identity/repositories/github"
-	"github.com/adrianozp/platform/internal/fakegithub"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/identity/repositories/github"
+	"github.com/klzn-labs/kalzone/internal/fakegithub"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 

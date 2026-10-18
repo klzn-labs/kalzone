@@ -3,10 +3,10 @@ package configs
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 func (u ConfigUsecase) Patch(ctx context.Context, a actor.Actor, serviceSlug, environment string, patch []byte) (entities.Revision, error) {

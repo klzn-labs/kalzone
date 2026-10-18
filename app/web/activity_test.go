@@ -3,8 +3,8 @@ package web_test
 import (
 	"testing"
 
-	audit "github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/app/web"
+	audit "github.com/klzn-labs/kalzone/app/audit/entities"
+	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/stretchr/testify/require"
 )
 

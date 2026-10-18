@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/agent"
-	"github.com/adrianozp/platform/internal/fakegrafana"
-	"github.com/adrianozp/platform/internal/integration"
-	"github.com/adrianozp/platform/pkg/agentapi"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/internal/agent"
+	"github.com/klzn-labs/kalzone/internal/fakegrafana"
+	"github.com/klzn-labs/kalzone/internal/integration"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 

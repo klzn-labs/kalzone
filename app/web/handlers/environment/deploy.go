@@ -3,12 +3,12 @@ package environment
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/authz"
-	deploy "github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
-	identity "github.com/adrianozp/platform/app/identity/entities"
-	release "github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/authz"
+	deploy "github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	identity "github.com/klzn-labs/kalzone/app/identity/entities"
+	release "github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 type Deployments interface {

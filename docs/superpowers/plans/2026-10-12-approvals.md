@@ -125,8 +125,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 	"github.com/stretchr/testify/require"
 )
 
@@ -176,11 +176,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/approvals/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/approvals/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -363,7 +363,7 @@ package entities
 import (
 	"time"
 
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 type Status string
@@ -464,7 +464,7 @@ package mysql
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
 )
 
 type changeRequest struct {
@@ -537,8 +537,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"gorm.io/gorm"
 )
 
@@ -778,11 +778,11 @@ Modify `app/envconfig/usecases/configs/secrets_scope_test.go` (apply this diff; 
 --- a/app/envconfig/usecases/configs/secrets_scope_test.go
 +++ b/app/envconfig/usecases/configs/secrets_scope_test.go
 @@ -7,7 +7,6 @@ import (
- 	"github.com/adrianozp/platform/app/authz"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
--	"github.com/adrianozp/platform/pkg/events"
- 	"github.com/adrianozp/platform/pkg/scope"
+ 	"github.com/klzn-labs/kalzone/app/authz"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
+-	"github.com/klzn-labs/kalzone/pkg/events"
+ 	"github.com/klzn-labs/kalzone/pkg/scope"
  	"github.com/stretchr/testify/require"
  )
 @@ -25,10 +24,6 @@ type unprotected struct{}
@@ -949,7 +949,7 @@ Modify `pkg/events/events.go` (apply this diff; context lines are the current co
  	"context"
  	"time"
 +
-+	"github.com/adrianozp/platform/pkg/actor"
++	"github.com/klzn-labs/kalzone/pkg/actor"
  )
  
  type Event struct {
@@ -1175,7 +1175,7 @@ package entities_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1231,12 +1231,12 @@ Modify `app/envconfig/usecases/configs/fakes_test.go` (apply this diff; context 
 --- a/app/envconfig/usecases/configs/fakes_test.go
 +++ b/app/envconfig/usecases/configs/fakes_test.go
 @@ -10,6 +10,7 @@ import (
- 	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/config"
- 	"github.com/adrianozp/platform/pkg/events"
+ 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/config"
+ 	"github.com/klzn-labs/kalzone/pkg/events"
  )
 @@ -110,14 +111,25 @@ func (s *sealer) Open(ciphertext, _, additionalData []byte, _ string) ([]byte, e
  type checks struct {
@@ -1311,12 +1311,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1556,12 +1556,12 @@ Modify `app/envconfig/usecases/configs/configs.go` (apply this diff; context lin
 --- a/app/envconfig/usecases/configs/configs.go
 +++ b/app/envconfig/usecases/configs/configs.go
 @@ -6,6 +6,7 @@ import (
- 	"github.com/adrianozp/platform/app/authz"
- 	"github.com/adrianozp/platform/app/envconfig/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/config"
- 	"github.com/adrianozp/platform/pkg/events"
+ 	"github.com/klzn-labs/kalzone/app/authz"
+ 	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/config"
+ 	"github.com/klzn-labs/kalzone/pkg/events"
  )
 @@ -35,7 +36,11 @@ type Sealer interface {
  }
@@ -1612,13 +1612,13 @@ Modify `app/envconfig/usecases/configs/revise.go` (apply this diff; context line
 --- a/app/envconfig/usecases/configs/revise.go
 +++ b/app/envconfig/usecases/configs/revise.go
 @@ -7,6 +7,7 @@ import (
- 	"github.com/adrianozp/platform/app/envconfig/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/clock"
- 	"github.com/adrianozp/platform/pkg/events"
- 	"github.com/adrianozp/platform/pkg/uuid"
+ 	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/clock"
+ 	"github.com/klzn-labs/kalzone/pkg/events"
+ 	"github.com/klzn-labs/kalzone/pkg/uuid"
 @@ -19,29 +20,48 @@ var (
  	errNoChanges      = apperror.Invalid("nothing changed")
  )
@@ -1716,12 +1716,12 @@ Modify `app/envconfig/usecases/configs/secrets.go` (apply this diff; context lin
 --- a/app/envconfig/usecases/configs/secrets.go
 +++ b/app/envconfig/usecases/configs/secrets.go
 @@ -8,6 +8,7 @@ import (
- 	"github.com/adrianozp/platform/app/envconfig/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/clock"
- 	"github.com/adrianozp/platform/pkg/uuid"
+ 	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/clock"
+ 	"github.com/klzn-labs/kalzone/pkg/uuid"
  )
 @@ -18,35 +19,28 @@ func (u ConfigUsecase) SetSecret(ctx context.Context, a actor.Actor, serviceSlug
  	if err := validateSecret(name, value); err != nil {
@@ -1779,11 +1779,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Proposal struct {
@@ -1943,11 +1943,11 @@ Modify `app/deploy/usecases/deployments/deployments_test.go` (apply this diff; c
 --- a/app/deploy/usecases/deployments/deployments_test.go
 +++ b/app/deploy/usecases/deployments/deployments_test.go
 @@ -11,6 +11,7 @@ import (
- 	"github.com/adrianozp/platform/app/deploy/usecases/fakestore"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/events"
+ 	"github.com/klzn-labs/kalzone/app/deploy/usecases/fakestore"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/events"
  	"github.com/stretchr/testify/require"
  )
 @@ -41,13 +42,26 @@ func (environments) EnvironmentExists(_ context.Context, slug string) error {
@@ -2002,13 +2002,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
-	"github.com/adrianozp/platform/app/deploy/usecases/fakestore"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/fakestore"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/stretchr/testify/require"
 )
 
@@ -2137,11 +2137,11 @@ Modify `app/deploy/usecases/deployments/deployments.go` (apply this diff; contex
 --- a/app/deploy/usecases/deployments/deployments.go
 +++ b/app/deploy/usecases/deployments/deployments.go
 @@ -6,6 +6,7 @@ import (
- 	"github.com/adrianozp/platform/app/authz"
- 	"github.com/adrianozp/platform/app/deploy/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/events"
+ 	"github.com/klzn-labs/kalzone/app/authz"
+ 	"github.com/klzn-labs/kalzone/app/deploy/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/events"
  )
  
 @@ -37,7 +38,11 @@ type EnvironmentLookup interface {
@@ -2253,10 +2253,10 @@ Modify `app/deploy/usecases/deployments/actions.go` (apply this diff; context li
 --- a/app/deploy/usecases/deployments/actions.go
 +++ b/app/deploy/usecases/deployments/actions.go
 @@ -6,6 +6,7 @@ import (
- 	"github.com/adrianozp/platform/app/deploy/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/app/deploy/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
  )
  
  var (
@@ -2368,10 +2368,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Proposal struct {
@@ -2529,11 +2529,11 @@ Modify `app/queue/usecases/queues/fakes_test.go` (apply this diff; context lines
 --- a/app/queue/usecases/queues/fakes_test.go
 +++ b/app/queue/usecases/queues/fakes_test.go
 @@ -10,6 +10,7 @@ import (
- 	"github.com/adrianozp/platform/app/queue/usecases/queues"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/events"
+ 	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/events"
  )
  
 @@ -127,13 +128,26 @@ func (s stats) Latest(id string) (entities.Stats, bool) {
@@ -2616,11 +2616,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/stretchr/testify/require"
 )
 
@@ -2714,11 +2714,11 @@ Modify `app/queue/usecases/queues/queues.go` (apply this diff; context lines are
 --- a/app/queue/usecases/queues/queues.go
 +++ b/app/queue/usecases/queues/queues.go
 @@ -6,6 +6,7 @@ import (
- 	"github.com/adrianozp/platform/app/authz"
- 	"github.com/adrianozp/platform/app/queue/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/events"
+ 	"github.com/klzn-labs/kalzone/app/authz"
+ 	"github.com/klzn-labs/kalzone/app/queue/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/events"
  )
  
 @@ -45,7 +46,11 @@ type StatsReader interface {
@@ -2793,12 +2793,12 @@ Modify `app/queue/usecases/queues/edit.go` (apply this diff; context lines are t
 --- a/app/queue/usecases/queues/edit.go
 +++ b/app/queue/usecases/queues/edit.go
 @@ -8,6 +8,7 @@ import (
- 	"github.com/adrianozp/platform/app/queue/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/clock"
- 	"github.com/adrianozp/platform/pkg/uuid"
+ 	"github.com/klzn-labs/kalzone/app/queue/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/clock"
+ 	"github.com/klzn-labs/kalzone/pkg/uuid"
  )
 @@ -35,17 +36,25 @@ func (u QueuesUsecase) Create(ctx context.Context, a actor.Actor, d Draft) (enti
  	if err != nil {
@@ -2864,13 +2864,13 @@ Modify `app/queue/usecases/queues/delete.go` (apply this diff; context lines are
  import (
  	"context"
  
-+	"github.com/adrianozp/platform/app/authz"
- 	"github.com/adrianozp/platform/app/queue/entities"
- 	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
- 	"github.com/adrianozp/platform/pkg/clock"
- 	"github.com/adrianozp/platform/pkg/uuid"
++	"github.com/klzn-labs/kalzone/app/authz"
+ 	"github.com/klzn-labs/kalzone/app/queue/entities"
+ 	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/clock"
+ 	"github.com/klzn-labs/kalzone/pkg/uuid"
  )
 @@ -13,7 +15,7 @@ import (
  var errNotEmpty = apperror.Conflict("the queue still holds messages; empty it or delete with force")
@@ -2946,10 +2946,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Proposal struct {
@@ -3148,14 +3148,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/approvals/usecases/submit"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/config"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/approvals/usecases/submit"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"github.com/stretchr/testify/require"
 )
 
@@ -3277,14 +3277,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/approvals/usecases/requests"
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/approvals/usecases/requests"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 var (
@@ -3399,10 +3399,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -3529,9 +3529,9 @@ Modify `app/identity/usecases/tokens/authenticate.go` (apply this diff; context 
 @@ -5,6 +5,7 @@ import (
  	"time"
  
- 	"github.com/adrianozp/platform/app/identity/entities"
-+	"github.com/adrianozp/platform/pkg/actor"
- 	"github.com/adrianozp/platform/pkg/clock"
+ 	"github.com/klzn-labs/kalzone/app/identity/entities"
++	"github.com/klzn-labs/kalzone/pkg/actor"
+ 	"github.com/klzn-labs/kalzone/pkg/clock"
  )
  
 @@ -35,3 +36,18 @@ func (u TokensUsecase) touchIfDue(ctx context.Context, t entities.AccessToken, n
@@ -3561,8 +3561,8 @@ Create `app/approvals/entities/event.go`:
 package entities
 
 import (
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 func (r Request) ApprovePath() string {
@@ -3594,14 +3594,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/config"
-	"github.com/adrianozp/platform/pkg/events"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/events"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 type Store interface {
@@ -3711,12 +3711,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 type Store interface {
@@ -3814,11 +3814,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 func (u RequestsUsecase) Approve(ctx context.Context, a actor.Actor, id string) (entities.Request, error) {
@@ -3931,10 +3931,10 @@ package requests
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 var platform = actor.Actor{Login: "platform"}
@@ -4053,9 +4053,9 @@ Modify `internal/httperror/httperror_test.go` (apply this diff; context lines ar
 +	"net/http/httptest"
  	"testing"
  
- 	"github.com/adrianozp/platform/internal/httperror"
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/internal/httperror"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
 +	"github.com/gin-gonic/gin"
  	"github.com/stretchr/testify/require"
  )
@@ -4099,8 +4099,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/repositories/discord"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/approvals/repositories/discord"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -4182,7 +4182,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/integration"
+	"github.com/klzn-labs/kalzone/internal/integration"
 	"github.com/stretchr/testify/require"
 )
 
@@ -4451,8 +4451,8 @@ Modify `internal/httperror/httperror.go` (apply this diff; context lines are the
 @@ -6,6 +6,7 @@ import (
  	"net/http"
  
- 	"github.com/adrianozp/platform/pkg/apperror"
-+	"github.com/adrianozp/platform/pkg/approval"
+ 	"github.com/klzn-labs/kalzone/pkg/apperror"
++	"github.com/klzn-labs/kalzone/pkg/approval"
  	"github.com/gin-gonic/gin"
  )
  
@@ -4493,7 +4493,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 const timeout = 10 * time.Second
@@ -4564,10 +4564,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Configs interface {
@@ -4611,10 +4611,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Deployments interface {
@@ -4658,10 +4658,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 )
 
 type Queues interface {
@@ -4706,7 +4706,7 @@ package requests
 import (
 	"time"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
 )
 
 type errorDTO struct {
@@ -4757,12 +4757,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -4825,22 +4825,22 @@ Create `cmd/controlplane/modules/approvals.go`:
 package modules
 
 import (
-	requestsHandler "github.com/adrianozp/platform/app/approvals/handlers/requests"
-	approvalsDeploy "github.com/adrianozp/platform/app/approvals/repositories/deploy"
-	"github.com/adrianozp/platform/app/approvals/repositories/discord"
-	approvalsConfig "github.com/adrianozp/platform/app/approvals/repositories/envconfig"
-	approvalsMysql "github.com/adrianozp/platform/app/approvals/repositories/mysql"
-	approvalsQueue "github.com/adrianozp/platform/app/approvals/repositories/queue"
-	"github.com/adrianozp/platform/app/approvals/usecases/requests"
-	"github.com/adrianozp/platform/app/approvals/usecases/submit"
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/deploy/usecases/deployments"
-	"github.com/adrianozp/platform/app/envconfig/usecases/configs"
-	"github.com/adrianozp/platform/app/identity/usecases/tokens"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/internal/eventbus"
-	"github.com/adrianozp/platform/internal/sweeper"
-	"github.com/adrianozp/platform/pkg/approval"
+	requestsHandler "github.com/klzn-labs/kalzone/app/approvals/handlers/requests"
+	approvalsDeploy "github.com/klzn-labs/kalzone/app/approvals/repositories/deploy"
+	"github.com/klzn-labs/kalzone/app/approvals/repositories/discord"
+	approvalsConfig "github.com/klzn-labs/kalzone/app/approvals/repositories/envconfig"
+	approvalsMysql "github.com/klzn-labs/kalzone/app/approvals/repositories/mysql"
+	approvalsQueue "github.com/klzn-labs/kalzone/app/approvals/repositories/queue"
+	"github.com/klzn-labs/kalzone/app/approvals/usecases/requests"
+	"github.com/klzn-labs/kalzone/app/approvals/usecases/submit"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/internal/eventbus"
+	"github.com/klzn-labs/kalzone/internal/sweeper"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"go.uber.org/fx"
 )
 
@@ -4900,10 +4900,10 @@ Modify `cmd/controlplane/modules/authz.go` (apply this diff; context lines are t
 --- a/cmd/controlplane/modules/authz.go
 +++ b/cmd/controlplane/modules/authz.go
 @@ -4,7 +4,6 @@ import (
- 	"github.com/adrianozp/platform/app/authz"
- 	"github.com/adrianozp/platform/app/catalog/usecases/environments"
- 	"github.com/adrianozp/platform/app/team/usecases/source"
--	"github.com/adrianozp/platform/internal/eventbus"
+ 	"github.com/klzn-labs/kalzone/app/authz"
+ 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
+ 	"github.com/klzn-labs/kalzone/app/team/usecases/source"
+-	"github.com/klzn-labs/kalzone/internal/eventbus"
  	"go.uber.org/fx"
  )
  
@@ -5080,12 +5080,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/adrianozp/platform/app/approvals/entities"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/approval"
+	"github.com/klzn-labs/kalzone/app/approvals/entities"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/gin-gonic/gin"
 )
 
@@ -5352,18 +5352,18 @@ Modify `cmd/controlplane/modules/web.go` (apply this diff; context lines are the
  package modules
  
  import (
-+	"github.com/adrianozp/platform/app/approvals/usecases/requests"
- 	auditLookups "github.com/adrianozp/platform/app/audit/repositories/lookups"
- 	"github.com/adrianozp/platform/app/audit/usecases/query"
- 	"github.com/adrianozp/platform/app/authz"
++	"github.com/klzn-labs/kalzone/app/approvals/usecases/requests"
+ 	auditLookups "github.com/klzn-labs/kalzone/app/audit/repositories/lookups"
+ 	"github.com/klzn-labs/kalzone/app/audit/usecases/query"
+ 	"github.com/klzn-labs/kalzone/app/authz"
 @@ -27,6 +28,7 @@ import (
- 	peoplePage "github.com/adrianozp/platform/app/web/handlers/people"
- 	queuesPage "github.com/adrianozp/platform/app/web/handlers/queues"
- 	releasesPage "github.com/adrianozp/platform/app/web/handlers/releases"
-+	requestsPage "github.com/adrianozp/platform/app/web/handlers/requests"
- 	servicePage "github.com/adrianozp/platform/app/web/handlers/service"
- 	servicesPage "github.com/adrianozp/platform/app/web/handlers/services"
- 	teamPage "github.com/adrianozp/platform/app/web/handlers/team"
+ 	peoplePage "github.com/klzn-labs/kalzone/app/web/handlers/people"
+ 	queuesPage "github.com/klzn-labs/kalzone/app/web/handlers/queues"
+ 	releasesPage "github.com/klzn-labs/kalzone/app/web/handlers/releases"
++	requestsPage "github.com/klzn-labs/kalzone/app/web/handlers/requests"
+ 	servicePage "github.com/klzn-labs/kalzone/app/web/handlers/service"
+ 	servicesPage "github.com/klzn-labs/kalzone/app/web/handlers/services"
+ 	teamPage "github.com/klzn-labs/kalzone/app/web/handlers/team"
 @@ -43,7 +45,7 @@ func Web() fx.Option {
  			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
  			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,

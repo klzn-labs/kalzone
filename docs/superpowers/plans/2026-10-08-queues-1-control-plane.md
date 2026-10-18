@@ -403,10 +403,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -546,9 +546,9 @@ package mysql_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -584,9 +584,9 @@ package mysql_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/repositories/mysql"
-	"github.com/adrianozp/platform/internal/testdb"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/testdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -620,7 +620,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 )
 
 type queueModel struct {
@@ -746,8 +746,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 )
@@ -929,7 +929,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -969,7 +969,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 )
 
 func (r QueueRepository) AddCommand(ctx context.Context, c entities.Command) error {
@@ -1037,7 +1037,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1109,7 +1109,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9-]{1,62}$`)
@@ -1262,12 +1262,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 var ctx = context.Background()
@@ -1432,9 +1432,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1569,10 +1569,10 @@ package queues
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 type ServiceRef struct {
@@ -1694,11 +1694,11 @@ import (
 	"context"
 	"slices"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 type Draft struct {
@@ -1830,11 +1830,11 @@ package queues
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
-	"github.com/adrianozp/platform/pkg/uuid"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
 var errNotEmpty = apperror.Conflict("the queue still holds messages; empty it or delete with force")
@@ -1890,8 +1890,8 @@ package queues
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 func (u QueuesUsecase) Replay(ctx context.Context, a actor.Actor, environment, name, messageID string) error {
@@ -1931,9 +1931,9 @@ package catalog
 import (
 	"context"
 
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	team "github.com/adrianozp/platform/app/team/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type ServiceFinder interface {
@@ -2099,10 +2099,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/credentials"
-	"github.com/adrianozp/platform/internal/secretbox"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/internal/secretbox"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -2176,8 +2176,8 @@ package credentials
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 type Store interface {
@@ -2301,11 +2301,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/credentials"
-	"github.com/adrianozp/platform/app/queue/usecases/gateway"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/gateway"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -2419,7 +2419,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 )
 
 type StatsStore struct {
@@ -2460,11 +2460,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/credentials"
-	"github.com/adrianozp/platform/app/queue/usecases/queues"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 type QueueSource interface {
@@ -2721,7 +2721,7 @@ package queue
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
 )
 
 type Credentials interface {
@@ -2802,7 +2802,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/integration"
+	"github.com/klzn-labs/kalzone/internal/integration"
 	"github.com/stretchr/testify/require"
 )
 

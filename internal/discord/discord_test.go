@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/discord"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/internal/discord"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 

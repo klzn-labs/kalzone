@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 )
 
 type ControlPlane interface {

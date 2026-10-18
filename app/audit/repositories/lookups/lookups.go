@@ -3,10 +3,10 @@ package lookups
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/audit/entities"
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	identity "github.com/adrianozp/platform/app/identity/entities"
-	team "github.com/adrianozp/platform/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	identity "github.com/klzn-labs/kalzone/app/identity/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type TeamFinder interface {

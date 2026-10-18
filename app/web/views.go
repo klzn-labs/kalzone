@@ -3,13 +3,13 @@ package web
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/authz"
-	catalog "github.com/adrianozp/platform/app/catalog/entities"
-	deploy "github.com/adrianozp/platform/app/deploy/entities"
-	envconfig "github.com/adrianozp/platform/app/envconfig/entities"
-	identity "github.com/adrianozp/platform/app/identity/entities"
-	team "github.com/adrianozp/platform/app/team/entities"
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/app/authz"
+	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	deploy "github.com/klzn-labs/kalzone/app/deploy/entities"
+	envconfig "github.com/klzn-labs/kalzone/app/envconfig/entities"
+	identity "github.com/klzn-labs/kalzone/app/identity/entities"
+	team "github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 type TeamFinder interface {

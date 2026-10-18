@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/eventbus"
-	"github.com/adrianozp/platform/pkg/events"
+	"github.com/klzn-labs/kalzone/internal/eventbus"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"github.com/stretchr/testify/require"
 )
 

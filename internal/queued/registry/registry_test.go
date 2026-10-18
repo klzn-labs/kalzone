@@ -3,8 +3,8 @@ package registry_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/internal/queued/registry"
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/internal/queued/registry"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 	"github.com/stretchr/testify/require"
 )
 

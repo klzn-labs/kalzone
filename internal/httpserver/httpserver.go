@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/adrianozp/platform/internal/httpserver/wait"
-	"github.com/adrianozp/platform/pkg/config"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/httpserver/wait"
+	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/fx"
 )

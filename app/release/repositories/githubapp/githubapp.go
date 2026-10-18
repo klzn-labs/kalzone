@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/config"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 const tokenMargin = time.Minute

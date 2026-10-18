@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/agentapi"
+	"github.com/klzn-labs/kalzone/pkg/agentapi"
 )
 
 const (

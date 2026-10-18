@@ -13,8 +13,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/adrianozp/platform/internal/apispec"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/internal/apispec"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

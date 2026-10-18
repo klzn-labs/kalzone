@@ -1,9 +1,9 @@
 package gatewayapi
 
 import (
-	"github.com/adrianozp/platform/app/queue/entities"
-	"github.com/adrianozp/platform/app/queue/usecases/gateway"
-	"github.com/adrianozp/platform/pkg/queuedapi"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/gateway"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 )
 
 func toDesiredDTO(d gateway.Desired) queuedapi.Desired {

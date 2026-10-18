@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"strings"
 
-	envconfig "github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/internal/requestctx"
-	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/gin-gonic/gin"
+	envconfig "github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 func (h EnvironmentHandler) SaveSpec(c *gin.Context) {

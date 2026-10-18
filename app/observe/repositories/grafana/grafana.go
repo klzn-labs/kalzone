@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/app/observe/entities"
-	"github.com/adrianozp/platform/pkg/config"
+	"github.com/klzn-labs/kalzone/app/observe/entities"
+	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
 type Client struct {

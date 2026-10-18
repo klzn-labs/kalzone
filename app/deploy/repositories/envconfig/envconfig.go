@@ -3,8 +3,8 @@ package envconfig
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	envconfig "github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	envconfig "github.com/klzn-labs/kalzone/app/envconfig/entities"
 )
 
 type Configs interface {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
 	"gorm.io/gorm/clause"
 )
 

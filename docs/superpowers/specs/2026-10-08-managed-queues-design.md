@@ -222,7 +222,7 @@ queue's dispatcher stops fetching, so pausing spends no deliveries.
 
 ## 10. Go library (`adrianozp/platform-sdk-go`)
 
-Public repository, module `github.com/adrianozp/platform-sdk-go`, standard library
+Public repository, module `github.com/klzn-labs/kalzone-sdk-go`, standard library
 only, tagged `queue/v0.x.y`.
 
 ```go

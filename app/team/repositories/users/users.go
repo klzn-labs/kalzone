@@ -3,8 +3,8 @@ package users
 import (
 	"context"
 
-	identity "github.com/adrianozp/platform/app/identity/entities"
-	"github.com/adrianozp/platform/app/team/entities"
+	identity "github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/app/team/entities"
 )
 
 type UserFinder interface {

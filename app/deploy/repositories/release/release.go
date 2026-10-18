@@ -3,8 +3,8 @@ package release
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/deploy/entities"
-	release "github.com/adrianozp/platform/app/release/entities"
+	"github.com/klzn-labs/kalzone/app/deploy/entities"
+	release "github.com/klzn-labs/kalzone/app/release/entities"
 )
 
 type ReleaseFinder interface {

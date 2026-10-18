@@ -3,10 +3,10 @@ package onboarding
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/authz"
-	"github.com/adrianozp/platform/app/onboarding/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/apperror"
+	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/onboarding/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 var errServiceNotVisible = apperror.NotFound("service not found").WithHint("list services with GET /api/v1/services")

@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/adrianozp/platform/app/release/entities"
-	"github.com/adrianozp/platform/app/release/handlers/releases"
-	"github.com/adrianozp/platform/internal/httperror"
-	"github.com/adrianozp/platform/internal/httpserver"
-	"github.com/adrianozp/platform/internal/oidc"
-	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/release/entities"
+	"github.com/klzn-labs/kalzone/app/release/handlers/releases"
+	"github.com/klzn-labs/kalzone/internal/httperror"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/oidc"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 const callerKey = "platform.build_caller"

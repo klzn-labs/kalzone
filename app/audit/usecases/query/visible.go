@@ -3,9 +3,9 @@ package query
 import (
 	"context"
 
-	"github.com/adrianozp/platform/app/audit/entities"
-	"github.com/adrianozp/platform/pkg/actor"
-	"github.com/adrianozp/platform/pkg/page"
+	"github.com/klzn-labs/kalzone/app/audit/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/page"
 )
 
 func (u QueryUsecase) ListFor(ctx context.Context, a actor.Actor, filter entities.Filter) ([]entities.Event, error) {

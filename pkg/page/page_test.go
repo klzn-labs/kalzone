@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/apperror"
-	"github.com/adrianozp/platform/pkg/page"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
+	"github.com/klzn-labs/kalzone/pkg/page"
 	"github.com/stretchr/testify/require"
 )
 

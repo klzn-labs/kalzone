@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued"
+	"github.com/klzn-labs/kalzone/internal/queued"
 	"github.com/stretchr/testify/require"
 )
 

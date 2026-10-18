@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 func funcs() template.FuncMap {

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/app/web"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 

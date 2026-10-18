@@ -4,8 +4,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
-	"github.com/adrianozp/platform/internal/apispec"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/internal/apispec"
 )
 
 type specDTO struct {

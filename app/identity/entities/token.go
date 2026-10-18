@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
-	"github.com/adrianozp/platform/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 func NewToken() (string, error) {

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/adrianozp/platform/internal/integration"
+	"github.com/klzn-labs/kalzone/internal/integration"
 	"github.com/stretchr/testify/require"
 )
 

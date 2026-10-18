@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/queued/model"
-	"github.com/adrianozp/platform/internal/queued/natstest"
-	"github.com/adrianozp/platform/internal/queued/publish"
-	"github.com/adrianozp/platform/internal/queued/registry"
+	"github.com/klzn-labs/kalzone/internal/queued/model"
+	"github.com/klzn-labs/kalzone/internal/queued/natstest"
+	"github.com/klzn-labs/kalzone/internal/queued/publish"
+	"github.com/klzn-labs/kalzone/internal/queued/registry"
 	"github.com/stretchr/testify/require"
 )
 

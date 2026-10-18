@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/adrianozp/platform/pkg/apperror"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
 func BindStrict(c *gin.Context, out any) bool {

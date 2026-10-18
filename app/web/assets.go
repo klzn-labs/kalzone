@@ -5,8 +5,8 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/adrianozp/platform/internal/httpserver"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/internal/httpserver"
 )
 
 //go:embed templates static

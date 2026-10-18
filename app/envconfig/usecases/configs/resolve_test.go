@@ -3,7 +3,7 @@ package configs_test
 import (
 	"testing"
 
-	"github.com/adrianozp/platform/app/envconfig/entities"
+	"github.com/klzn-labs/kalzone/app/envconfig/entities"
 	"github.com/stretchr/testify/require"
 )
 

@@ -3,10 +3,10 @@ package apispec
 import (
 	"slices"
 
-	"github.com/adrianozp/platform/pkg/approval"
-	"github.com/adrianozp/platform/pkg/page"
-	"github.com/adrianozp/platform/pkg/scope"
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/pkg/approval"
+	"github.com/klzn-labs/kalzone/pkg/page"
+	"github.com/klzn-labs/kalzone/pkg/scope"
 )
 
 const BasePath = "/api/v1"

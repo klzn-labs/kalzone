@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adrianozp/platform/internal/integration"
-	"github.com/adrianozp/platform/pkg/clock"
+	"github.com/klzn-labs/kalzone/internal/integration"
+	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
 

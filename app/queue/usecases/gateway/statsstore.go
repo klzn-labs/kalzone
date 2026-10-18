@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adrianozp/platform/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/queue/entities"
 )
 
 type StatsStore struct {
