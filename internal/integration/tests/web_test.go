@@ -119,3 +119,18 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 	require.True(t, s.Grafana.Dashboards()["platform-places-api"])
 	require.Contains(t, page.Body, "/grafana/d-solo/platform-places-api?orgId=1&panelId=1&var-env=dev")
 }
+
+func Test_CatalogFiltersByTeam(t *testing.T) {
+	_, p := setupPlaces(t)
+	createReviews(t, p)
+	p.root.MustJSON(t, http.MethodPost, "/api/v1/services", reviewsService(), http.StatusCreated, nil)
+
+	all := p.mia.Do(t, http.MethodGet, "/services", nil)
+	reviews := p.mia.Do(t, http.MethodGet, "/services?team=reviews", nil)
+
+	require.Contains(t, all.Body, `href="/services?team=places"`)
+	require.Contains(t, all.Body, `href="/services?team=reviews"`)
+	require.Contains(t, all.Body, "places-api")
+	require.Contains(t, reviews.Body, "reviews-api")
+	require.NotContains(t, reviews.Body, "places-api")
+}

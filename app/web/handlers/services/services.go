@@ -24,8 +24,16 @@ type Teams interface {
 
 type listData struct {
 	Filter string
+	Team   string
+	Teams  []teamTab
 	Cards  []web.ServiceCard
 	Total  int
+}
+
+type teamTab struct {
+	Slug  string
+	Name  string
+	Count int
 }
 
 type newData struct {
@@ -46,7 +54,7 @@ func NewServicesHandler(renderer *web.Renderer, views web.Views, services Servic
 }
 
 func (h ServicesHandler) List(c *gin.Context) {
-	d, err := h.list(c.Request.Context(), requestctx.ActorFrom(c), c.Query("filter"))
+	d, err := h.list(c.Request.Context(), requestctx.ActorFrom(c), c.Query("filter"), c.Query("team"))
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)
 		return
@@ -54,8 +62,12 @@ func (h ServicesHandler) List(c *gin.Context) {
 	h.renderer.Render(c, http.StatusOK, "services", web.Page{Title: "Services", Nav: "services", Data: d})
 }
 
-func (h ServicesHandler) list(ctx context.Context, a actor.Actor, filter string) (listData, error) {
+func (h ServicesHandler) list(ctx context.Context, a actor.Actor, filter, teamSlug string) (listData, error) {
 	all, err := h.services.List(ctx, catalog.ServiceFilter{})
+	if err != nil {
+		return listData{}, err
+	}
+	teams, err := h.teams.List(ctx)
 	if err != nil {
 		return listData{}, err
 	}
@@ -63,8 +75,9 @@ func (h ServicesHandler) list(ctx context.Context, a actor.Actor, filter string)
 	if err != nil {
 		return listData{}, err
 	}
+	shown = ownedBy(shown, teams, teamSlug)
 	cards, err := h.views.ServiceCards(ctx, shown)
-	return listData{Filter: filter, Cards: cards, Total: len(all)}, err
+	return listData{Filter: filter, Team: teamSlug, Teams: teamTabs(teams, all), Cards: cards, Total: len(all)}, err
 }
 
 func (h ServicesHandler) filtered(ctx context.Context, a actor.Actor, filter string, all []catalog.Service) ([]catalog.Service, error) {
@@ -76,6 +89,43 @@ func (h ServicesHandler) filtered(ctx context.Context, a actor.Actor, filter str
 		return nil, err
 	}
 	return h.services.List(ctx, catalog.ServiceFilter{OwnerTeamIDs: web.TeamIDs(mine)})
+}
+
+func ownedBy(services []catalog.Service, teams []team.Team, teamSlug string) []catalog.Service {
+	if teamSlug == "" {
+		return services
+	}
+	teamID := teamIDBySlug(teams, teamSlug)
+	owned := []catalog.Service{}
+	for _, s := range services {
+		if s.OwnerTeamID == teamID {
+			owned = append(owned, s)
+		}
+	}
+	return owned
+}
+
+func teamIDBySlug(teams []team.Team, slug string) string {
+	for _, t := range teams {
+		if t.Slug == slug {
+			return t.ID
+		}
+	}
+	return ""
+}
+
+func teamTabs(teams []team.Team, services []catalog.Service) []teamTab {
+	counts := map[string]int{}
+	for _, s := range services {
+		counts[s.OwnerTeamID]++
+	}
+	tabs := []teamTab{}
+	for _, t := range teams {
+		if counts[t.ID] > 0 {
+			tabs = append(tabs, teamTab{Slug: t.Slug, Name: t.Name, Count: counts[t.ID]})
+		}
+	}
+	return tabs
 }
 
 func (h ServicesHandler) New(c *gin.Context) {
