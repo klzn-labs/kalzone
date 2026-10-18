@@ -41,15 +41,37 @@ jobs:
 
   install-deployctl:
     needs: test
-    uses: adrianozp/infra-plateful/.github/workflows/install-deployctl.yml@main
-    secrets: inherit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: adrianozp/infra-plateful
+          ssh-key: ${{ secrets.INFRA_DEPLOY_KEY }}
+      - uses: ./.github/actions/install-deployctl
+        with:
+          vps_host: ${{ secrets.VPS_HOST }}
+          vps_user: ${{ secrets.VPS_USER }}
+          vps_ssh_key: ${{ secrets.VPS_SSH_KEY }}
 
   deploy:
     needs: [publish, install-deployctl]
-    uses: adrianozp/infra-plateful/.github/workflows/deploy.yml@main
-    with:
-      service: controlplane
-      image: adrianozdp/platform-controlplane:${{ github.sha }}
-      version: ${{ github.sha }}
-      strategy: ${{ inputs.strategy }}
-    secrets: inherit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency:
+      group: deploy-controlplane
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: adrianozp/infra-plateful
+          ssh-key: ${{ secrets.INFRA_DEPLOY_KEY }}
+      - uses: ./.github/actions/deploy
+        with:
+          service: controlplane
+          image: adrianozdp/platform-controlplane:${{ github.sha }}
+          version: ${{ github.sha }}
+          strategy: ${{ inputs.strategy }}
+          vps_host: ${{ secrets.VPS_HOST }}
+          vps_user: ${{ secrets.VPS_USER }}
+          vps_ssh_key: ${{ secrets.VPS_SSH_KEY }}
