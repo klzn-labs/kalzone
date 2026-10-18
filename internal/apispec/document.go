@@ -30,7 +30,7 @@ var ginParam = regexp.MustCompile(`:([a-zA-Z_]+)`)
 func Build(c *Catalog, baseURL string) ([]byte, error) {
 	r := openapi31.NewReflector()
 	r.DefaultOptions = append(r.DefaultOptions, schemaRules()...)
-	r.Spec.Info.WithTitle("Platform API").WithVersion("1").WithDescription("The internal developer platform's API for people and agents.")
+	r.Spec.Info.WithTitle("Kalzone API").WithVersion("1").WithDescription("The API of Kalzone, the internal developer platform, for people and agents.")
 	r.Spec.WithServers(openapi31.Server{URL: baseURL})
 	r.Spec.SetHTTPBearerTokenSecurity("token", "plat_…", "an access token from the Tokens page or POST /api/v1/tokens")
 	r.Spec.SetAPIKeySecurity("session", "platform_session", openapi.InCookie, "a browser session; writes also need the X-CSRF-Token header")

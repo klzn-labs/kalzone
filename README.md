@@ -1,7 +1,7 @@
-# Platform
+# Kalzone
 
-An internal developer platform for the Plateful services, built as platform-engineering
-practice. Teams register their services, keep per-environment config and secrets, and
+Kalzone is an internal developer platform, built as platform-engineering practice and
+first used for the Plateful services. It runs at https://platform.kalz.one. Teams register their services, keep per-environment config and secrets, and
 (in later sub-projects) build, release, deploy and watch them from one website.
 
 This repository holds the **control plane**: a Go service with an htmx web UI and a JSON
@@ -164,7 +164,7 @@ from the handlers' declarations, so it is always the API that runs.
 stateless, JSON answers). It takes the same access tokens, as a bearer only:
 
 ```
-claude mcp add --transport http platform https://platform.kalz.one/mcp \
+claude mcp add --transport http kalzone https://platform.kalz.one/mcp \
   --header "Authorization: Bearer plat_…"
 ```
 

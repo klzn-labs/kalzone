@@ -10,7 +10,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-const instructions = "The internal developer platform: services, their config and secrets, releases, deployments, queues and change requests. " +
+const instructions = "Kalzone, the internal developer platform: services, their config and secrets, releases, deployments, queues and change requests. " +
 	"Every tool acts as the token's owner, limited to the token's scopes and teams. " +
 	"On a protected environment such as prod a change answers a change request: a human approves it at approve_url, and the wait tool with kind request follows it. " +
 	"Builds and deployments take wait: true to answer once they are final, and the wait tool waits on a release, deployment or change request by id. " +
@@ -39,7 +39,7 @@ func (h *Handler) Serve(c *gin.Context) {
 }
 
 func (h *Handler) serverFor(origin *http.Request, a actor.Actor) *mcp.Server {
-	server := mcp.NewServer(&mcp.Implementation{Name: "platform", Version: "1"}, &mcp.ServerOptions{Instructions: instructions})
+	server := mcp.NewServer(&mcp.Implementation{Name: "kalzone", Version: "1"}, &mcp.ServerOptions{Instructions: instructions})
 	for _, tool := range h.tools {
 		if tool.VisibleTo(a) {
 			server.AddTool(tool.Definition, tool.handler(h.engine, origin))
