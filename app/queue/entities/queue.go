@@ -1,6 +1,9 @@
 package entities
 
-import "time"
+import (
+	"slices"
+	"time"
+)
 
 const (
 	BackoffFixed       = "fixed"
@@ -36,6 +39,10 @@ type Queue struct {
 	Paused      bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+func (q Queue) Attached() []string {
+	return slices.DeleteFunc(slices.Clone(q.Publishers), func(id string) bool { return id == q.ConsumerID })
 }
 
 type Version struct {

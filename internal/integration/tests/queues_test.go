@@ -40,6 +40,12 @@ func createQueue(t *testing.T, c *integration.Client, env string, status int) qu
 	return q
 }
 
+func dropPublishers(t *testing.T, c *integration.Client) {
+	t.Helper()
+	dropped := c.Do(t, http.MethodPatch, "/api/v1/queues/dev/place-import", map[string]any{"publishers": []string{}, "version": 1})
+	require.Equal(t, http.StatusOK, dropped.Status, dropped.Body)
+}
+
 func Test_QueuesAreCreatedWithDefaultsAndEditedByPolicy(t *testing.T) {
 	_, p := setupQueue(t)
 
@@ -113,6 +119,7 @@ func Test_DeleteNeedsAnEmptyQueueOrForce(t *testing.T) {
 	s, p := setupQueue(t)
 	q := createQueue(t, p.bob, "dev", http.StatusCreated)
 	s.Queued(t, http.MethodPost, "/queued/v1/stats", map[string]any{"stats": []map[string]any{{"queue_id": q.ID, "depth": 2}}})
+	dropPublishers(t, p.bob)
 
 	held := p.bob.Do(t, http.MethodDelete, "/api/v1/queues/dev/place-import", nil)
 	forced := p.bob.Do(t, http.MethodDelete, "/api/v1/queues/dev/place-import?force=true", nil)

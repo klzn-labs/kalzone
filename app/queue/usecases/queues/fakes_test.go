@@ -196,6 +196,12 @@ func draft() queues.Draft {
 	return queues.Draft{Name: "place-import", Environment: "prod", Consumer: "worker", Publishers: []string{"importer"}, Settings: entities.Settings{Path: "/hooks/place-import"}}
 }
 
+func soloDraft() queues.Draft {
+	d := draft()
+	d.Publishers = nil
+	return d
+}
+
 func fresh(depth int64) entities.Stats {
 	return entities.Stats{Depth: depth, ReportedAt: time.Now().UTC()}
 }

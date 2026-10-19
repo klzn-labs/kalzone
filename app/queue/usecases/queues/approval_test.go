@@ -59,7 +59,7 @@ func Test_Update_NeedingApprovalKeepsTheBaseVersion(t *testing.T) {
 
 func Test_Delete_NeedingApprovalStillRefusesAQueueWithMessages(t *testing.T) {
 	f := newFixture(t, false)
-	created, _ := f.usecase.Create(ctx, ana, draft())
+	created, _ := f.usecase.Create(ctx, ana, soloDraft())
 	f.stats[created.ID] = fresh(3)
 
 	err := f.as(authz.NeedsApproval).Delete(ctx, ana, "prod", "place-import", false)
@@ -126,7 +126,7 @@ func Test_Update_NeedingApprovalPreviewShowsPublishersNowAndAfter(t *testing.T) 
 
 func Test_Delete_NeedingApprovalFlagsForce(t *testing.T) {
 	f := newFixture(t, false)
-	_, _ = f.usecase.Create(ctx, ana, draft())
+	_, _ = f.usecase.Create(ctx, ana, soloDraft())
 
 	_ = f.as(authz.NeedsApproval).Delete(ctx, ana, "prod", "place-import", true)
 	preview, err := f.usecase.Preview(ctx, f.proposal(t))
