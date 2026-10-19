@@ -43,6 +43,8 @@ var tokenCases = []tokenCase{
 	{"secrets need their own scope", via("member", only(scope.Config), places, false), authz.EditSecrets, "dev", apperror.CodeMissingScope},
 	{"secrets with the secrets scope", via("member", only(scope.Secrets), places, false), authz.EditSecrets, "dev", ""},
 	{"queues go with services", via("member", only(scope.Services), places, false), authz.EditQueue, "dev", ""},
+	{"databases go with services", via("member", only(scope.Services), places, false), authz.EditDatabase, "dev", ""},
+	{"databases on prod need approval", via("maintainer", only(scope.Services, scope.Protected), places, false), authz.EditDatabase, "prod", apperror.CodeApprovalRequired},
 	{"deleting needs services:admin", via("maintainer", only(scope.Services), places, false), authz.DeleteService, "", apperror.CodeMissingScope},
 	{"builds", via("member", only(scope.Builds), places, false), authz.CreateRelease, "", ""},
 	{"an admin owner is bound by scopes", via("admin", only(scope.Read), places, false), authz.EditService, "", apperror.CodeMissingScope},

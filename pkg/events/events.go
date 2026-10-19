@@ -34,6 +34,7 @@ const (
 	TargetRelease    = "release"
 	TargetDeployment = "deployment"
 	TargetQueue      = "queue"
+	TargetDatabase   = "database"
 	TargetToken      = "token"
 	TargetRequest    = "request"
 )
