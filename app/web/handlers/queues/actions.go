@@ -23,7 +23,7 @@ func (h QueuesHandler) Create(c *gin.Context) {
 		Name: strings.TrimSpace(c.PostForm("name")), Environment: c.PostForm("environment"),
 		Consumer: strings.TrimSpace(c.PostForm("consumer")), Settings: settings, Publishers: splitList(c.PostForm("publishers")),
 	})
-	h.finish(c, err, "/queues/"+q.Environment+"/"+q.Name, "Queue "+q.Name+" created")
+	h.finish(c, err, "/resources/queues/"+q.Environment+"/"+q.Name, "Queue "+q.Name+" created")
 }
 
 func (h QueuesHandler) Edit(c *gin.Context) {
@@ -51,7 +51,7 @@ func (h QueuesHandler) Resume(c *gin.Context) {
 
 func (h QueuesHandler) Delete(c *gin.Context) {
 	err := h.queues.Delete(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"), c.PostForm("force") == "on")
-	h.finish(c, err, "/queues", "Queue "+c.Param("name")+" deleted")
+	h.finish(c, err, "/resources?kind=queue", "Queue "+c.Param("name")+" deleted")
 }
 
 func (h QueuesHandler) Replay(c *gin.Context) {
@@ -70,7 +70,7 @@ func (h QueuesHandler) Purge(c *gin.Context) {
 }
 
 func (h QueuesHandler) base(c *gin.Context) string {
-	return "/queues/" + c.Param("env") + "/" + c.Param("name")
+	return "/resources/queues/" + c.Param("env") + "/" + c.Param("name")
 }
 
 func (h QueuesHandler) finish(c *gin.Context, err error, location, message string) {

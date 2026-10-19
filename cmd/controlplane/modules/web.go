@@ -31,6 +31,7 @@ import (
 	queuesPage "github.com/klzn-labs/kalzone/app/web/handlers/queues"
 	releasesPage "github.com/klzn-labs/kalzone/app/web/handlers/releases"
 	requestsPage "github.com/klzn-labs/kalzone/app/web/handlers/requests"
+	resourcesPage "github.com/klzn-labs/kalzone/app/web/handlers/resources"
 	servicePage "github.com/klzn-labs/kalzone/app/web/handlers/service"
 	servicesPage "github.com/klzn-labs/kalzone/app/web/handlers/services"
 	teamPage "github.com/klzn-labs/kalzone/app/web/handlers/team"
@@ -46,7 +47,7 @@ func Web() fx.Option {
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
-			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler,
+			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler, resourcesPage.NewResourcesHandler,
 			tokensPage.NewTokensHandler, requestsPage.NewRequestsHandler,
 		),
 		viewInjections(),
@@ -64,6 +65,7 @@ func viewInjections() fx.Option {
 		func(u agents.AgentsUsecase) agentsPage.Agents { return u },
 		func(u queues.QueuesUsecase) queuesPage.Queues { return u },
 		func(l queueCatalog.Lookup) queuesPage.ServiceNames { return l },
+		func(h queuesPage.QueuesHandler) resourcesPage.QueueSection { return h },
 		func(u environments.EnvironmentsUsecase) web.EnvironmentLister { return u },
 		func(u users.UsersUsecase) web.UserFinder { return u },
 		func(p authz.Policy) web.Authorizer { return p },
@@ -133,7 +135,7 @@ func pageRoutes() fx.Option {
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
-		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes,
+		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes, resourcesPage.RegisterResourcesRoutes,
 		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes,
 	)
 }
