@@ -93,7 +93,7 @@ func Test_SetPaused(t *testing.T) {
 
 func Test_Delete_RefusesAQueueWithMessagesUnlessForced(t *testing.T) {
 	f := newFixture(t, false)
-	q, _ := f.usecase.Create(ctx, ana, draft())
+	q, _ := f.usecase.Create(ctx, ana, soloDraft())
 	f.stats[q.ID] = fresh(3)
 
 	held := f.usecase.Delete(ctx, ana, "prod", "place-import", false)
@@ -107,7 +107,7 @@ func Test_Delete_RefusesAQueueWithMessagesUnlessForced(t *testing.T) {
 
 func Test_Delete_RefusesUnknownDepthWithoutForce(t *testing.T) {
 	f := newFixture(t, false)
-	q, _ := f.usecase.Create(ctx, ana, draft())
+	q, _ := f.usecase.Create(ctx, ana, soloDraft())
 	f.stats[q.ID] = entities.Stats{Depth: 0, ReportedAt: time.Now().Add(-2 * time.Minute)}
 
 	err := f.usecase.Delete(ctx, ana, "prod", "place-import", false)
@@ -117,7 +117,7 @@ func Test_Delete_RefusesUnknownDepthWithoutForce(t *testing.T) {
 
 func Test_Delete_AnEmptyQueue(t *testing.T) {
 	f := newFixture(t, false)
-	q, _ := f.usecase.Create(ctx, ana, draft())
+	q, _ := f.usecase.Create(ctx, ana, soloDraft())
 	f.stats[q.ID] = fresh(0)
 
 	require.NoError(t, f.usecase.Delete(ctx, ana, "prod", "place-import", false))

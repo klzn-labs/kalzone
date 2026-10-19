@@ -55,6 +55,7 @@ func Test_TheQueuePageShowsStateAndPauses(t *testing.T) {
 func Test_TheQueuePageReplaysAndDeletes(t *testing.T) {
 	s, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)
+	dropPublishers(t, p.bob)
 	base := "/queues/dev/place-import"
 
 	replay := p.bob.Form(t, base+"/dead/replay-all", url.Values{"_csrf": {p.bob.CSRFToken}})

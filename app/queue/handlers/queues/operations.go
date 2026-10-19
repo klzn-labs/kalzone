@@ -47,7 +47,7 @@ func queueOperations(h QueuesHandler) []apispec.Operation {
 			Scope: scope.Read, Params: queueParams{}, Status: http.StatusOK, Response: QueueDTO{}, Handler: h.Get},
 		{ID: "updateQueue", Method: http.MethodPatch, Path: "/queues/:env/:name", Summary: "Change a queue's settings or publishers from a base version",
 			Scope: scope.Services, Gated: true, Params: queueParams{}, Body: changeDTO{}, Status: http.StatusOK, Response: QueueDTO{}, Handler: h.Update},
-		{ID: "deleteQueue", Method: http.MethodDelete, Path: "/queues/:env/:name", Summary: "Delete a queue",
+		{ID: "deleteQueue", Method: http.MethodDelete, Path: "/queues/:env/:name", Summary: "Delete a queue; refused while services other than its consumer publish to it",
 			Scope: scope.Services, Gated: true, Params: deleteParams{}, Status: http.StatusNoContent, Handler: h.Delete},
 	}
 }
