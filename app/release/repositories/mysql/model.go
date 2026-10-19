@@ -44,3 +44,44 @@ func (m release) toEntity() entities.Release {
 		CreatedAt: m.CreatedAt, FinishedAt: m.FinishedAt,
 	}
 }
+
+type changelog struct {
+	ReleaseID     string `gorm:"primaryKey"`
+	BaseReleaseID string
+	BaseSHA       string `gorm:"column:base_sha"`
+	HeadSHA       string `gorm:"column:head_sha"`
+	State         string
+	AheadBy       int
+	BehindBy      int
+	Truncated     bool
+	CompareURL    string            `gorm:"column:compare_url"`
+	Commits       []entities.Commit `gorm:"serializer:json"`
+	Attempts      int
+	LastError     string
+	UpdatedAt     time.Time `gorm:"autoUpdateTime:false"`
+}
+
+func (changelog) TableName() string { return "release_changelogs" }
+
+func fromChangelog(c entities.Changelog) changelog {
+	return changelog{
+		ReleaseID: c.ReleaseID, BaseReleaseID: c.BaseReleaseID, BaseSHA: c.BaseSHA, HeadSHA: c.HeadSHA, State: string(c.State),
+		AheadBy: c.AheadBy, BehindBy: c.BehindBy, Truncated: c.Truncated, CompareURL: c.CompareURL,
+		Commits: nonNil(c.Commits), Attempts: c.Attempts, LastError: c.LastError, UpdatedAt: c.UpdatedAt,
+	}
+}
+
+func (m changelog) toEntity() entities.Changelog {
+	return entities.Changelog{
+		ReleaseID: m.ReleaseID, BaseReleaseID: m.BaseReleaseID, BaseSHA: m.BaseSHA, HeadSHA: m.HeadSHA,
+		State: entities.ChangelogState(m.State), AheadBy: m.AheadBy, BehindBy: m.BehindBy, Truncated: m.Truncated,
+		CompareURL: m.CompareURL, Commits: nonNil(m.Commits), Attempts: m.Attempts, LastError: m.LastError, UpdatedAt: m.UpdatedAt.UTC(),
+	}
+}
+
+func nonNil(commits []entities.Commit) []entities.Commit {
+	if commits == nil {
+		return []entities.Commit{}
+	}
+	return commits
+}
