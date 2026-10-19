@@ -89,6 +89,11 @@ func (w *world) Detach(context.Context, actor.Actor, string) error {
 	return nil
 }
 
+func (w *world) DetachService(context.Context, actor.Actor, string) error {
+	w.record("detach databases")
+	return nil
+}
+
 func (w *world) Delete(context.Context, string) error {
 	w.record("delete dashboard")
 	return w.dashErr
@@ -102,10 +107,10 @@ func newWorld(removed map[string]bool) *world {
 }
 
 func usecase(w *world) decommission.DecommissionUsecase {
-	return decommission.NewDecommissionUsecase(w, w, w, w, w, w)
+	return decommission.NewDecommissionUsecase(w, w, w, w, w, w, w)
 }
 
-var finishCalls = []string{"detach queues", "forget runtime", "delete dashboard", "mark deleted by decommission"}
+var finishCalls = []string{"detach queues", "detach databases", "forget runtime", "delete dashboard", "mark deleted by decommission"}
 
 func Test_Start_DeletesAServiceThatNeverRanAtOnce(t *testing.T) {
 	w := newWorld(map[string]bool{})
@@ -178,6 +183,16 @@ func Test_Finish_LeavesAnActiveServiceAlone(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, deleted)
 	require.Empty(t, w.calls)
+}
+
+func Test_Finish_DetachesDatabases(t *testing.T) {
+	w := newWorld(map[string]bool{"dev": true})
+	w.service.Status = entities.StatusDecommissioning
+
+	_, err := usecase(w).Finish(ctx, "s1")
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"detach queues", "detach databases"}, w.calls[:2])
 }
 
 func Test_Finish_StillDeletesWhenGrafanaFails(t *testing.T) {

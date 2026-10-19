@@ -45,6 +45,10 @@ type QueueAccess interface {
 	QueueAccess(ctx context.Context, serviceID, environment string) (env, secrets map[string]string, err error)
 }
 
+type DatabaseAccess interface {
+	DatabaseAccess(ctx context.Context, serviceID, environment string) (env, secrets map[string]string, err error)
+}
+
 type Publisher interface {
 	Publish(ctx context.Context, event events.Event)
 }
@@ -54,13 +58,14 @@ type AgentsUsecase struct {
 	services  ServiceLookup
 	configs   ConfigResolver
 	queues    QueueAccess
+	databases DatabaseAccess
 	publisher Publisher
 	timeout   time.Duration
 }
 
-func NewAgentsUsecase(cfg config.Config, store Store, services ServiceLookup, configs ConfigResolver, queues QueueAccess, publisher Publisher) AgentsUsecase {
+func NewAgentsUsecase(cfg config.Config, store Store, services ServiceLookup, configs ConfigResolver, queues QueueAccess, databases DatabaseAccess, publisher Publisher) AgentsUsecase {
 	return AgentsUsecase{
-		store: store, services: services, configs: configs, queues: queues, publisher: publisher, timeout: cfg.Deploy.Timeout,
+		store: store, services: services, configs: configs, queues: queues, databases: databases, publisher: publisher, timeout: cfg.Deploy.Timeout,
 	}
 }
 

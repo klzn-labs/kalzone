@@ -19,7 +19,11 @@ var (
 	hostPattern = regexp.MustCompile(`^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$|^localhost$`)
 )
 
-var reserved = map[string]bool{"PLATFORM_QUEUE_URL": true, "PLATFORM_QUEUE_TOKEN": true, "PLATFORM_QUEUE_SIGNING_KEY": true}
+var reserved = map[string]bool{
+	"PLATFORM_QUEUE_URL": true, "PLATFORM_QUEUE_TOKEN": true, "PLATFORM_QUEUE_SIGNING_KEY": true,
+	"PLATFORM_DB_HOST": true, "PLATFORM_DB_PORT": true, "PLATFORM_DB_NAME": true,
+	"PLATFORM_DB_USER": true, "PLATFORM_DB_PASSWORD": true, "PLATFORM_DB_DSN": true,
+}
 
 func ValidateName(name string) error {
 	if !namePattern.MatchString(name) {

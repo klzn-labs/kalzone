@@ -50,6 +50,13 @@ func Test_Validate_Rules(t *testing.T) {
 	}
 }
 
+func Test_ValidateName_ReservesDatabaseNames(t *testing.T) {
+	names := []string{"PLATFORM_DB_HOST", "PLATFORM_DB_PORT", "PLATFORM_DB_NAME", "PLATFORM_DB_USER", "PLATFORM_DB_PASSWORD", "PLATFORM_DB_DSN"}
+	for _, name := range names {
+		require.Error(t, entities.ValidateName(name), name)
+	}
+}
+
 func Test_HostAllowed(t *testing.T) {
 	domains := []string{"kalz.one"}
 
