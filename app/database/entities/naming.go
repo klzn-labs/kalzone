@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	usernamePrefix    = "kz_"
+	UsernamePrefix    = "kz_"
 	maxUsernameLength = 32
 	minMaxConnections = 1
 	maxMaxConnections = 30
@@ -36,7 +36,7 @@ func SchemaFor(name, environment string, protected bool) string {
 }
 
 func UsernameFor(schema string) (string, error) {
-	user := usernamePrefix + schema
+	user := UsernamePrefix + schema
 	if len(user) > maxUsernameLength {
 		return "", apperror.Invalid("database user name would exceed 32 characters, use a shorter database name").
 			WithHint("shorten the database name so that kz_<schema> fits in 32 characters")

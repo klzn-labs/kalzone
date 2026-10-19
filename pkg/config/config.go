@@ -28,6 +28,13 @@ type Config struct {
 	Registry       Registry  `mapstructure:"registry"`
 	Queues         Queues    `mapstructure:"queues"`
 	Approvals      Approvals `mapstructure:"approvals"`
+	Databases      Databases `mapstructure:"databases"`
+}
+
+type Databases struct {
+	AdminDSN string `mapstructure:"admin_dsn"`
+	Host     string `mapstructure:"host" default:"mysql"`
+	Port     int    `mapstructure:"port" default:"3306"`
 }
 
 type Approvals struct {
@@ -144,6 +151,7 @@ var envKeys = []string{
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
 	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
 	"queues.gateway_url", "queues.token", "approvals.webhook_url",
+	"databases.admin_dsn", "databases.host", "databases.port",
 }
 
 func bindEnvVars() {

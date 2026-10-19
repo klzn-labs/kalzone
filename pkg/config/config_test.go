@@ -44,3 +44,14 @@ func Test_LoadConfig_ReadsTheQueueGatewaySettings(t *testing.T) {
 	require.Equal(t, "queued-token", cfg.Queues.Token)
 	require.Equal(t, "http://queued:8080", cfg.Queues.GatewayURL)
 }
+
+func Test_LoadConfig_ReadsTheManagedDatabaseSettings(t *testing.T) {
+	t.Setenv("PLATFORM_DATABASES_ADMIN_DSN", "admin:pw@tcp(mysql:3306)/")
+
+	cfg, err := config.LoadConfig()
+
+	require.NoError(t, err)
+	require.Equal(t, "admin:pw@tcp(mysql:3306)/", cfg.Databases.AdminDSN)
+	require.Equal(t, "mysql", cfg.Databases.Host)
+	require.Equal(t, 3306, cfg.Databases.Port)
+}
