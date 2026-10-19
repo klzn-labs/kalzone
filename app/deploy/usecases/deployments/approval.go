@@ -14,14 +14,15 @@ import (
 var errNotApproved = apperror.Forbidden("only an approved request can apply this change")
 
 type Proposal struct {
-	Kind         string `json:"kind"`
-	Service      string `json:"service"`
-	Environment  string `json:"environment"`
-	ReleaseID    string `json:"release_id,omitempty"`
-	Strategy     string `json:"strategy,omitempty"`
-	From         string `json:"from,omitempty"`
-	DeploymentID string `json:"deployment_id,omitempty"`
-	LiveID       string `json:"live_id,omitempty"`
+	Kind         string          `json:"kind"`
+	Service      string          `json:"service"`
+	Environment  string          `json:"environment"`
+	ReleaseID    string          `json:"release_id,omitempty"`
+	Strategy     string          `json:"strategy,omitempty"`
+	From         string          `json:"from,omitempty"`
+	DeploymentID string          `json:"deployment_id,omitempty"`
+	LiveID       string          `json:"live_id,omitempty"`
+	Ships        *approval.Ships `json:"ships,omitempty"`
 }
 
 func (u DeploymentsUsecase) propose(ctx context.Context, p plan, o Proposal) error {
@@ -30,6 +31,7 @@ func (u DeploymentsUsecase) propose(ctx context.Context, p plan, o Proposal) err
 		return err
 	}
 	o.Service, o.Environment, o.LiveID = p.service.Slug, p.env, live.ID
+	o.Ships = u.shipsFor(ctx, o.Kind, live.ReleaseID, p.release.ID)
 	pending, err := u.requests.Submit(ctx, p.actor, approval.Change{
 		Kind: o.Kind, Subject: "deploy", ServiceID: p.service.ID, ServiceSlug: p.service.Slug,
 		TeamID: p.service.OwnerTeamID, Environment: p.env, Summary: summaryOf(o.Kind, p), Proposal: o,
@@ -114,13 +116,13 @@ func (u DeploymentsUsecase) promotePinned(ctx context.Context, a actor.Actor, o 
 func (u DeploymentsUsecase) Preview(ctx context.Context, o Proposal) (approval.Preview, error) {
 	live, _, err := u.Live(ctx, o.Service, o.Environment)
 	if err != nil {
-		return approval.Preview{}, err
+		return approval.Preview{Ships: o.Ships}, err
 	}
 	lines, err := u.previewLines(ctx, o, live)
 	if err != nil {
-		return approval.Preview{}, err
+		return approval.Preview{Ships: o.Ships}, err
 	}
-	preview := approval.Preview{Lines: lines}
+	preview := approval.Preview{Lines: lines, Ships: o.Ships}
 	if live.ID != o.LiveID {
 		preview.Conflict = fmt.Sprintf("approving will fail: deployment #%d went live after the request", live.Number)
 	}

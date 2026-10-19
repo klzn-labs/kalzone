@@ -92,7 +92,7 @@ var rels = releases{
 
 func setup(denyEnv string) (*fakestore.Store, deployments.DeploymentsUsecase) {
 	store := fakestore.New()
-	usecase := deployments.NewDeploymentsUsecase(store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{denyEnv: denyEnv}, &published{}, &requests{})
+	usecase := deployments.NewDeploymentsUsecase(store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{denyEnv: denyEnv}, &published{}, &requests{}, &shipments{})
 	return store, usecase
 }
 
