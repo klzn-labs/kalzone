@@ -1,0 +1,32 @@
+{{define "changelog-summary"}}{{if eq (print .State) "pending"}}Reading the commits from GitHub…{{else if eq (print .State) "failed"}}GitHub could not be read: {{.LastError}}{{else if eq (print .State) "unavailable"}}{{if .LastError}}No changelog: {{.LastError}}.{{else}}No changelog: this image was not built from a commit.{{end}}{{else}}{{len .Commits}} commit{{if ne (len .Commits) 1}}s{{end}}{{if eq (print .State) "first"}} · the first release{{end}} · frozen when the release was built{{end}}{{end}}
+
+{{define "changelog-empty"}}{{if eq (print .State) "ahead"}}No new commits since the release before.{{else}}Nothing to list.{{end}}{{end}}
+
+{{define "commit-type"}}<span class="chip chip-{{.}}">{{.}}</span>{{end}}
+
+{{define "pull-group"}}
+<div class="commit-group">
+  {{if .Pull}}<div class="commit-pull">{{template "commit-type" (index .Commits 0).Type}}<a href="{{.Pull.URL}}" target="_blank" rel="noopener"><b>{{.Pull.Title}}</b></a> <a class="small" href="{{.Pull.URL}}" target="_blank" rel="noopener">#{{.Pull.Number}}</a></div>{{end}}
+  {{range .Commits}}<div class="commit-line">{{if not $.Pull}}{{template "commit-type" .Type}}{{end}}<span class="mono small accent">{{short .SHA 7}}</span><span>{{.Title}}</span>{{if .Author}}<span class="small muted">@{{.Author}}</span>{{end}}</div>{{end}}
+</div>
+{{end}}
+
+{{define "ships-card"}}{{$s := .Ships}}
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header">
+    <div>
+      <h2>{{if eq $s.Direction "backward"}}What leaves {{.Env}}{{else}}What ships to {{.Env}}{{end}}</h2>
+      <p>{{if eq $s.State "failed"}}GitHub could not be read: {{$s.Error}}{{else if eq $s.State "unavailable"}}No commit history: a registered image is on one side.{{else}}{{len $s.Releases}} release{{if ne (len $s.Releases) 1}}s{{end}} · {{$s.CommitCount}} commit{{if ne $s.CommitCount 1}}s{{end}} · {{$s.PullCount}} pull request{{if ne $s.PullCount 1}}s{{end}}{{if $s.From}} between r{{$s.From}} and r{{$s.To}}{{end}} · frozen when the request was made{{end}}</p>
+    </div>
+    {{if $s.CompareURL}}<a class="small" href="{{$s.CompareURL}}" target="_blank" rel="noopener">compare on GitHub {{icon "external"}}</a>{{end}}
+  </div>
+  <div class="card-body">
+    {{if eq $s.State "diverged"}}<div class="alert alert-warn" style="margin-bottom:12px">{{icon "alert"}}<span>The two releases are on different branches; showing the commits GitHub reports.</span></div>{{end}}
+    {{range $s.Releases}}<div class="ship-release"><div class="ship-number"><a class="mono" href="/services/{{$.Service}}/releases/{{.Number}}"><b>r{{.Number}}</b></a><span class="small muted">{{len .Commits}} commit{{if ne (len .Commits) 1}}s{{end}}</span></div><div class="ship-commits">{{range shipLines .Commits}}{{template "ship-commit" .}}{{end}}</div></div>{{end}}
+    {{if $s.Leaving}}<div class="ship-release"><div class="ship-number"><b>What leaves {{$.Env}}</b><span class="small muted">on the other branch</span></div><div class="ship-commits">{{range shipLines $s.Leaving}}{{template "ship-commit" .}}{{end}}</div></div>{{end}}
+    {{if $s.Unattributed}}<div class="ship-release"><div class="ship-number"><span class="small muted">not in any release changelog</span></div><div class="ship-commits">{{range shipLines $s.Unattributed}}{{template "ship-commit" .}}{{end}}</div></div>{{end}}
+  </div>
+</div>
+{{end}}
+
+{{define "ship-commit"}}<div class="commit-line">{{template "commit-type" .Type}}<span>{{.Title}}{{if gt .Commits 1}} <span class="muted">({{.Commits}} commits)</span>{{end}}</span>{{if .PullNumber}}<a class="small" href="{{.PullURL}}" target="_blank" rel="noopener">#{{.PullNumber}}</a>{{end}}<span class="mono small muted">{{short .SHA 7}}</span></div>{{end}}

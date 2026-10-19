@@ -16,6 +16,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
 	queueCatalog "github.com/klzn-labs/kalzone/app/queue/repositories/catalog"
 	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
+	"github.com/klzn-labs/kalzone/app/release/usecases/changelogs"
 	"github.com/klzn-labs/kalzone/app/release/usecases/releases"
 	"github.com/klzn-labs/kalzone/app/team/usecases/members"
 	"github.com/klzn-labs/kalzone/app/team/usecases/source"
@@ -93,6 +94,7 @@ func catalogPageInjections() fx.Option {
 		func(c grafana.Client) environmentPage.Grafana { return c },
 		func(u services.ServicesUsecase) releasesPage.Services { return u },
 		func(u releases.ReleasesUsecase) releasesPage.Releases { return u },
+		func(u changelogs.ChangelogsUsecase) releasesPage.Changelogs { return u },
 	)
 }
 

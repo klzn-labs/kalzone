@@ -12,6 +12,7 @@ import (
 	"github.com/klzn-labs/kalzone/internal/httpserver/wait"
 	"github.com/klzn-labs/kalzone/internal/requestctx"
 	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/approval"
 	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/klzn-labs/kalzone/pkg/page"
 	"github.com/klzn-labs/kalzone/pkg/scope"
@@ -21,6 +22,7 @@ type Requests interface {
 	Get(ctx context.Context, a actor.Actor, id string) (entities.Request, error)
 	PageFor(ctx context.Context, a actor.Actor, status string, p page.Request) (page.Page[entities.Request], error)
 	Cancel(ctx context.Context, a actor.Actor, id string) (entities.Request, error)
+	Preview(ctx context.Context, r entities.Request) (approval.Preview, error)
 }
 
 type RequestsHandler struct {
@@ -57,7 +59,12 @@ func (h RequestsHandler) Get(c *gin.Context) {
 	a, id := requestctx.ActorFrom(c), c.Param("id")
 	load := func(ctx context.Context) (requestDTO, error) {
 		r, err := h.requests.Get(ctx, a, id)
-		return h.toDTO(r), err
+		if err != nil {
+			return requestDTO{}, err
+		}
+		dto := h.toDTO(r)
+		dto.Preview = h.previewOf(ctx, r)
+		return dto, nil
 	}
 	wait.Read(c, h.waiter, d, load, finalRequest)
 }

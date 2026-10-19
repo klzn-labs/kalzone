@@ -26,11 +26,20 @@ type Releases interface {
 	List(ctx context.Context, serviceSlug string, limit int) ([]release.Release, error)
 	Request(ctx context.Context, a actor.Actor, serviceSlug, ref string) (release.Release, error)
 	Register(ctx context.Context, a actor.Actor, serviceSlug, tag string) (release.Release, error)
+	Resolve(ctx context.Context, serviceSlug, ref string) (release.Release, error)
 }
+
+type Changelogs interface {
+	Get(ctx context.Context, rel release.Release) (release.Changelog, error)
+	Many(ctx context.Context, releaseIDs []string) (map[string]release.Changelog, error)
+}
+
+type catalogEnv = catalog.Environment
 
 type Row struct {
 	Release     release.Release
 	RequestedBy identity.User
+	Changes     string
 }
 
 type data struct {
@@ -49,14 +58,15 @@ type EnvTab struct {
 }
 
 type ReleasesHandler struct {
-	renderer *web.Renderer
-	views    web.Views
-	services Services
-	releases Releases
+	renderer   *web.Renderer
+	views      web.Views
+	services   Services
+	releases   Releases
+	changelogs Changelogs
 }
 
-func NewReleasesHandler(renderer *web.Renderer, views web.Views, services Services, releases Releases) ReleasesHandler {
-	return ReleasesHandler{renderer: renderer, views: views, services: services, releases: releases}
+func NewReleasesHandler(renderer *web.Renderer, views web.Views, services Services, releases Releases, changelogs Changelogs) ReleasesHandler {
+	return ReleasesHandler{renderer: renderer, views: views, services: services, releases: releases, changelogs: changelogs}
 }
 
 func (h ReleasesHandler) Show(c *gin.Context) {
@@ -105,14 +115,18 @@ func (h ReleasesHandler) frame(ctx context.Context, slug string) (data, error) {
 }
 
 func (h ReleasesHandler) rows(ctx context.Context, list []release.Release) ([]Row, error) {
-	ids := make([]string, 0, len(list))
+	userIDs, releaseIDs, numbers := make([]string, 0, len(list)), make([]string, 0, len(list)), map[string]int{}
 	for _, r := range list {
-		ids = append(ids, r.RequestedBy)
+		userIDs, releaseIDs, numbers[r.ID] = append(userIDs, r.RequestedBy), append(releaseIDs, r.ID), r.Number
 	}
-	users, err := h.views.UsersByID(ctx, ids)
+	users, err := h.views.UsersByID(ctx, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	logs, err := h.changelogs.Many(ctx, releaseIDs)
 	rows := make([]Row, 0, len(list))
 	for _, r := range list {
-		rows = append(rows, Row{Release: r, RequestedBy: users[r.RequestedBy]})
+		rows = append(rows, Row{Release: r, RequestedBy: users[r.RequestedBy], Changes: changesLabel(logs[r.ID], numbers)})
 	}
 	return rows, err
 }
@@ -154,6 +168,7 @@ func (h ReleasesHandler) finish(c *gin.Context, err error, message string) {
 
 func RegisterReleasesRoutes(routes httpserver.Web, h ReleasesHandler) {
 	routes.GET("/services/:service/releases", h.Show)
+	routes.GET("/services/:service/releases/:number", h.Detail)
 	routes.POST("/services/:service/releases", h.Build)
 	routes.POST("/services/:service/releases/registrations", h.Register)
 	routes.POST("/services/:service/build-settings", h.Settings)

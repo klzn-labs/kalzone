@@ -1,0 +1,52 @@
+{{define "content"}}
+{{$d := .Data}}{{$r := $d.Release}}{{$log := $d.Changelog}}{{$slug := $d.Service.Slug}}
+{{template "service-header" dict "Service" $d.Service "Team" $d.Team "Envs" $d.Envs "Tab" "releases"}}
+
+<div class="page-header" style="margin-top:4px">
+  <div>
+    <div class="eyebrow"><a href="/services/{{$slug}}/releases">Releases</a></div>
+    <h1 class="row">r{{$r.Number}} {{template "release-status" (print $r.Status)}}</h1>
+    <p class="lead">{{if eq (print $r.Source) "registered"}}Registered tag <span class="mono">{{$r.Tag}}</span>{{else}}Built from <span class="mono">{{$r.GitRef}}{{if $r.CommitSHA}}@{{short $r.CommitSHA 7}}{{end}}</span>{{if eq (print $r.Trigger) "push"}} on push{{end}}{{end}} · {{ago $r.CreatedAt}}</p>
+  </div>
+  {{if $d.PromoteHint}}<div class="actions"><a class="btn btn-primary" href="/services/{{$slug}}/env/prod">{{icon "arrow"}}Promote from the prod page</a></div>{{end}}
+</div>
+
+<div class="split">
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2>{{if $log.BaseNumber}}Changelog since r{{$log.BaseNumber}}{{else}}Changelog{{end}}</h2>
+        <p>{{template "changelog-summary" $log}}</p>
+      </div>
+      {{if $log.CompareURL}}<a class="small" href="{{$log.CompareURL}}" target="_blank" rel="noopener">compare on GitHub {{icon "external"}}</a>{{end}}
+    </div>
+    <div class="card-body">
+      {{if eq (print $log.State) "diverged"}}<div class="alert alert-warn" style="margin-bottom:12px">{{icon "alert"}}<span>r{{$r.Number}} is not a descendant of r{{$log.BaseNumber}}; showing the commits GitHub reports.</span></div>{{end}}
+      {{if $log.Truncated}}<div class="alert alert-warn" style="margin-bottom:12px">{{icon "alert"}}<span>GitHub lists at most 250 commits; open the comparison for the rest.</span></div>{{end}}
+      {{range $d.Groups}}{{template "pull-group" .}}{{else}}<p class="muted">{{template "changelog-empty" $log}}</p>{{end}}
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-header"><div><h2>Build</h2></div></div>
+      <div class="card-body">
+        <dl class="details" style="grid-template-columns:90px minmax(0,1fr)">
+          <dt>Commit</dt><dd class="mono">{{if $r.CommitSHA}}{{short $r.CommitSHA 12}}{{else}}—{{end}}</dd>
+          <dt>Image</dt><dd class="mono" title="{{$r.Reference}}">{{if $r.Digest}}{{$r.Image}}@{{short $r.Digest 19}}{{else}}—{{end}}</dd>
+          {{if $r.RunURL}}<dt>Run</dt><dd><a href="{{$r.RunURL}}" target="_blank" rel="noopener">workflow run {{icon "external"}}</a></dd>{{end}}
+          {{if eq (print $r.Source) "shared"}}<dt>Source</dt><dd>shared from a build of the same image</dd>{{end}}
+        </dl>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><h2>Where it runs</h2></div></div>
+      <div class="card-body">
+        <dl class="details" style="grid-template-columns:90px minmax(0,1fr)">
+          {{range $d.Runs}}<dt>{{.Env}}</dt><dd>{{if .Here}}<span class="badge badge-ok">r{{.Live}} · live</span>{{else if .Live}}<span class="muted">r{{.Live}}{{if gt .Behind 0}} · {{.Behind}} release{{if gt .Behind 1}}s{{end}} behind{{end}}</span>{{else}}<span class="muted">not deployed</span>{{end}}</dd>{{end}}
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}

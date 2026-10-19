@@ -72,10 +72,8 @@ func (h RequestsHandler) Show(c *gin.Context) {
 		return
 	}
 	view := detailView{Request: r, CanDecide: r.Pending() && h.requests.MayDecide(ctx, a, r), CanCancel: r.Pending() && r.RequestedBy == a.UserID}
-	if r.Pending() {
-		view.Preview, err = h.requests.Preview(ctx, r)
-	}
-	if err != nil {
+	view.Preview, err = h.requests.Preview(ctx, r)
+	if err != nil && r.Pending() {
 		view.PreviewError = web.UserMessage(err)
 	}
 	h.renderer.Render(c, http.StatusOK, "request", web.Page{Title: r.Summary, Nav: "requests", Data: view})

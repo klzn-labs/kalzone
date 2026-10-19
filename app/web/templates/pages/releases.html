@@ -38,12 +38,13 @@
         <tbody>
         {{range $d.Rows}}{{$r := .Release}}
           <tr>
-            <td><span class="revision-number">r{{$r.Number}}</span></td>
+            <td><a class="revision-number" href="/services/{{$slug}}/releases/{{$r.Number}}">r{{$r.Number}}</a></td>
             <td>{{template "release-status" (print $r.Status)}}{{if $r.Failure}}<div class="small muted" style="margin-top:4px;max-width:260px">{{$r.Failure}}</div>{{end}}</td>
             <td>
               {{if eq (print $r.Source) "registered"}}<span class="ref">{{icon "tag"}}{{$r.Tag}}</span>
               {{else}}<span class="ref">{{icon "branch"}}{{$r.GitRef}}</span>{{if $r.CommitSHA}} <span class="ref muted">@{{short $r.CommitSHA 7}}</span>{{end}}{{end}}
               <div class="small muted">{{if eq (print $r.Source) "shared"}}shared from a build of the same image · {{end}}{{if eq (print $r.Trigger) "push"}}auto-build on push{{else if .RequestedBy.Login}}by @{{.RequestedBy.Login}}{{end}}</div>
+              {{if .Changes}}<div class="small"><a href="/services/{{$slug}}/releases/{{$r.Number}}">{{.Changes}}</a></div>{{end}}
             </td>
             <td>{{if $r.Digest}}<span class="ref" title="{{$r.Reference}}">{{icon "package"}}{{short $r.Digest 12}}</span>{{else}}<span class="muted">—</span>{{end}}{{if $r.RunURL}}<div><a class="small" href="{{$r.RunURL}}" target="_blank" rel="noopener">workflow run {{icon "external"}}</a></div>{{end}}</td>
             <td class="right muted nowrap" title="{{date $r.CreatedAt}}">{{ago $r.CreatedAt}}</td>

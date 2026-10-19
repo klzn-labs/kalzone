@@ -25,31 +25,37 @@ type Releases interface {
 	Register(ctx context.Context, a actor.Actor, serviceSlug, tag string) (entities.Release, error)
 }
 
-type ReleasesHandler struct {
-	releases Releases
-	waiter   wait.Waiter
+type Changelogs interface {
+	Get(ctx context.Context, rel entities.Release) (entities.Changelog, error)
 }
 
-func NewReleasesHandler(releases Releases, waiter wait.Waiter) ReleasesHandler {
-	return ReleasesHandler{releases: releases, waiter: waiter}
+type ReleasesHandler struct {
+	releases   Releases
+	changelogs Changelogs
+	waiter     wait.Waiter
+}
+
+func NewReleasesHandler(releases Releases, changelogs Changelogs, waiter wait.Waiter) ReleasesHandler {
+	return ReleasesHandler{releases: releases, changelogs: changelogs, waiter: waiter}
 }
 
 type ReleaseDTO struct {
-	ID         string     `json:"id"`
-	Number     int        `json:"number"`
-	Source     string     `json:"source" enum:"build,registered,shared"`
-	Status     string     `json:"status" enum:"requested,building,built,failed"`
-	Trigger    string     `json:"trigger" enum:"manual,push,register"`
-	GitRef     string     `json:"git_ref,omitempty"`
-	CommitSHA  string     `json:"commit_sha,omitempty"`
-	Image      string     `json:"image"`
-	Tag        string     `json:"tag,omitempty"`
-	Digest     string     `json:"digest,omitempty"`
-	Reference  string     `json:"reference,omitempty"`
-	RunURL     string     `json:"run_url,omitempty"`
-	Failure    string     `json:"failure,omitempty"`
-	CreatedAt  time.Time  `json:"created_at"`
-	FinishedAt *time.Time `json:"finished_at,omitempty"`
+	ID         string        `json:"id"`
+	Number     int           `json:"number"`
+	Source     string        `json:"source" enum:"build,registered,shared"`
+	Status     string        `json:"status" enum:"requested,building,built,failed"`
+	Trigger    string        `json:"trigger" enum:"manual,push,register"`
+	GitRef     string        `json:"git_ref,omitempty"`
+	CommitSHA  string        `json:"commit_sha,omitempty"`
+	Image      string        `json:"image"`
+	Tag        string        `json:"tag,omitempty"`
+	Digest     string        `json:"digest,omitempty"`
+	Reference  string        `json:"reference,omitempty"`
+	RunURL     string        `json:"run_url,omitempty"`
+	Failure    string        `json:"failure,omitempty"`
+	CreatedAt  time.Time     `json:"created_at"`
+	FinishedAt *time.Time    `json:"finished_at,omitempty"`
+	Changelog  *ChangelogDTO `json:"changelog,omitempty"`
 }
 
 func ToDTO(r entities.Release) ReleaseDTO {
@@ -97,7 +103,7 @@ func (h ReleasesHandler) Get(c *gin.Context) {
 		httperror.Abort(c, err)
 		return
 	}
-	wait.Read(c, h.waiter, d, h.reread(c, id), finalRelease)
+	wait.Read(c, h.waiter, d, h.rereadWithChangelog(c, id), finalRelease)
 }
 
 func (h ReleasesHandler) releaseID(c *gin.Context) (string, error) {
@@ -124,6 +130,20 @@ func (h ReleasesHandler) reread(c *gin.Context, id string) wait.Load[ReleaseDTO]
 	return func(ctx context.Context) (ReleaseDTO, error) {
 		rel, err := h.releases.GetFor(ctx, a, id)
 		return ToDTO(rel), err
+	}
+}
+
+func (h ReleasesHandler) rereadWithChangelog(c *gin.Context, id string) wait.Load[ReleaseDTO] {
+	a := requestctx.ActorFrom(c)
+	return func(ctx context.Context) (ReleaseDTO, error) {
+		rel, err := h.releases.GetFor(ctx, a, id)
+		if err != nil {
+			return ReleaseDTO{}, err
+		}
+		log, err := h.changelogs.Get(ctx, rel)
+		dto := ToDTO(rel)
+		dto.Changelog = toChangelogDTO(log)
+		return dto, err
 	}
 }
 

@@ -28,6 +28,7 @@
     <tbody>{{range $d.Preview.Lines}}<tr><td class="key">{{.Key}}</td><td class="value">{{or .Before "—"}}</td><td class="value">{{or .After "—"}}</td></tr>{{else}}<tr><td colspan="3" class="muted">Nothing would change.</td></tr>{{end}}</tbody>
   </table></div>
 </div>
+{{if $d.Preview.Ships}}{{template "ships-card" dict "Ships" $d.Preview.Ships "Env" $r.Environment "Service" $r.ServiceSlug}}{{end}}
 {{if $d.CanDecide}}
 <div class="grid grid-2">
   <form class="card" method="post" action="/requests/{{$r.ID}}/approve" hx-post="/requests/{{$r.ID}}/approve" hx-confirm="Approve and run it now?">{{template "csrf" $csrf}}
@@ -40,6 +41,7 @@
 {{end}}
 {{if $d.CanCancel}}<form method="post" action="/requests/{{$r.ID}}/cancel" hx-post="/requests/{{$r.ID}}/cancel" style="margin-top:12px">{{template "csrf" $csrf}}<button class="btn btn-ghost">{{icon "trash"}}Cancel my request</button></form>{{end}}
 {{else}}
+{{if $d.Preview.Ships}}{{template "ships-card" dict "Ships" $d.Preview.Ships "Env" $r.Environment "Service" $r.ServiceSlug}}{{end}}
 <div class="card"><div class="card-body">
   {{if $r.Result}}<p>{{icon "check"}} Done: <b class="mono">{{$r.Result}}</b></p>{{end}}
   {{if $r.ErrorCode}}<div class="alert alert-danger">{{icon "alert"}}<span><span class="mono">{{$r.ErrorCode}}</span> · {{$r.ErrorMessage}}</span></div>{{end}}
