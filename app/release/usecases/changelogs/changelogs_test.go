@@ -259,3 +259,18 @@ func Test_Get_NamesTheBaseRelease(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, got.BaseNumber)
 }
+
+func Test_Fill_KeepsCommitsWithoutPullAccess(t *testing.T) {
+	w := newWorld()
+	w.built(1, "s1", 0)
+	w.built(2, "s2", 5)
+	w.compares("s1", "s2", "s2")
+	w.github.pullsErr = entities.ErrNoPullAccess
+
+	require.NoError(t, w.usecase.Fill(ctx, "r2"))
+
+	got := w.logs.rows["r2"]
+	require.Equal(t, entities.ChangelogAhead, got.State)
+	require.Equal(t, []string{"s2"}, shas(got.Commits))
+	require.Equal(t, 1, w.github.pullCalls)
+}

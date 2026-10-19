@@ -111,6 +111,7 @@ type github struct {
 	pulls        map[string]*entities.PullRef
 	down         bool
 	pullsDown    bool
+	pullsErr     error
 	message      string
 	gate         chan struct{}
 	compareCalls int
@@ -145,6 +146,9 @@ func (g *github) PullFor(_ context.Context, _, sha string) (*entities.PullRef, e
 	g.pullCalls++
 	if g.pullsDown {
 		return nil, errors.New("github: 403 rate limited")
+	}
+	if g.pullsErr != nil {
+		return nil, g.pullsErr
 	}
 	return g.pulls[sha], nil
 }
