@@ -27,12 +27,13 @@ type history struct {
 	compares     map[string]Comparison
 	commits      map[string]Commit
 	failing      map[string]bool
+	pullsDenied  map[string]bool
 	compareCalls int
 	pullCalls    int
 }
 
 func newHistory() history {
-	return history{compares: map[string]Comparison{}, commits: map[string]Commit{}, failing: map[string]bool{}}
+	return history{compares: map[string]Comparison{}, commits: map[string]Commit{}, failing: map[string]bool{}, pullsDenied: map[string]bool{}}
 }
 
 func (s *Server) routeHistory(mux *http.ServeMux) {
@@ -63,6 +64,12 @@ func (s *Server) FailHistory(repo string, failing bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.history.failing[repo] = failing
+}
+
+func (s *Server) DenyPulls(repo string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.history.pullsDenied[repo] = true
 }
 
 func (s *Server) CompareCalls() int {
@@ -130,7 +137,13 @@ func (s *Server) commitPulls(w http.ResponseWriter, r *http.Request) {
 	}
 	s.mu.Lock()
 	s.history.pullCalls++
+	denied := s.history.pullsDenied[repoName(r)]
 	s.mu.Unlock()
+	if denied {
+		w.WriteHeader(http.StatusForbidden)
+		writeJSON(w, map[string]string{"message": "Resource not accessible by integration"})
+		return
+	}
 	pulls := []map[string]any{}
 	if c.PullNumber != 0 {
 		url := fmt.Sprintf("https://github.com/%s/pull/%d", repoName(r), c.PullNumber)

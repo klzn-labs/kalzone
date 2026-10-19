@@ -102,3 +102,13 @@ func Test_Commit_ReadsOneCommit(t *testing.T) {
 	require.Equal(t, "feat: first", commit.Title)
 	require.Equal(t, "ana", commit.Author)
 }
+
+func Test_PullFor_WithoutPullRequestAccessSaysSo(t *testing.T) {
+	client, server := appClient(t)
+	server.WillCommit("o/api", fakegithub.Commit{SHA: "ccc", Message: "x", PullNumber: 61})
+	server.DenyPulls("o/api")
+
+	_, err := client.PullFor(context.Background(), "o/api", "ccc")
+
+	require.ErrorIs(t, err, entities.ErrNoPullAccess)
+}

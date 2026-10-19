@@ -2,9 +2,11 @@ package githubapp
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/klzn-labs/kalzone/app/release/entities"
@@ -75,9 +77,8 @@ func (c Client) Commit(ctx context.Context, repository, sha string) (entities.Co
 }
 
 func (c Client) PullFor(ctx context.Context, repository, sha string) (*entities.PullRef, error) {
-	var pulls []pullRefJSON
-	path := "/repos/" + repository + "/commits/" + url.PathEscape(sha) + "/pulls"
-	if err := c.installed(ctx, repository, http.MethodGet, path, nil, http.StatusOK, &pulls); err != nil {
+	pulls, err := c.pullsOf(ctx, repository, sha)
+	if err != nil {
 		return nil, err
 	}
 	for _, p := range pulls {
@@ -86,4 +87,23 @@ func (c Client) PullFor(ctx context.Context, repository, sha string) (*entities.
 		}
 	}
 	return nil, nil
+}
+
+func (c Client) pullsOf(ctx context.Context, repository, sha string) ([]pullRefJSON, error) {
+	token, err := c.installationToken(ctx, repository)
+	if err != nil {
+		return nil, err
+	}
+	status, raw, err := c.do(ctx, http.MethodGet, "/repos/"+repository+"/commits/"+url.PathEscape(sha)+"/pulls", "token "+token, nil)
+	if err != nil {
+		return nil, err
+	}
+	if status == http.StatusForbidden && strings.Contains(string(raw), "not accessible by integration") {
+		return nil, entities.ErrNoPullAccess
+	}
+	if err := unexpected(status, http.StatusOK, "commit pulls of "+repository); err != nil {
+		return nil, err
+	}
+	var pulls []pullRefJSON
+	return pulls, json.Unmarshal(raw, &pulls)
 }
