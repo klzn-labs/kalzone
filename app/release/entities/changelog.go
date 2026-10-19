@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"time"
@@ -24,6 +25,8 @@ const (
 	FetchTimeout         = 2 * time.Minute
 	retryFloor           = FetchTimeout + 30*time.Second
 )
+
+var ErrNoPullAccess = errors.New("the GitHub App cannot read pull requests on this repository")
 
 var commitTypes = []string{"feat", "fix", "chore", "docs", "refactor", "perf", "test", "build", "ci", "style", "revert"}
 
