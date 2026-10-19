@@ -13,21 +13,22 @@ import (
 
 func funcs() template.FuncMap {
 	return template.FuncMap{
-		"icon":     icon,
-		"ago":      Ago,
-		"date":     func(t time.Time) string { return t.UTC().Format("Jan 2, 2006 15:04 UTC") },
-		"iso":      func(t time.Time) string { return t.UTC().Format(time.RFC3339) },
-		"initials": Initials,
-		"hue":      Hue,
-		"add":      func(a, b int) int { return a + b },
-		"dict":     dict,
-		"upper":    strings.ToUpper,
-		"join":     strings.Join,
-		"short":    Short,
-		"deref":    deref,
-		"list":     func(values ...int) []int { return values },
-		"digestOf": digestOf,
-		"span":     Span,
+		"icon":      icon,
+		"ago":       Ago,
+		"date":      func(t time.Time) string { return t.UTC().Format("Jan 2, 2006 15:04 UTC") },
+		"iso":       func(t time.Time) string { return t.UTC().Format(time.RFC3339) },
+		"initials":  Initials,
+		"hue":       Hue,
+		"add":       func(a, b int) int { return a + b },
+		"dict":      dict,
+		"upper":     strings.ToUpper,
+		"join":      strings.Join,
+		"short":     Short,
+		"deref":     deref,
+		"list":      func(values ...int) []int { return values },
+		"digestOf":  digestOf,
+		"span":      Span,
+		"shipLines": shipLines,
 	}
 }
 

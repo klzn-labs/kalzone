@@ -56,6 +56,7 @@ func changelogInjections() fx.Option {
 		func(r mysql.ReleaseRepository) changelogs.Releases { return r },
 		func(l catalog.Lookup) changelogs.Services { return l },
 		func(c githubapp.Client) changelogs.GitHub { return c },
+		func(u changelogs.ChangelogsUsecase) releasesHandler.Changelogs { return u },
 	)
 }
 

@@ -90,3 +90,7 @@ func TeamIDs(teams []MyTeam) []string {
 	}
 	return ids
 }
+
+func (v Views) LiveReleases(ctx context.Context, serviceSlug string, envs []catalog.Environment) ([]EnvChip, error) {
+	return v.envChips(ctx, serviceSlug, envs)
+}
