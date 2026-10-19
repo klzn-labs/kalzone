@@ -8,6 +8,7 @@ import (
 	deploymentsHandler "github.com/klzn-labs/kalzone/app/deploy/handlers/deployments"
 	runtimeHandler "github.com/klzn-labs/kalzone/app/deploy/handlers/runtime"
 	deployCatalog "github.com/klzn-labs/kalzone/app/deploy/repositories/catalog"
+	deployChangelog "github.com/klzn-labs/kalzone/app/deploy/repositories/changelog"
 	deployConfig "github.com/klzn-labs/kalzone/app/deploy/repositories/envconfig"
 	"github.com/klzn-labs/kalzone/app/deploy/repositories/metrics"
 	"github.com/klzn-labs/kalzone/app/deploy/repositories/mysql"
@@ -21,6 +22,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
 	"github.com/klzn-labs/kalzone/app/queue/usecases/credentials"
+	"github.com/klzn-labs/kalzone/app/release/usecases/changelogs"
 	"github.com/klzn-labs/kalzone/app/release/usecases/releases"
 	"github.com/klzn-labs/kalzone/internal/discord"
 	"github.com/klzn-labs/kalzone/internal/eventbus"
@@ -33,7 +35,7 @@ import (
 func Deploy() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			mysql.NewDeploymentRepository, deployCatalog.NewLookup, deployRelease.NewLookup, deployConfig.NewSource,
+			mysql.NewDeploymentRepository, deployCatalog.NewLookup, deployRelease.NewLookup, deployConfig.NewSource, deployChangelog.NewShipments,
 			deployments.NewDeploymentsUsecase, agents.NewAgentsUsecase,
 			deploymentsHandler.NewDeploymentsHandler, agentapi.NewAgentAPIHandler,
 			runtime.NewRuntimeUsecase, runtimeHandler.NewRuntimeHandler, autodeploy.NewAutoDeployUsecase,
@@ -41,6 +43,7 @@ func Deploy() fx.Option {
 		),
 		deployAdapterInjections(),
 		deployUsecaseInjections(),
+		shipmentInjections(),
 		fx.Invoke(deploymentsHandler.RegisterDeploymentsRoutes, agentapi.RegisterAgentAPIRoutes, runtimeHandler.RegisterRuntimeRoutes, startDeploySweeper, subscribeAutoDeploy),
 	)
 }
@@ -94,4 +97,11 @@ func subscribeAutoDeploy(b *eventbus.Bus, u autodeploy.AutoDeployUsecase) {
 
 func startDeploySweeper(lc fx.Lifecycle, u agents.AgentsUsecase) {
 	sweeper.Start(lc, "deploy", u)
+}
+
+func shipmentInjections() fx.Option {
+	return fx.Provide(
+		func(u changelogs.ChangelogsUsecase) deployChangelog.Between { return u },
+		func(s deployChangelog.Shipments) deployments.Shipments { return s },
+	)
 }

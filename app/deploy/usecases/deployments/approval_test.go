@@ -16,21 +16,22 @@ import (
 )
 
 type gated struct {
-	store    *fakestore.Store
-	requests *requests
-	events   *published
+	store     *fakestore.Store
+	requests  *requests
+	events    *published
+	shipments *shipments
 }
 
 func newGated() gated {
-	return gated{store: fakestore.New(), requests: &requests{}, events: &published{}}
+	return gated{store: fakestore.New(), requests: &requests{}, events: &published{}, shipments: &shipments{}}
 }
 
 func (g gated) as(gate authz.Gate) deployments.DeploymentsUsecase {
-	return deployments.NewDeploymentsUsecase(g.store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{gate: gate}, g.events, g.requests)
+	return deployments.NewDeploymentsUsecase(g.store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{gate: gate}, g.events, g.requests, g.shipments)
 }
 
 func (g gated) per(gates map[string]authz.Gate) deployments.DeploymentsUsecase {
-	return deployments.NewDeploymentsUsecase(g.store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{gates: gates}, g.events, g.requests)
+	return deployments.NewDeploymentsUsecase(g.store, fakestore.Services{}, rels, configs{"dev": 4, "prod": 2}, environments{}, policy{gates: gates}, g.events, g.requests, g.shipments)
 }
 
 func (g gated) live(t *testing.T, env, releaseID string) entities.Deployment {
@@ -66,6 +67,7 @@ func Test_Deploy_NeedingApprovalSubmitsInsteadOfScheduling(t *testing.T) {
 	require.Equal(t, "deploy release #2 to prod", c.Summary)
 	require.Equal(t, deployments.Proposal{
 		Kind: approval.KindDeploy, Service: "api", Environment: "prod", ReleaseID: "r2", Strategy: "bluegreen", LiveID: live.ID,
+		Ships: &approval.Ships{State: "ahead", Direction: "forward", To: 2, CommitCount: 3},
 	}, g.proposal(t))
 }
 

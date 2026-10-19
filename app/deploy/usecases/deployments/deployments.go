@@ -51,6 +51,10 @@ type Requests interface {
 	Submit(ctx context.Context, a actor.Actor, c approval.Change) (*approval.Pending, error)
 }
 
+type Shipments interface {
+	Ships(ctx context.Context, fromReleaseID, toReleaseID string) (approval.Ships, error)
+}
+
 type Publisher interface {
 	Publish(ctx context.Context, event events.Event)
 }
@@ -64,12 +68,13 @@ type DeploymentsUsecase struct {
 	authz        Authorizer
 	publisher    Publisher
 	requests     Requests
+	shipments    Shipments
 }
 
-func NewDeploymentsUsecase(store Store, services ServiceLookup, releases ReleaseLookup, configs ConfigSource, environments EnvironmentLookup, authz Authorizer, publisher Publisher, requests Requests) DeploymentsUsecase {
+func NewDeploymentsUsecase(store Store, services ServiceLookup, releases ReleaseLookup, configs ConfigSource, environments EnvironmentLookup, authz Authorizer, publisher Publisher, requests Requests, shipments Shipments) DeploymentsUsecase {
 	return DeploymentsUsecase{
 		store: store, services: services, releases: releases, configs: configs,
-		environments: environments, authz: authz, publisher: publisher, requests: requests,
+		environments: environments, authz: authz, publisher: publisher, requests: requests, shipments: shipments,
 	}
 }
 
