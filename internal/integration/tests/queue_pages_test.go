@@ -21,14 +21,14 @@ func Test_TheQueuePagesListAndCreate(t *testing.T) {
 	_, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)
 
-	list := p.mia.Do(t, http.MethodGet, "/queues", nil)
-	form := p.bob.Do(t, http.MethodGet, "/queues/new", nil)
-	created := p.bob.Form(t, "/queues", queueForm(p.bob.CSRFToken))
-	settings := p.mia.Do(t, http.MethodGet, "/queues/dev/other?tab=settings", nil)
+	list := p.mia.Do(t, http.MethodGet, "/resources?kind=queue", nil)
+	form := p.bob.Do(t, http.MethodGet, "/resources/new/queue", nil)
+	created := p.bob.Form(t, "/resources/queues", queueForm(p.bob.CSRFToken))
+	settings := p.mia.Do(t, http.MethodGet, "/resources/queues/dev/other?tab=settings", nil)
 
 	require.Equal(t, http.StatusOK, list.Status, list.Body)
 	require.Contains(t, list.Body, "place-import")
-	require.Contains(t, list.Body, "Create queue")
+	require.Contains(t, list.Body, "New queue")
 	require.Equal(t, http.StatusOK, form.Status, form.Body)
 	require.Equal(t, http.StatusNoContent, created.Status, created.Body)
 	require.Contains(t, settings.Body, "5 / s")
@@ -38,7 +38,7 @@ func Test_TheQueuePagesListAndCreate(t *testing.T) {
 func Test_TheQueuePageShowsStateAndPauses(t *testing.T) {
 	_, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)
-	base := "/queues/dev/place-import"
+	base := "/resources/queues/dev/place-import"
 
 	detail := p.mia.Do(t, http.MethodGet, base, nil)
 	paused := p.bob.Form(t, base+"/pause", url.Values{"_csrf": {p.bob.CSRFToken}})
@@ -56,12 +56,12 @@ func Test_TheQueuePageReplaysAndDeletes(t *testing.T) {
 	s, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)
 	dropPublishers(t, p.bob)
-	base := "/queues/dev/place-import"
+	base := "/resources/queues/dev/place-import"
 
 	replay := p.bob.Form(t, base+"/dead/replay-all", url.Values{"_csrf": {p.bob.CSRFToken}})
 	desired := s.Queued(t, http.MethodGet, "/queued/v1/desired", nil)
 	deleted := p.bob.Form(t, base+"/delete", url.Values{"_csrf": {p.bob.CSRFToken}, "force": {"on"}})
-	list := p.mia.Do(t, http.MethodGet, "/queues", nil)
+	list := p.mia.Do(t, http.MethodGet, "/resources?kind=queue", nil)
 
 	require.Equal(t, http.StatusNoContent, replay.Status, replay.Body)
 	require.Contains(t, desired.Body, `"kind":"replay_all"`)
@@ -76,9 +76,9 @@ func Test_TheQueuePageSavesSettingsAsANewVersion(t *testing.T) {
 	form.Set("version", "1")
 	form.Set("message", "slower for the quota")
 
-	saved := p.bob.Form(t, "/queues/dev/place-import/settings", form)
-	stale := p.bob.Form(t, "/queues/dev/place-import/settings", form)
-	activity := p.mia.Do(t, http.MethodGet, "/queues/dev/place-import?tab=activity", nil)
+	saved := p.bob.Form(t, "/resources/queues/dev/place-import/settings", form)
+	stale := p.bob.Form(t, "/resources/queues/dev/place-import/settings", form)
+	activity := p.mia.Do(t, http.MethodGet, "/resources/queues/dev/place-import?tab=activity", nil)
 
 	require.Equal(t, http.StatusNoContent, saved.Status, saved.Body)
 	require.NotEqual(t, http.StatusNoContent, stale.Status, stale.Body)

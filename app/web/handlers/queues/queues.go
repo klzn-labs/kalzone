@@ -40,17 +40,16 @@ func NewQueuesHandler(renderer *web.Renderer, queues Queues, names ServiceNames)
 	return QueuesHandler{renderer: renderer, queues: queues, names: names}
 }
 
-func (h QueuesHandler) List(c *gin.Context) {
-	list, err := h.queues.List(c.Request.Context(), c.Query("environment"), "")
+func (h QueuesHandler) Rows(ctx context.Context, environment string) ([]Row, error) {
+	list, err := h.queues.List(ctx, environment, "")
 	if err != nil {
-		web.ErrorPage(c, h.renderer, err)
-		return
+		return nil, err
 	}
 	rows := make([]Row, 0, len(list))
 	for _, q := range list {
-		rows = append(rows, h.row(c.Request.Context(), q))
+		rows = append(rows, h.row(ctx, q))
 	}
-	h.renderer.Render(c, http.StatusOK, "queues", web.Page{Title: "Queues", Nav: "queues", Data: listView{Rows: rows, Environment: c.Query("environment")}})
+	return rows, nil
 }
 
 func (h QueuesHandler) Show(c *gin.Context) {
@@ -65,23 +64,22 @@ func (h QueuesHandler) Show(c *gin.Context) {
 		return
 	}
 	v := detailView{Row: h.row(c.Request.Context(), q), Tab: tab(c.Query("tab")), Edit: c.Query("edit") == "1", Versions: versions}
-	h.renderer.Render(c, http.StatusOK, "queue", web.Page{Title: q.Name + " · " + q.Environment, Nav: "queues", Data: v})
+	h.renderer.Render(c, http.StatusOK, "queue", web.Page{Title: q.Name + " · " + q.Environment, Nav: "resources", Data: v})
 }
 
 func (h QueuesHandler) New(c *gin.Context) {
-	h.renderer.Render(c, http.StatusOK, "queue_new", web.Page{Title: "Create queue", Nav: "queues", Data: entities.DefaultSettings("/hooks/")})
+	h.renderer.Render(c, http.StatusOK, "queue_new", web.Page{Title: "New queue", Nav: "resources", Data: entities.DefaultSettings("/hooks/")})
 }
 
 func RegisterQueuesRoutes(routes httpserver.Web, h QueuesHandler) {
-	routes.GET("/queues", h.List)
-	routes.GET("/queues/new", h.New)
-	routes.POST("/queues", h.Create)
-	routes.GET("/queues/:env/:name", h.Show)
-	routes.POST("/queues/:env/:name/pause", h.Pause)
-	routes.POST("/queues/:env/:name/resume", h.Resume)
-	routes.POST("/queues/:env/:name/settings", h.Edit)
-	routes.POST("/queues/:env/:name/delete", h.Delete)
-	routes.POST("/queues/:env/:name/dead/replay-all", h.ReplayAll)
-	routes.POST("/queues/:env/:name/dead/purge", h.Purge)
-	routes.POST("/queues/:env/:name/dead/:id/replay", h.Replay)
+	routes.GET("/resources/new/queue", h.New)
+	routes.POST("/resources/queues", h.Create)
+	routes.GET("/resources/queues/:env/:name", h.Show)
+	routes.POST("/resources/queues/:env/:name/pause", h.Pause)
+	routes.POST("/resources/queues/:env/:name/resume", h.Resume)
+	routes.POST("/resources/queues/:env/:name/settings", h.Edit)
+	routes.POST("/resources/queues/:env/:name/delete", h.Delete)
+	routes.POST("/resources/queues/:env/:name/dead/replay-all", h.ReplayAll)
+	routes.POST("/resources/queues/:env/:name/dead/purge", h.Purge)
+	routes.POST("/resources/queues/:env/:name/dead/:id/replay", h.Replay)
 }

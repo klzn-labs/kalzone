@@ -15,15 +15,11 @@ type Row struct {
 	Queue      entities.Queue
 	Consumer   string
 	Publishers string
+	Attached   []string
 	Stats      entities.Stats
 	Fresh      bool
 	State      string
 	Badge      string
-}
-
-type listView struct {
-	Rows        []Row
-	Environment string
 }
 
 type detailView struct {
@@ -44,19 +40,19 @@ func tab(raw string) string {
 func (h QueuesHandler) row(ctx context.Context, q entities.Queue) Row {
 	st, _, _ := h.queues.Stats(ctx, q.Environment, q.Name)
 	consumer, _ := h.names.SlugOf(ctx, q.ConsumerID)
-	r := Row{Queue: q, Consumer: consumer, Publishers: h.publisherNames(ctx, q), Stats: st, Fresh: st.Fresh(clock.Now().UTC())}
+	r := Row{Queue: q, Consumer: consumer, Publishers: strings.Join(h.slugs(ctx, q.Publishers), ", "), Attached: h.slugs(ctx, q.Attached()), Stats: st, Fresh: st.Fresh(clock.Now().UTC())}
 	r.State, r.Badge = state(r)
 	return r
 }
 
-func (h QueuesHandler) publisherNames(ctx context.Context, q entities.Queue) string {
+func (h QueuesHandler) slugs(ctx context.Context, ids []string) []string {
 	names := []string{}
-	for _, id := range q.Publishers {
+	for _, id := range ids {
 		if slug, err := h.names.SlugOf(ctx, id); err == nil {
 			names = append(names, slug)
 		}
 	}
-	return strings.Join(names, ", ")
+	return names
 }
 
 func state(r Row) (string, string) {
