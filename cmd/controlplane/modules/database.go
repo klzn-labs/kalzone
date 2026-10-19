@@ -3,10 +3,10 @@ package modules
 import (
 	"context"
 
-	"github.com/klzn-labs/kalzone/app/approvals/usecases/submit"
 	"github.com/klzn-labs/kalzone/app/authz"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	databasesHandler "github.com/klzn-labs/kalzone/app/database/handlers/databases"
 	databaseCatalog "github.com/klzn-labs/kalzone/app/database/repositories/catalog"
 	databaseDeploy "github.com/klzn-labs/kalzone/app/database/repositories/deploy"
 	databaseMysql "github.com/klzn-labs/kalzone/app/database/repositories/mysql"
@@ -24,11 +24,11 @@ func Database() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			databaseMysql.NewDatabaseRepository, provisioner.New, databaseCatalog.NewLookup,
-			databaseDeploy.NewRunning, databases.NewDatabasesUsecase, databaseEndpoint,
+			databaseDeploy.NewRunning, databases.NewDatabasesUsecase, databasesHandler.NewDatabasesHandler, databaseEndpoint,
 		),
 		databaseAdapterInjections(),
 		databaseUsecaseInjections(),
-		fx.Invoke(closeProvisioner),
+		fx.Invoke(closeProvisioner, databasesHandler.RegisterDatabasesRoutes),
 	)
 }
 
@@ -49,8 +49,8 @@ func databaseUsecaseInjections() fx.Option {
 		func(r databaseDeploy.Running) databases.Running { return r },
 		func(b *secretbox.Box) databases.Sealer { return b },
 		func(p authz.Policy) databases.Authorizer { return p },
-		func(u submit.SubmitUsecase) databases.Requests { return u },
 		func(b *eventbus.Bus) databases.Publisher { return b },
+		func(u databases.DatabasesUsecase) databasesHandler.Databases { return u },
 	)
 }
 

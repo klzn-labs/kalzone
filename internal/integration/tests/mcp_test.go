@@ -221,3 +221,16 @@ func Test_TheDocumentDescribesTheMergePatchBody(t *testing.T) {
 	body := doc.Paths["/api/v1/config/{service}/{env}"]["patch"].RequestBody.Content["application/merge-patch+json"]
 	require.Contains(t, body.Schema, "$ref")
 }
+
+func Test_McpListsDatabaseTools(t *testing.T) {
+	s, p := setupPlaces(t)
+
+	tools := listTools(t, mcpSession(t, s, issue(t, p.bob, tokenBody("dba", "read", "services")).Token))
+
+	for _, name := range []string{"listDatabases", "createDatabase", "getDatabase", "attachDatabase", "detachDatabase", "deleteDatabase"} {
+		require.Contains(t, tools, name)
+	}
+	require.False(t, mcpserver.Excluded("deleteDatabase"))
+	require.Contains(t, tools["attachDatabase"].Description, "secrets scope")
+	require.Contains(t, tools["detachDatabase"].Description, "secrets scope")
+}
