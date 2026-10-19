@@ -455,3 +455,31 @@ a.small svg, .small a svg { width: 12px; height: 12px; vertical-align: -1px; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .section-head h2 { font-size: 17px; }
 .section-head a { font-weight: 600; }
+
+.card-header.wrap { flex-wrap: wrap; }
+.release-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.release-actions input { width: 160px; }
+.release-actions details[open] > summary { background: var(--surface-2); }
+.release-actions details .inline-panel { margin-top: 8px; }
+.release-table tr.has-failure td { border-bottom: 0; }
+.release-table tr.failure-row td { padding-top: 0; }
+.release-table tr.failure-row:hover td { background: transparent; }
+.failure-note { padding: 8px 12px; border-radius: var(--radius-sm); background: var(--danger-soft); color: var(--danger); font-size: 13px; }
+.failure-note > summary { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.failure-note > summary svg { width: 15px; height: 15px; flex: none; }
+.failure-note .link { color: var(--accent-text); font-weight: 400; }
+.failure-note p { margin: 10px 0 8px; color: var(--text-2); }
+.failure-note .code { white-space: pre-wrap; word-break: break-word; }
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+.settings-col { background: var(--surface); padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; word-break: break-word; }
+.settings-label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.settings-col .row input { flex: 1; min-width: 0; }
+.settings-col .field label { font-weight: 400; }
+.settings-col .switch { align-items: flex-start; font-weight: 500; }
+.settings-col .switch .hint { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+.settings-col .form-actions { margin-top: auto; }
+.settings-snippet { padding: 14px 20px; }
+.settings-snippet > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-weight: 600; }
+.settings-snippet > summary svg { width: 15px; height: 15px; }
+.settings-snippet .code { margin-top: 12px; }
+.settings-snippet p { margin-top: 10px; }

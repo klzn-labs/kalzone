@@ -37,9 +37,11 @@ type Changelogs interface {
 type catalogEnv = catalog.Environment
 
 type Row struct {
-	Release     release.Release
-	RequestedBy identity.User
-	Changes     string
+	Release         release.Release
+	RequestedBy     identity.User
+	Changes         string
+	FailureSummary  string
+	MissingWorkflow bool
 }
 
 type data struct {
@@ -50,7 +52,9 @@ type data struct {
 	CanEdit  bool
 	CanBuild bool
 	Building bool
+	Wiring   Wiring
 	Snippet  string
+	Uses     string
 }
 
 type EnvTab struct {
@@ -94,6 +98,7 @@ func (h ReleasesHandler) build(ctx context.Context, a actor.Actor, slug string) 
 	d.CanEdit = h.views.Can(ctx, a, authz.EditService, resource)
 	d.CanBuild = h.views.Can(ctx, a, authz.CreateRelease, resource)
 	d.Building = anyBuilding(list)
+	d.Wiring = wiringOf(d.Service, list)
 	return d, nil
 }
 
@@ -107,7 +112,7 @@ func (h ReleasesHandler) frame(ctx context.Context, slug string) (data, error) {
 		return data{}, err
 	}
 	envs, err := h.views.Environments(ctx)
-	d := data{Service: service, Team: teams[service.OwnerTeamID], Snippet: callerWorkflow}
+	d := data{Service: service, Team: teams[service.OwnerTeamID], Snippet: callerWorkflow, Uses: buildWorkflowUses}
 	for _, env := range envs {
 		d.Envs = append(d.Envs, EnvTab{Env: env})
 	}
@@ -126,9 +131,13 @@ func (h ReleasesHandler) rows(ctx context.Context, list []release.Release) ([]Ro
 	logs, err := h.changelogs.Many(ctx, releaseIDs)
 	rows := make([]Row, 0, len(list))
 	for _, r := range list {
-		rows = append(rows, Row{Release: r, RequestedBy: users[r.RequestedBy], Changes: changesLabel(logs[r.ID], numbers)})
+		rows = append(rows, rowOf(r, users[r.RequestedBy], changesLabel(logs[r.ID], numbers)))
 	}
 	return rows, err
+}
+
+func rowOf(r release.Release, by identity.User, changes string) Row {
+	return Row{Release: r, RequestedBy: by, Changes: changes, FailureSummary: failureSummary(r.Failure), MissingWorkflow: missingWorkflow(r.Failure)}
 }
 
 func anyBuilding(list []release.Release) bool {

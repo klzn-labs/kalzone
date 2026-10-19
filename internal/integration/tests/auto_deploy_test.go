@@ -80,5 +80,5 @@ func Test_AutoDeployNeedsARepositoryAndIsSetFromTheReleasesPage(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, refused.Status, refused.Body)
 	require.Equal(t, http.StatusNoContent, saved.Status, saved.Body)
 	require.True(t, service.AutoDeployDev)
-	require.Contains(t, page.Body, ">to dev</span>")
+	require.Contains(t, page.Body, `name="auto_deploy_dev" checked`)
 }
