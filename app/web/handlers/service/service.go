@@ -51,6 +51,7 @@ type data struct {
 	Activity    []web.Activity
 	CanEdit     bool
 	CanMaintain bool
+	Resources   []ResourceUse
 }
 
 type ServiceHandler struct {
@@ -61,6 +62,8 @@ type ServiceHandler struct {
 	teams        Teams
 	configs      Configs
 	events       Events
+	queues       Queues
+	databases    Databases
 }
 
 type Deps struct {
@@ -69,12 +72,14 @@ type Deps struct {
 	Teams        Teams
 	Configs      Configs
 	Events       Events
+	Queues       Queues
+	Databases    Databases
 }
 
 func NewServiceHandler(renderer *web.Renderer, views web.Views, d Deps) ServiceHandler {
 	return ServiceHandler{
 		renderer: renderer, views: views, services: d.Services, decommission: d.Decommission,
-		teams: d.Teams, configs: d.Configs, events: d.Events,
+		teams: d.Teams, configs: d.Configs, events: d.Events, queues: d.Queues, databases: d.Databases,
 	}
 }
 
@@ -100,12 +105,21 @@ func (h ServiceHandler) build(ctx context.Context, a actor.Actor, slug string) (
 	if err != nil {
 		return data{}, err
 	}
-	events, err := h.events.List(ctx, audit.Filter{TargetID: service.ID, Limit: 15})
-	resource := authz.Resource{TeamID: service.OwnerTeamID}
-	return data{
-		Service: service, Team: owner(teams, service.OwnerTeamID), Teams: teams, Envs: envs, Activity: web.ActivityFrom(events),
-		CanEdit: h.views.Can(ctx, a, authz.EditService, resource), CanMaintain: h.views.Can(ctx, a, authz.DeleteService, resource),
-	}, err
+	d := data{Service: service, Team: owner(teams, service.OwnerTeamID), Teams: teams, Envs: envs}
+	return h.withHistory(ctx, a, d)
+}
+
+func (h ServiceHandler) withHistory(ctx context.Context, a actor.Actor, d data) (data, error) {
+	events, err := h.events.List(ctx, audit.Filter{TargetID: d.Service.ID, Limit: 15})
+	if err != nil {
+		return data{}, err
+	}
+	d.Activity = web.ActivityFrom(events)
+	d.Resources, err = h.resources(ctx, d.Service)
+	resource := authz.Resource{TeamID: d.Service.OwnerTeamID}
+	d.CanEdit = h.views.Can(ctx, a, authz.EditService, resource)
+	d.CanMaintain = h.views.Can(ctx, a, authz.DeleteService, resource)
+	return d, err
 }
 
 func (h ServiceHandler) envSummaries(ctx context.Context, slug string) ([]EnvSummary, error) {

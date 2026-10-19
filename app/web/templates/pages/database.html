@@ -1,0 +1,86 @@
+{{define "content"}}{{$d := .Data}}{{$db := $d.Database}}{{$base := printf "/resources/databases/%s/%s" $db.Environment $db.Name}}{{$csrf := .Viewer.CSRFToken}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/resources?kind=database">Resources</a></div>
+    <h1>{{$db.Name}}</h1>
+    <div class="row">
+      {{template "env-badge" $db.Environment}}
+      <span class="badge badge-ok">MySQL</span>
+      <span class="muted small">Team {{$d.Team}} · created <span title="{{date $db.CreatedAt}}">{{ago $db.CreatedAt}}</span></span>
+    </div>
+  </div>
+</div>
+
+<div class="stack">
+  <dl class="kv kv-4">
+    <div><dt>Host</dt><dd>{{$d.Address}}</dd></div>
+    <div><dt>Schema</dt><dd>{{$db.Schema}}</dd></div>
+    <div><dt>User</dt><dd>{{$db.Username}}</dd></div>
+    <div><dt>Connections</dt><dd>up to {{$db.MaxConnections}}</dd></div>
+  </dl>
+
+  <div class="card">
+    <div class="card-header">
+      <div><h2>Attached services</h2></div>
+      {{if and $d.CanEdit $d.Attachable}}
+      <div class="header-control">
+        <form class="form-inline attach-form" method="post" action="{{$base}}/attach" hx-post="{{$base}}/attach" hx-target="next .form-error">
+          {{template "csrf" $csrf}}
+          <label for="attach-service">Attach</label>
+          <select id="attach-service" name="service">{{range $d.Attachable}}<option value="{{.}}">{{.}}</option>{{end}}</select>
+          <button class="btn btn-primary">{{icon "plus"}}Attach</button>
+        </form>
+        <div class="form-error"></div>
+      </div>
+      {{end}}
+    </div>
+    {{if $d.Attachments}}
+    <div class="table-scroll"><table class="table">
+      <thead><tr><th>Service</th><th>State</th><th>Since</th><th class="right">Action</th></tr></thead>
+      <tbody>
+      {{range $d.Attachments}}
+        <tr>
+          <td class="mono"><a href="/services/{{.Service}}">{{.Service}}</a></td>
+          <td>{{template "attachment-state" .}}</td>
+          <td class="muted"><span title="{{date .Since}}">{{ago .Since}}</span></td>
+          <td class="right">{{template "attachment-action" dict "Row" . "Base" $base "CSRF" $csrf "CanEdit" $d.CanEdit}}</td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table></div>
+    {{else}}{{template "empty" dict "Icon" "layers" "Title" "No services attached" "Text" "Attach a service and its credentials arrive on its next deploy."}}{{end}}
+    <div class="card-body"><p class="muted small">Attach and detach take effect on each service's next deploy.</p></div>
+  </div>
+
+  {{if $d.CanEdit}}
+  <div class="card danger-zone">
+    <div class="card-body">
+      <div class="danger-row">
+        <div><h3>Delete this database</h3>{{if $d.Blocker}}<p>{{$d.Blocker}}</p>{{else}}<p>The schema and its user are dropped; the data is lost. Type the database name to confirm.</p>{{end}}</div>
+        <form class="form-inline" method="post" action="{{$base}}/delete" hx-post="{{$base}}/delete" hx-target="next .form-error">
+          {{template "csrf" $csrf}}
+          <input type="text" name="confirm" class="mono confirm-input" placeholder="{{$db.Name}}" aria-label="Type the database name to confirm"{{if $d.Blocker}} disabled{{end}}>
+          <button class="btn btn-danger"{{if $d.Blocker}} disabled{{end}}>{{icon "trash"}}Delete {{$db.Name}}</button>
+        </form>
+        <div class="form-error"></div>
+      </div>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{end}}
+
+{{define "attachment-state"}}
+{{if eq .State "attached"}}<span class="badge badge-ok"><span class="dot"></span>Attached</span>
+{{else if eq .State "draining"}}<span class="badge badge-warn"><span class="dot"></span>Detached, still running with these credentials</span>
+{{else}}<span class="badge"><span class="dot"></span>Detached</span>{{end}}
+{{end}}
+
+{{define "attachment-action"}}
+{{if and .CanEdit (not .Row.Detached)}}
+<form class="form-inline end" method="post" action="{{.Base}}/detach/{{.Row.Service}}" hx-post="{{.Base}}/detach/{{.Row.Service}}" hx-target="next .form-error" hx-confirm="Detach {{.Row.Service}}? It loses these credentials on its next deploy.">
+  {{template "csrf" .CSRF}}<button class="btn btn-sm">Detach</button>
+</form><div class="form-error"></div>
+{{else if eq .Row.State "draining"}}<span class="muted">Redeploy to finish</span>
+{{else}}<span class="muted">—</span>{{end}}
+{{end}}

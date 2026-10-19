@@ -19,6 +19,7 @@
     <a href="{{.NewHref}}">+ New {{.Noun}}</a>
   </div>
   {{if eq .Kind "queue"}}{{template "queue-section" .}}{{end}}
+  {{if eq .Kind "database"}}{{template "database-section" .}}{{end}}
 </section>
 {{end}}
 {{end}}
@@ -45,5 +46,26 @@
     </tbody>
   </table></div>
   {{else}}{{template "empty" dict "Icon" "layers" "Title" "No queues yet" "Text" "Create a queue to let services hand work to each other with retries and a rate limit." "Href" "/resources/new/queue" "Action" "New queue"}}{{end}}
+</div>
+{{end}}
+
+{{define "database-section"}}
+<div class="card">
+  {{if .Databases}}
+  <div class="table-scroll"><table class="table">
+    <thead><tr><th>Database</th><th>Env</th><th>Schema</th><th>Attached services</th><th>Team</th></tr></thead>
+    <tbody>
+    {{range .Databases}}
+      <tr>
+        <td><a class="mono" href="/resources/databases/{{.Database.Environment}}/{{.Database.Name}}"><b>{{.Database.Name}}</b></a></td>
+        <td>{{template "env-badge" .Database.Environment}}</td>
+        <td class="mono">{{.Database.Schema}}</td>
+        <td class="mono">{{if .Attached}}{{join .Attached ", "}}{{else}}<span class="muted">none</span>{{end}}</td>
+        <td>{{.Team}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}{{template "empty" dict "Icon" "layers" "Title" "No databases yet" "Text" "Create a database and attach it to a service; its credentials arrive on the next deploy." "Href" "/resources/new/database" "Action" "New database"}}{{end}}
 </div>
 {{end}}
