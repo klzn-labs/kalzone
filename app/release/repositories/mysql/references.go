@@ -1,6 +1,8 @@
 package mysql
 
 import (
+	"time"
+
 	"context"
 	"strings"
 
@@ -36,4 +38,10 @@ func (r ReleaseRepository) first(tx *gorm.DB) (entities.Release, bool, error) {
 		return entities.Release{}, false, err
 	}
 	return found[0], true, nil
+}
+
+func (r ReleaseRepository) PreviousBuilt(ctx context.Context, serviceID, excludeID string, finishedBefore time.Time) (entities.Release, bool, error) {
+	return r.first(r.db.WithContext(ctx).
+		Where("service_id = ? AND status = ? AND commit_sha <> '' AND id <> ? AND finished_at < ?", serviceID, entities.StatusBuilt, excludeID, finishedBefore).
+		Order("finished_at DESC"))
 }

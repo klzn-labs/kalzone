@@ -98,3 +98,37 @@ func Test_UnfinishedFor_ListsOnlyTheServicesOpenBuilds(t *testing.T) {
 	require.Len(t, unfinished, 1)
 	require.Equal(t, open.ID, unfinished[0].ID)
 }
+
+func builtAt(t *testing.T, repo mysql.ReleaseRepository, id, commit string, at time.Time) entities.Release {
+	t.Helper()
+	rel, err := repo.Create(ctx, requested(id, "a", at))
+	require.NoError(t, err)
+	rel.Status, rel.Digest, rel.CommitSHA, rel.FinishedAt = entities.StatusBuilt, "sha256:"+id, commit, &at
+	require.NoError(t, repo.Transition(ctx, rel, entities.StatusRequested))
+	return rel
+}
+
+func Test_PreviousBuilt_ByFinishTimeNotNumber(t *testing.T) {
+	repo := mysql.NewReleaseRepository(testdb.Open(t))
+	t0 := time.Now().UTC().Truncate(time.Millisecond)
+	builtAt(t, repo, "r1", sha("1"), t0)
+	r2 := builtAt(t, repo, "r2", sha("2"), t0.Add(3*time.Minute))
+	builtAt(t, repo, "r3", sha("3"), t0.Add(2*time.Minute))
+	builtAt(t, repo, "r4", "", t0.Add(150*time.Second))
+
+	previous, found, err := repo.PreviousBuilt(ctx, "a", r2.ID, *r2.FinishedAt)
+
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "r3", previous.ID)
+}
+
+func Test_PreviousBuilt_NoneForTheFirst(t *testing.T) {
+	repo := mysql.NewReleaseRepository(testdb.Open(t))
+	r1 := builtAt(t, repo, "r1", sha("1"), time.Now().UTC())
+
+	_, found, err := repo.PreviousBuilt(ctx, "a", r1.ID, *r1.FinishedAt)
+
+	require.NoError(t, err)
+	require.False(t, found)
+}
