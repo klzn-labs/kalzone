@@ -2,6 +2,7 @@ package changelogs
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/klzn-labs/kalzone/app/release/entities"
@@ -85,6 +86,9 @@ func (u ChangelogsUsecase) first(ctx context.Context, t target) (entities.Change
 func (u ChangelogsUsecase) withPulls(ctx context.Context, repository string, commits []entities.Commit) ([]entities.Commit, error) {
 	for i := range commits[:min(len(commits), entities.MaxPullLookups)] {
 		pull, err := u.github.PullFor(ctx, repository, commits[i].SHA)
+		if errors.Is(err, entities.ErrNoPullAccess) {
+			return commits, nil
+		}
 		if err != nil {
 			return nil, err
 		}
