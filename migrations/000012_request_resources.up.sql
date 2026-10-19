@@ -1,0 +1,1 @@
+ALTER TABLE change_requests ADD COLUMN resource VARCHAR(80) NOT NULL DEFAULT '';

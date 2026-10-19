@@ -3,17 +3,21 @@ package approval
 import "time"
 
 const (
-	KindConfigRevise = "config.revise"
-	KindSecretSet    = "secret.set"
-	KindSecretUnset  = "secret.unset"
-	KindDeploy       = "deploy"
-	KindPromote      = "promote"
-	KindRollback     = "rollback"
-	KindConfigApply  = "config.apply"
-	KindRemove       = "remove"
-	KindQueueCreate  = "queue.create"
-	KindQueueUpdate  = "queue.update"
-	KindQueueDelete  = "queue.delete"
+	KindConfigRevise   = "config.revise"
+	KindSecretSet      = "secret.set"
+	KindSecretUnset    = "secret.unset"
+	KindDeploy         = "deploy"
+	KindPromote        = "promote"
+	KindRollback       = "rollback"
+	KindConfigApply    = "config.apply"
+	KindRemove         = "remove"
+	KindQueueCreate    = "queue.create"
+	KindQueueUpdate    = "queue.update"
+	KindQueueDelete    = "queue.delete"
+	KindDatabaseCreate = "database.create"
+	KindDatabaseAttach = "database.attach"
+	KindDatabaseDetach = "database.detach"
+	KindDatabaseDelete = "database.delete"
 )
 
 type Change struct {
@@ -21,6 +25,7 @@ type Change struct {
 	Subject     string
 	ServiceID   string
 	ServiceSlug string
+	Resource    string
 	TeamID      string
 	Environment string
 	Summary     string

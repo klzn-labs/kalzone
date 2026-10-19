@@ -20,11 +20,11 @@
 
 {{define "request-table"}}
 <div class="table-scroll"><table class="table">
-  <thead><tr><th>Change</th><th>Service</th><th>Env</th><th>Asked by</th><th>When</th><th>Status</th></tr></thead>
+  <thead><tr><th>Change</th><th>Target</th><th>Env</th><th>Asked by</th><th>When</th><th>Status</th></tr></thead>
   <tbody>{{range .}}
     <tr>
       <td><a href="/requests/{{.ID}}"><b>{{.Summary}}</b></a></td>
-      <td class="mono">{{.ServiceSlug}}</td>
+      <td class="mono">{{.Target}}</td>
       <td>{{template "env-badge" .Environment}}</td>
       <td>@{{.RequesterLogin}} <span class="muted">via {{.TokenName}}</span></td>
       <td class="muted nowrap" title="{{date .CreatedAt}}">{{ago .CreatedAt}}</td>

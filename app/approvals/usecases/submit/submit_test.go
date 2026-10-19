@@ -36,10 +36,10 @@ func (s *store) Create(_ context.Context, r entities.Request) error {
 	return nil
 }
 
-func (s *store) PendingFor(_ context.Context, serviceID, environment, subject string) ([]entities.Request, error) {
+func (s *store) PendingFor(_ context.Context, serviceID, resource, teamID, environment, subject string) ([]entities.Request, error) {
 	found := []entities.Request{}
 	for _, r := range s.byID {
-		if r.ServiceID == serviceID && r.Environment == environment && r.Subject == subject && r.Pending() {
+		if r.ServiceID == serviceID && r.Resource == resource && r.TeamID == teamID && r.Environment == environment && r.Subject == subject && r.Pending() {
 			found = append(found, r)
 		}
 	}
@@ -177,4 +177,43 @@ func Test_Submit_ClipsALongSummary(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, []rune(f.store.byID[pending.ID].Summary), entities.SummaryLimit)
+}
+
+func databaseChange(subject string) approval.Change {
+	return approval.Change{
+		Kind: approval.KindDatabaseCreate, Subject: subject, Resource: "database shop", TeamID: "t1",
+		Environment: "prod", Summary: "create database shop", Proposal: map[string]string{"name": "shop"},
+	}
+}
+
+func Test_Submit_SupersedesByResourceSubject(t *testing.T) {
+	f := newFixture()
+	first, _ := f.usecase.Submit(ctx, bob, databaseChange("database.shop"))
+	other, _ := f.usecase.Submit(ctx, bob, databaseChange("database.cart"))
+	otherResource := databaseChange("database.shop")
+	otherResource.Resource = "database other"
+	sibling, _ := f.usecase.Submit(ctx, bob, otherResource)
+	otherTeam := databaseChange("database.shop")
+	otherTeam.TeamID = "t2"
+	foreign, _ := f.usecase.Submit(ctx, bob, otherTeam)
+	clock.WithTime(now.Add(time.Minute))
+
+	second, err := f.usecase.Submit(ctx, bob, databaseChange("database.shop"))
+
+	require.NoError(t, err)
+	require.Equal(t, entities.StatusCancelled, f.store.byID[first.ID].Status)
+	require.Equal(t, entities.StatusPending, f.store.byID[other.ID].Status)
+	require.Equal(t, entities.StatusPending, f.store.byID[sibling.ID].Status)
+	require.Equal(t, entities.StatusPending, f.store.byID[foreign.ID].Status)
+	require.Equal(t, entities.StatusPending, f.store.byID[second.ID].Status)
+	require.Equal(t, "database shop", f.store.byID[second.ID].Resource)
+}
+
+func Test_Notice_NamesTheResource(t *testing.T) {
+	f := newFixture()
+
+	_, err := f.usecase.Submit(ctx, bob, databaseChange("database.shop"))
+
+	require.NoError(t, err)
+	require.Contains(t, f.notes.texts[0], "bob via claude-local asks to create database shop in prod.")
 }

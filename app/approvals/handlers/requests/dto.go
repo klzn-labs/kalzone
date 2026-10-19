@@ -13,9 +13,10 @@ type errorDTO struct {
 
 type requestDTO struct {
 	ID          string      `json:"id"`
-	Kind        string      `json:"kind" enum:"config.revise,secret.set,secret.unset,deploy,promote,rollback,config.apply,queue.create,queue.update,queue.delete"`
+	Kind        string      `json:"kind" enum:"config.revise,secret.set,secret.unset,deploy,promote,rollback,config.apply,queue.create,queue.update,queue.delete,database.create,database.attach,database.detach,database.delete"`
 	Status      string      `json:"status" enum:"pending,approved,executed,failed,rejected,cancelled,expired"`
 	Service     string      `json:"service"`
+	Resource    string      `json:"resource,omitempty"`
 	Environment string      `json:"environment"`
 	Summary     string      `json:"summary"`
 	RequestedBy string      `json:"requested_by"`
@@ -33,7 +34,7 @@ type requestDTO struct {
 
 func toDTO(r entities.Request, baseURL string) requestDTO {
 	dto := requestDTO{
-		ID: r.ID, Kind: r.Kind, Status: string(r.Status), Service: r.ServiceSlug, Environment: r.Environment,
+		ID: r.ID, Kind: r.Kind, Status: string(r.Status), Service: r.ServiceSlug, Resource: r.Resource, Environment: r.Environment,
 		Summary: r.Summary, RequestedBy: r.RequesterLogin, Token: r.TokenName, ApproveURL: baseURL + r.ApprovePath(),
 		CreatedAt: r.CreatedAt, ExpiresAt: r.ExpiresAt, DecidedBy: r.DeciderLogin, DecidedAt: r.DecidedAt,
 		Reason: r.Reason, Result: r.Result,
