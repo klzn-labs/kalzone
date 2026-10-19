@@ -51,4 +51,5 @@ type Preview struct {
 	Lines    []Line
 	Moved    string
 	Conflict string
+	Ships    *Ships
 }
