@@ -18,6 +18,7 @@ const (
 	EditConfig      Action = "config.edit"
 	EditSecrets     Action = "secrets.edit"
 	EditQueue       Action = "queue.edit"
+	EditDatabase    Action = "database.edit"
 	CreateRelease   Action = "release.create"
 	Deploy          Action = "deploy"
 	ManageMembers   Action = "team.members"
@@ -119,7 +120,7 @@ func (p Policy) requiredRole(ctx context.Context, action Action, r Resource) (Ro
 		return RoleMember, nil
 	case DeleteService, TransferService, ManageMembers, ApproveRequest:
 		return RoleMaintainer, nil
-	case EditConfig, EditSecrets, EditQueue, Deploy:
+	case EditConfig, EditSecrets, EditQueue, EditDatabase, Deploy:
 		return p.roleForEnvironment(ctx, r.Environment)
 	}
 	return RoleNone, nil
