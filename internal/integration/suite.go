@@ -5,11 +5,14 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"net"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	driver "github.com/go-sql-driver/mysql"
 	"github.com/klzn-labs/kalzone/app/release/repositories/registry"
 	"github.com/klzn-labs/kalzone/cmd/controlplane/options"
 	"github.com/klzn-labs/kalzone/internal/apispec"
@@ -89,7 +92,25 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Agent.Token = AgentToken
 	cfg.Queues = config.Queues{GatewayURL: "http://queued:8080", Token: QueuedToken}
 	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token", PrometheusUID: "prometheus", LokiUID: "loki"}
+	cfg.Databases = testDatabases(t)
 	return cfg
+}
+
+func testDatabases(t *testing.T) config.Databases {
+	parsed, err := driver.ParseDSN(testdb.DSN())
+	if err != nil {
+		t.Fatal(err)
+	}
+	host, rawPort, err := net.SplitHostPort(parsed.Addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	port, err := strconv.Atoi(rawPort)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed.DBName = ""
+	return config.Databases{AdminDSN: parsed.FormatDSN(), Host: host, Port: port}
 }
 
 func appKey(t *testing.T) string {

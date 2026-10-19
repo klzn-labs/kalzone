@@ -15,7 +15,7 @@ type listParams struct {
 
 func resourceOperations(h ResourcesHandler) []apispec.Operation {
 	return []apispec.Operation{
-		{ID: "listResources", Method: http.MethodGet, Path: "/resources", Summary: "List the managed resources you can see, such as queues, by environment, kind and name",
+		{ID: "listResources", Method: http.MethodGet, Path: "/resources", Summary: "List the managed resources you can see, queues and databases, by environment, kind and name",
 			Scope: scope.Read, Params: listParams{}, Status: http.StatusOK, Response: apispec.Page[ResourceDTO]{}, Handler: h.List},
 	}
 }
