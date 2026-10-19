@@ -21,7 +21,7 @@ import (
 
 type Store interface {
 	Create(ctx context.Context, r entities.Request) error
-	PendingFor(ctx context.Context, serviceID, environment, subject string) ([]entities.Request, error)
+	PendingFor(ctx context.Context, serviceID, resource, teamID, environment, subject string) ([]entities.Request, error)
 	Transition(ctx context.Context, r entities.Request, from entities.Status) error
 }
 
@@ -65,7 +65,7 @@ func newRequest(a actor.Actor, c approval.Change) (entities.Request, error) {
 	}
 	now := clock.Now().UTC().Truncate(time.Millisecond)
 	return entities.Request{
-		ID: uuid.NewUUID(), Kind: c.Kind, Subject: c.Subject, ServiceID: c.ServiceID, ServiceSlug: c.ServiceSlug,
+		ID: uuid.NewUUID(), Kind: c.Kind, Subject: c.Subject, ServiceID: c.ServiceID, ServiceSlug: c.ServiceSlug, Resource: c.Resource,
 		TeamID: c.TeamID, Environment: c.Environment, Summary: entities.Clip(c.Summary, entities.SummaryLimit),
 		Payload: payload, RequestedBy: a.UserID, RequesterLogin: a.Login, TokenID: a.Token.ID, TokenName: a.Token.Name,
 		Status: entities.StatusPending, CreatedAt: now, ExpiresAt: now.Add(entities.Lifetime),
@@ -73,7 +73,7 @@ func newRequest(a actor.Actor, c approval.Change) (entities.Request, error) {
 }
 
 func (u SubmitUsecase) supersede(ctx context.Context, a actor.Actor, newer entities.Request) {
-	older, err := u.store.PendingFor(ctx, newer.ServiceID, newer.Environment, newer.Subject)
+	older, err := u.store.PendingFor(ctx, newer.ServiceID, newer.Resource, newer.TeamID, newer.Environment, newer.Subject)
 	if err != nil {
 		log.Printf("change request %s: could not look for older requests to supersede: %v", newer.ID, err)
 		return
@@ -109,8 +109,15 @@ func olderThan(r, other entities.Request) bool {
 }
 
 func (u SubmitUsecase) notice(r entities.Request) string {
-	return fmt.Sprintf("%s via %s asks to %s on %s in %s. Approve or reject within 24 hours: %s",
-		r.RequesterLogin, r.TokenName, r.Summary, r.ServiceSlug, r.Environment, u.baseURL+r.ApprovePath())
+	return fmt.Sprintf("%s via %s asks to %s%s in %s. Approve or reject within 24 hours: %s",
+		r.RequesterLogin, r.TokenName, r.Summary, onTarget(r), r.Environment, u.baseURL+r.ApprovePath())
+}
+
+func onTarget(r entities.Request) string {
+	if r.ServiceSlug == "" && strings.Contains(r.Summary, r.Resource) {
+		return ""
+	}
+	return " on " + r.Target()
 }
 
 func (u SubmitUsecase) pending(r entities.Request) *approval.Pending {

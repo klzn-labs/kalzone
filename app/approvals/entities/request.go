@@ -33,6 +33,7 @@ type Request struct {
 	Subject        string
 	ServiceID      string
 	ServiceSlug    string
+	Resource       string
 	TeamID         string
 	Environment    string
 	Summary        string
@@ -106,4 +107,11 @@ func Clip(text string, limit int) string {
 		return text
 	}
 	return string(runes[:limit-1]) + "…"
+}
+
+func (r Request) Target() string {
+	if r.ServiceSlug != "" {
+		return r.ServiceSlug
+	}
+	return r.Resource
 }

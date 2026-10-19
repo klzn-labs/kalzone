@@ -61,9 +61,13 @@ func before(tx *gorm.DB, f entities.Filter) *gorm.DB {
 	return tx.Where("created_at < ? OR (created_at = ? AND id < ?)", *f.Before, *f.Before, f.BeforeID)
 }
 
-func (r RequestRepository) PendingFor(ctx context.Context, serviceID, environment, subject string) ([]entities.Request, error) {
-	return find(r.db.WithContext(ctx).Where("service_id = ? AND environment = ? AND subject = ? AND status = ?",
-		serviceID, environment, subject, entities.StatusPending).Order("created_at, id"))
+func (r RequestRepository) PendingFor(ctx context.Context, serviceID, resource, teamID, environment, subject string) ([]entities.Request, error) {
+	tx := r.db.WithContext(ctx).Where("service_id = ? AND resource = ? AND environment = ? AND subject = ? AND status = ?",
+		serviceID, resource, environment, subject, entities.StatusPending)
+	if serviceID == "" {
+		tx = tx.Where("team_id = ?", teamID)
+	}
+	return find(tx.Order("created_at, id"))
 }
 
 func (r RequestRepository) Overdue(ctx context.Context, now time.Time) ([]entities.Request, error) {

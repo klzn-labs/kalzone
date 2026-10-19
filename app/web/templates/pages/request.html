@@ -3,13 +3,13 @@
   <div>
     <div class="eyebrow"><a href="/requests">Requests</a></div>
     <h1>{{$r.Summary}}</h1>
-    <p class="lead">@{{$r.RequesterLogin}} via <span class="mono">{{$r.TokenName}}</span> asked {{ago $r.CreatedAt}} to change <span class="mono">{{$r.ServiceSlug}}</span> in {{$r.Environment}}.</p>
+    <p class="lead">@{{$r.RequesterLogin}} via <span class="mono">{{$r.TokenName}}</span> asked {{ago $r.CreatedAt}} to change <span class="mono">{{$r.Target}}</span> in {{$r.Environment}}.</p>
   </div>
   <div class="actions">{{template "request-status" $r.Status}}</div>
 </div>
 
 <dl class="kv" style="margin-bottom:20px">
-  <div><dt>Service</dt><dd>{{$r.ServiceSlug}}</dd></div>
+  <div><dt>{{if $r.ServiceSlug}}Service{{else}}Resource{{end}}</dt><dd>{{$r.Target}}</dd></div>
   <div><dt>Environment</dt><dd>{{$r.Environment}}</dd></div>
   <div><dt>Kind</dt><dd>{{$r.Kind}}</dd></div>
   <div><dt>Asked</dt><dd>{{date $r.CreatedAt}}</dd></div>

@@ -54,3 +54,8 @@ func Test_Request_IsFinalOnceNothingMoreHappensToIt(t *testing.T) {
 		require.Equal(t, final[status], entities.Request{Status: status}.Final(), status)
 	}
 }
+
+func Test_Target_FallsBackToResource(t *testing.T) {
+	require.Equal(t, "api", entities.Request{ServiceSlug: "api", Resource: "database shop"}.Target())
+	require.Equal(t, "database shop", entities.Request{Resource: "database shop"}.Target())
+}

@@ -80,7 +80,18 @@ func Test_Requests_PendingForTheSameSubject(t *testing.T) {
 	require.NoError(t, repo.Create(ctx, request("c1", "t1", "deploy")))
 	require.NoError(t, repo.Create(ctx, request("c2", "t1", "secret.TOKEN")))
 
-	same, err := repo.PendingFor(ctx, "s1", "prod", "deploy")
+	same, err := repo.PendingFor(ctx, "s1", "", "t1", "prod", "deploy")
+
+	require.NoError(t, err)
+	require.Len(t, same, 1)
+	require.Equal(t, "c1", same[0].ID)
+}
+
+func Test_Requests_PendingForAServiceIgnoresATeamChange(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	require.NoError(t, repo.Create(ctx, request("c1", "t-old", "deploy")))
+
+	same, err := repo.PendingFor(ctx, "s1", "", "t-new", "prod", "deploy")
 
 	require.NoError(t, err)
 	require.Len(t, same, 1)
@@ -190,4 +201,37 @@ func Test_Requests_ListFiltersByService(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, found, 1)
 	require.Equal(t, "c2", found[0].ID)
+}
+
+func resourceRequest(id, team, resource string) entities.Request {
+	r := request(id, team, "database.shop")
+	r.ServiceID, r.ServiceSlug, r.Resource = "", "", resource
+	return r
+}
+
+func Test_Requests_ResourceRoundTrips(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	require.NoError(t, repo.Create(ctx, resourceRequest("c1", "t1", "database shop")))
+
+	got, err := repo.Get(ctx, "c1")
+
+	require.NoError(t, err)
+	require.Equal(t, "database shop", got.Resource)
+	require.Equal(t, "database shop", got.Target())
+}
+
+func Test_PendingFor_ScopesByResourceAndTeam(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	for _, r := range []entities.Request{
+		resourceRequest("c1", "t1", "database shop"), resourceRequest("c2", "t1", "database other"),
+		resourceRequest("c3", "t2", "database shop"), request("c4", "t1", "database.shop"),
+	} {
+		require.NoError(t, repo.Create(ctx, r))
+	}
+
+	found, err := repo.PendingFor(ctx, "", "database shop", "t1", "prod", "database.shop")
+
+	require.NoError(t, err)
+	require.Len(t, found, 1)
+	require.Equal(t, "c1", found[0].ID)
 }
