@@ -4,11 +4,13 @@ import (
 	"github.com/klzn-labs/kalzone/app/authz"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	"github.com/klzn-labs/kalzone/app/deploy/handlers/agentapi"
 	deploymentsHandler "github.com/klzn-labs/kalzone/app/deploy/handlers/deployments"
 	runtimeHandler "github.com/klzn-labs/kalzone/app/deploy/handlers/runtime"
 	deployCatalog "github.com/klzn-labs/kalzone/app/deploy/repositories/catalog"
 	deployChangelog "github.com/klzn-labs/kalzone/app/deploy/repositories/changelog"
+	deployDatabase "github.com/klzn-labs/kalzone/app/deploy/repositories/database"
 	deployConfig "github.com/klzn-labs/kalzone/app/deploy/repositories/envconfig"
 	"github.com/klzn-labs/kalzone/app/deploy/repositories/metrics"
 	"github.com/klzn-labs/kalzone/app/deploy/repositories/mysql"
@@ -43,6 +45,7 @@ func Deploy() fx.Option {
 		),
 		deployAdapterInjections(),
 		deployUsecaseInjections(),
+		deployRuntimeInjections(),
 		shipmentInjections(),
 		fx.Invoke(deploymentsHandler.RegisterDeploymentsRoutes, agentapi.RegisterAgentAPIRoutes, runtimeHandler.RegisterRuntimeRoutes, startDeploySweeper, subscribeAutoDeploy),
 	)
@@ -55,6 +58,7 @@ func deployAdapterInjections() fx.Option {
 		func(u releases.ReleasesUsecase) deployRelease.ReleaseFinder { return u },
 		func(u configs.ConfigUsecase) deployConfig.Configs { return u },
 		func(u credentials.CredentialsUsecase) deployQueue.Credentials { return u },
+		func(u databases.DatabasesUsecase) deployDatabase.Databases { return u },
 		func(c deployQueue.Credentials, cfg config.Config) deployQueue.Access {
 			return deployQueue.NewAccess(c, cfg.Queues.GatewayURL)
 		},
@@ -75,11 +79,18 @@ func deployUsecaseInjections() fx.Option {
 		func(s deployConfig.Source) deployments.ConfigSource { return s },
 		func(s deployConfig.Source) agents.ConfigResolver { return s },
 		func(a deployQueue.Access) agents.QueueAccess { return a },
+		deployDatabase.NewAccess,
+		func(a deployDatabase.Access) agents.DatabaseAccess { return a },
 		func(p authz.Policy) deployments.Authorizer { return p },
 		func(b *eventbus.Bus) deployments.Publisher { return b },
 		func(b *eventbus.Bus) agents.Publisher { return b },
 		func(u deployments.DeploymentsUsecase) deploymentsHandler.Deployments { return u },
 		func(u agents.AgentsUsecase) agentapi.Agents { return u },
+	)
+}
+
+func deployRuntimeInjections() fx.Option {
+	return fx.Provide(
 		func(r mysql.DeploymentRepository) runtime.Store { return r },
 		func(l deployCatalog.Lookup) runtime.ServiceLookup { return l },
 		func(m metrics.Metrics) runtime.Meter { return m },

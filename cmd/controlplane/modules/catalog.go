@@ -12,6 +12,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/ownership"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
 	queues "github.com/klzn-labs/kalzone/app/queue/usecases/queues"
@@ -43,6 +44,7 @@ func decommissionInjections() fx.Option {
 		func(u releases.ReleasesUsecase) decommission.Releases { return u },
 		func(u requests.RequestsUsecase) decommission.Requests { return u },
 		func(u queues.QueuesUsecase) decommission.Queues { return u },
+		func(u databases.DatabasesUsecase) decommission.Databases { return u },
 		func(u dashboards.DashboardsUsecase) decommission.Dashboards { return u },
 		func(u decommission.DecommissionUsecase) servicesHandler.Decommissioner { return u },
 	)

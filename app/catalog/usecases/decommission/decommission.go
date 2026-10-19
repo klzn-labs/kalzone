@@ -39,6 +39,10 @@ type Queues interface {
 	Detach(ctx context.Context, a actor.Actor, serviceID string) error
 }
 
+type Databases interface {
+	DetachService(ctx context.Context, a actor.Actor, serviceID string) error
+}
+
 type Dashboards interface {
 	Delete(ctx context.Context, serviceSlug string) error
 }
@@ -49,11 +53,12 @@ type DecommissionUsecase struct {
 	releases   Releases
 	requests   Requests
 	queues     Queues
+	databases  Databases
 	dashboards Dashboards
 }
 
-func NewDecommissionUsecase(services Services, host Host, releases Releases, requests Requests, queues Queues, dashboards Dashboards) DecommissionUsecase {
-	return DecommissionUsecase{services: services, host: host, releases: releases, requests: requests, queues: queues, dashboards: dashboards}
+func NewDecommissionUsecase(services Services, host Host, releases Releases, requests Requests, queues Queues, databases Databases, dashboards Dashboards) DecommissionUsecase {
+	return DecommissionUsecase{services: services, host: host, releases: releases, requests: requests, queues: queues, databases: databases, dashboards: dashboards}
 }
 
 func (u DecommissionUsecase) Start(ctx context.Context, a actor.Actor, slug string) (entities.Decommission, error) {
@@ -115,6 +120,9 @@ func (u DecommissionUsecase) Finish(ctx context.Context, serviceID string) (bool
 		return false, err
 	}
 	if err := u.queues.Detach(ctx, Actor, serviceID); err != nil {
+		return false, err
+	}
+	if err := u.databases.DetachService(ctx, Actor, serviceID); err != nil {
 		return false, err
 	}
 	if err := u.host.ForgetRuntime(ctx, serviceID); err != nil {

@@ -63,7 +63,7 @@ func (u AgentsUsecase) workload(ctx context.Context, d entities.Deployment) (ent
 	if err != nil {
 		return entities.Workload{}, err
 	}
-	resolved, err = u.withQueueAccess(ctx, resolved, d.ServiceID, d.Environment)
+	resolved, err = u.withPlatformAccess(ctx, resolved, d.ServiceID, d.Environment)
 	return entities.Workload{
 		Deployment: d, Name: entities.WorkloadName(service.Slug, d.Environment), Service: service.Slug,
 		Version: entities.VersionLabel(d), Config: resolved,
@@ -76,8 +76,18 @@ func removal(d entities.Deployment, service entities.ServiceRef) entities.Worklo
 	}
 }
 
-func (u AgentsUsecase) withQueueAccess(ctx context.Context, resolved entities.ResolvedConfig, serviceID, environment string) (entities.ResolvedConfig, error) {
-	env, secrets, err := u.queues.QueueAccess(ctx, serviceID, environment)
+func (u AgentsUsecase) withPlatformAccess(ctx context.Context, resolved entities.ResolvedConfig, serviceID, environment string) (entities.ResolvedConfig, error) {
+	resolved, err := withAccess(ctx, resolved, serviceID, environment, u.queues.QueueAccess)
+	if err != nil {
+		return entities.ResolvedConfig{}, err
+	}
+	return withAccess(ctx, resolved, serviceID, environment, u.databases.DatabaseAccess)
+}
+
+type accessFunc func(ctx context.Context, serviceID, environment string) (map[string]string, map[string]string, error)
+
+func withAccess(ctx context.Context, resolved entities.ResolvedConfig, serviceID, environment string, fetch accessFunc) (entities.ResolvedConfig, error) {
+	env, secrets, err := fetch(ctx, serviceID, environment)
 	if err != nil {
 		return entities.ResolvedConfig{}, err
 	}

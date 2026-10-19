@@ -23,7 +23,8 @@ func (r resolver) ResolveConfig(_ context.Context, _, _ string, number int) (ent
 	if r.fail {
 		return entities.ResolvedConfig{}, apperror.Invalid("secret could not be opened")
 	}
-	return entities.ResolvedConfig{Number: number, Secrets: map[string]string{"TOKEN": "s3cr3t"}}, nil
+	return entities.ResolvedConfig{Number: number, Env: map[string]string{"PLATFORM_DB_HOST": "hand"},
+		Secrets: map[string]string{"TOKEN": "s3cr3t", "PLATFORM_DB_PASSWORD": "hand"}}, nil
 }
 
 type queueAccess struct{}
@@ -33,6 +34,17 @@ func (queueAccess) QueueAccess(_ context.Context, serviceID, environment string)
 		map[string]string{"PLATFORM_QUEUE_TOKEN": "token-" + serviceID + "-" + environment}, nil
 }
 
+type databaseAccess struct {
+	store     *fakestore.Store
+	startedAt []entities.Status
+}
+
+func (d *databaseAccess) DatabaseAccess(_ context.Context, serviceID, _ string) (map[string]string, map[string]string, error) {
+	d.startedAt = append(d.startedAt, d.store.ByID["d1"].Status)
+	return map[string]string{"PLATFORM_DB_HOST": "mysql"},
+		map[string]string{"PLATFORM_DB_PASSWORD": "platform-" + serviceID}, nil
+}
+
 type published struct{ actions []string }
 
 func (p *published) Publish(_ context.Context, e events.Event) {
@@ -40,9 +52,15 @@ func (p *published) Publish(_ context.Context, e events.Event) {
 }
 
 func setup(fail bool) (*fakestore.Store, *published, agents.AgentsUsecase) {
+	store, p, _, usecase := setupWithDatabases(fail)
+	return store, p, usecase
+}
+
+func setupWithDatabases(fail bool) (*fakestore.Store, *published, *databaseAccess, agents.AgentsUsecase) {
 	store, p := fakestore.New(), &published{}
+	databases := &databaseAccess{store: store}
 	cfg := config.Config{Deploy: config.Deploy{Timeout: 30 * time.Minute}}
-	return store, p, agents.NewAgentsUsecase(cfg, store, fakestore.Services{}, resolver{fail}, queueAccess{}, p)
+	return store, p, databases, agents.NewAgentsUsecase(cfg, store, fakestore.Services{}, resolver{fail}, queueAccess{}, databases, p)
 }
 
 func pending(store *fakestore.Store, id, env string, status entities.Status) entities.Deployment {
@@ -80,6 +98,29 @@ func Test_Claim_AddsQueueAccessToTheWorkload(t *testing.T) {
 	require.Equal(t, "http://queued:8080", w.Config.Env["PLATFORM_QUEUE_URL"])
 	require.Equal(t, "token-s1-dev", w.Config.Secrets["PLATFORM_QUEUE_TOKEN"])
 	require.Equal(t, "s3cr3t", w.Config.Secrets["TOKEN"])
+}
+
+func Test_Claim_MergesDatabaseAccess(t *testing.T) {
+	store, _, _, usecase := setupWithDatabases(false)
+	pending(store, "d1", "dev", entities.StatusPending)
+
+	w, _, err := usecase.Claim(ctx, "vps-1")
+
+	require.NoError(t, err)
+	require.Equal(t, "mysql", w.Config.Env["PLATFORM_DB_HOST"])
+	require.Equal(t, "platform-s1", w.Config.Secrets["PLATFORM_DB_PASSWORD"])
+	require.Equal(t, "http://queued:8080", w.Config.Env["PLATFORM_QUEUE_URL"])
+	require.Equal(t, "s3cr3t", w.Config.Secrets["TOKEN"])
+}
+
+func Test_Claim_ReadsDatabaseAccessOnlyAfterTheDeploymentIsStarted(t *testing.T) {
+	store, _, databases, usecase := setupWithDatabases(false)
+	pending(store, "d1", "dev", entities.StatusPending)
+
+	_, _, err := usecase.Claim(ctx, "vps-1")
+
+	require.NoError(t, err)
+	require.Equal(t, []entities.Status{entities.StatusInProgress}, databases.startedAt)
 }
 
 func Test_Claim_FailsAWorkloadThatCannotBePrepared(t *testing.T) {
