@@ -1,5 +1,7 @@
 package releases
 
+const buildWorkflowUses = "klzn-labs/kalzone-actions/.github/workflows/build.yml@main"
+
 const callerWorkflow = `name: Platform build
 run-name: platform release ${{ inputs.release_id }}
 
@@ -19,7 +21,7 @@ permissions:
 
 jobs:
   build:
-    uses: klzn-labs/kalzone-actions/.github/workflows/build.yml@main
+    uses: ` + buildWorkflowUses + `
     with:
       release_id: ${{ inputs.release_id }}
       image: ${{ inputs.image }}

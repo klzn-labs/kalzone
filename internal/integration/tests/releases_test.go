@@ -181,5 +181,5 @@ func Test_TheReleasesPageBuildsAndSavesSettings(t *testing.T) {
 	require.Equal(t, "build.yml", s.GitHub.Dispatches()[0].Workflow)
 	require.Contains(t, page.Body, "r1")
 	require.Contains(t, page.Body, "building")
-	require.Contains(t, page.Body, "on every push")
+	require.Contains(t, page.Body, `name="auto_build" checked`)
 }

@@ -29,7 +29,7 @@ var pages = map[string]string{
 	"/services/new":                 "Register a service",
 	"/services/places-api":          "Danger zone",
 	"/services/places-api/env/dev":  "LOG_LEVEL",
-	"/services/places-api/releases": "Wire up the repository",
+	"/services/places-api/releases": "Workflow snippet",
 	"/teams":                        "Places",
 	"/teams/places":                 "@bob",
 	"/audit":                        "changed the config of",
