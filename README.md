@@ -378,6 +378,6 @@ Tests share it, so they run with `-p 1`.
 ## Releasing
 
 `Release` in GitHub Actions builds `adrianozdp/platform-controlplane` and deploys it
-blue-green through infra-plateful's deployctl, like the Plateful apps. The repository
-needs the same secrets as go-plateful: `DOCKER_USERNAME`, `DOCKER_PASSWORD`,
+blue-green through [kalzone-infra](https://github.com/klzn-labs/kalzone-infra)'s deployctl.
+The repository needs `DOCKER_USERNAME`, `DOCKER_PASSWORD`,
 `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` and `INFRA_DEPLOY_KEY`.
