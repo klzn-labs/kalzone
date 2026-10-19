@@ -296,6 +296,7 @@ p { margin: 0; }
 .kv dt { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .kv dd { margin: 4px 0 0; font-family: var(--mono); font-size: 14px; font-weight: 600; word-break: break-all; }
 .kv dd.empty { color: var(--muted); font-weight: 500; }
+.kv-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .details { margin: 0; display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px 16px; }
 .details dt { color: var(--muted); font-weight: 500; }
@@ -311,6 +312,11 @@ p { margin: 0; }
 .form-note { color: var(--muted); font-size: 12px; margin-top: 10px; }
 .form-note + .field { margin-top: 16px; }
 .form-inline { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.form-inline.end { justify-content: flex-end; }
+.attach-form { align-items: center; flex-wrap: nowrap; }
+.attach-form label { font-weight: 600; font-size: 13px; }
+.header-control { display: flex; flex-direction: column; align-items: flex-end; }
+.danger-row .form-error { width: 100%; }
 .form-inline .field { flex: 1; min-width: 160px; }
 .form-inline .field + .field { margin-top: 0; }
 .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
@@ -368,6 +374,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
 .danger-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 .danger-row + .danger-row { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
 .danger-row p { color: var(--muted); font-size: 13px; }
+.confirm-input { width: 200px; }
 
 .lock-banner { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 20px; background: var(--prod-soft); color: var(--prod); font-weight: 500; }
 .lock-banner svg { width: 18px; height: 18px; flex: none; }
@@ -417,6 +424,10 @@ a.small svg, .small a svg { width: 12px; height: 12px; vertical-align: -1px; }
 .spacer { flex: 1; }
 .mt-0 { margin-top: 0 !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .attach-form { flex-wrap: wrap; }
+}
 
 @media (max-width: 960px) {
   .split, .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); }

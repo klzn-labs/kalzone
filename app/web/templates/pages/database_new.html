@@ -1,0 +1,15 @@
+{{define "content"}}
+<div class="page-header"><div><div class="eyebrow"><a href="/resources?kind=database">Resources</a></div><h1>New database</h1><p class="lead">A MySQL 8 database on the shared server, with its own user that can only see this database.</p></div></div>
+<form class="card card-body" method="post" action="/resources/databases" hx-post="/resources/databases" hx-target="find .form-error">
+  {{template "csrf" .Viewer.CSRFToken}}
+  <div class="form-error"></div>
+  <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" class="mono" placeholder="shop" required pattern="[a-z][a-z0-9-]{1,19}"><span class="hint">2–20 lowercase letters, digits or dashes. The schema is named after it, with the environment added outside protected environments.</span></div>
+  <div class="form-row">
+    <div class="field"><label for="environment">Environment</label><select id="environment" name="environment"><option value="dev">dev</option><option value="prod">prod</option></select></div>
+    <div class="field"><label for="team">Team</label><select id="team" name="team" required>{{range .Data.Teams}}<option value="{{.Slug}}">{{.Name}}</option>{{end}}</select></div>
+    <div class="field"><label for="max_connections">Max connections</label><input id="max_connections" name="max_connections" type="number" min="1" max="30" value="{{.Data.MaxConnections}}"></div>
+  </div>
+  <div class="field"><span class="hint">Connections are shared by every attached service, across blue-green overlap. 1–30.</span></div>
+  <div class="form-actions"><button class="btn btn-primary">{{icon "plus"}}Create database</button></div>
+</form>
+{{end}}

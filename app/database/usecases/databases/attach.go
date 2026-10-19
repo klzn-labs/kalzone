@@ -93,7 +93,7 @@ func nextDeploy(serviceSlug string) map[string]any {
 }
 
 func (u DatabasesUsecase) DetachService(ctx context.Context, a actor.Actor, serviceID string) error {
-	attached, err := u.attachedTo(ctx, serviceID)
+	attached, err := u.AttachedTo(ctx, serviceID)
 	if err != nil || len(attached) == 0 {
 		return err
 	}
@@ -106,7 +106,7 @@ func (u DatabasesUsecase) DetachService(ctx context.Context, a actor.Actor, serv
 	return nil
 }
 
-func (u DatabasesUsecase) attachedTo(ctx context.Context, serviceID string) ([]entities.Database, error) {
+func (u DatabasesUsecase) AttachedTo(ctx context.Context, serviceID string) ([]entities.Database, error) {
 	all, err := u.store.List(ctx, "", "")
 	if err != nil {
 		return nil, err

@@ -8,6 +8,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/decommission"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/agents"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
@@ -24,6 +25,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/web"
 	agentsPage "github.com/klzn-labs/kalzone/app/web/handlers/agents"
 	auditPage "github.com/klzn-labs/kalzone/app/web/handlers/audit"
+	databasesPage "github.com/klzn-labs/kalzone/app/web/handlers/databases"
 	environmentPage "github.com/klzn-labs/kalzone/app/web/handlers/environment"
 	"github.com/klzn-labs/kalzone/app/web/handlers/login"
 	overviewPage "github.com/klzn-labs/kalzone/app/web/handlers/overview"
@@ -47,7 +49,7 @@ func Web() fx.Option {
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
-			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler, resourcesPage.NewResourcesHandler,
+			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler, databasesPage.NewDatabasesHandler, resourcesPage.NewResourcesHandler,
 			tokensPage.NewTokensHandler, requestsPage.NewRequestsHandler,
 		),
 		viewInjections(),
@@ -66,6 +68,10 @@ func viewInjections() fx.Option {
 		func(u queues.QueuesUsecase) queuesPage.Queues { return u },
 		func(l queueCatalog.Lookup) queuesPage.ServiceNames { return l },
 		func(h queuesPage.QueuesHandler) resourcesPage.QueueSection { return h },
+		func(u databases.DatabasesUsecase) databasesPage.Databases { return u },
+		func(u services.ServicesUsecase) databasesPage.Services { return u },
+		func(u teams.TeamsUsecase) databasesPage.Teams { return u },
+		func(h databasesPage.DatabasesHandler) resourcesPage.DatabaseSection { return h },
 		func(u environments.EnvironmentsUsecase) web.EnvironmentLister { return u },
 		func(u users.UsersUsecase) web.UserFinder { return u },
 		func(p authz.Policy) web.Authorizer { return p },
@@ -135,11 +141,11 @@ func pageRoutes() fx.Option {
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
-		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes, resourcesPage.RegisterResourcesRoutes,
+		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes, databasesPage.RegisterDatabasesRoutes, resourcesPage.RegisterResourcesRoutes,
 		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes,
 	)
 }
 
-func serviceDeps(s services.ServicesUsecase, d decommission.DecommissionUsecase, t teams.TeamsUsecase, c configs.ConfigUsecase, q query.QueryUsecase) servicePage.Deps {
-	return servicePage.Deps{Services: s, Decommission: d, Teams: t, Configs: c, Events: q}
+func serviceDeps(s services.ServicesUsecase, d decommission.DecommissionUsecase, t teams.TeamsUsecase, c configs.ConfigUsecase, q query.QueryUsecase, qu queues.QueuesUsecase, db databases.DatabasesUsecase) servicePage.Deps {
+	return servicePage.Deps{Services: s, Decommission: d, Teams: t, Configs: c, Events: q, Queues: qu, Databases: db}
 }
