@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/klzn-labs/kalzone/app/database/entities"
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/requestctx"
@@ -44,8 +45,21 @@ func (h DatabasesHandler) Delete(c *gin.Context) {
 		web.Fail(c, errConfirm)
 		return
 	}
-	err := h.databases.Delete(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
-	h.finish(c, err, "/resources?kind=database", "Database "+c.Param("name")+" deleted")
+	a := requestctx.ActorFrom(c)
+	db, err := h.databases.GetFor(c.Request.Context(), a, c.Param("env"), c.Param("name"))
+	if err != nil {
+		web.Fail(c, err)
+		return
+	}
+	err = h.databases.Delete(c.Request.Context(), a, c.Param("env"), c.Param("name"))
+	h.finish(c, err, "/resources?kind=database", deletedMessage(db))
+}
+
+func deletedMessage(db entities.Database) string {
+	if db.Adopted {
+		return "Released " + db.Name + "; its data stays in MySQL."
+	}
+	return "Database " + db.Name + " deleted"
 }
 
 func (h DatabasesHandler) base(c *gin.Context) string {

@@ -57,7 +57,7 @@
     <tbody>
     {{range .Databases}}
       <tr>
-        <td><a class="mono" href="/resources/databases/{{.Database.Environment}}/{{.Database.Name}}"><b>{{.Database.Name}}</b></a></td>
+        <td><a class="mono" href="/resources/databases/{{.Database.Environment}}/{{.Database.Name}}"><b>{{.Database.Name}}</b></a>{{if .Database.Adopted}} <span class="badge">Adopted</span>{{end}}</td>
         <td>{{template "env-badge" .Database.Environment}}</td>
         <td class="mono">{{.Database.Schema}}</td>
         <td class="mono">{{if .Attached}}{{join .Attached ", "}}{{else}}<span class="muted">none</span>{{end}}</td>
