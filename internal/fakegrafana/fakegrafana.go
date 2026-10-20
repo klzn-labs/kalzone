@@ -11,18 +11,19 @@ type Grafana struct {
 	*httptest.Server
 	mu          sync.Mutex
 	folder      bool
-	dashboards  map[string]bool
+	dashboards  map[string]string
 	usage       map[string]usage
 	lines       []LokiLine
 	lokiQueries []string
 }
 
 func New() *Grafana {
-	g := &Grafana{dashboards: map[string]bool{}, usage: map[string]usage{}}
+	g := &Grafana{dashboards: map[string]string{}, usage: map[string]usage{}}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /grafana/api/folders/platform", g.getFolder)
 	mux.HandleFunc("POST /grafana/api/folders", g.createFolder)
 	mux.HandleFunc("POST /grafana/api/dashboards/db", g.dashboard)
+	mux.HandleFunc("DELETE /grafana/api/dashboards/uid/{uid}", g.deleteDashboard)
 	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/prometheus/api/v1/query", g.prometheus)
 	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/loki/loki/api/v1/query_range", g.loki)
 	mux.HandleFunc("/grafana/", echo)
@@ -34,8 +35,8 @@ func (g *Grafana) Dashboards() map[string]bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	copied := map[string]bool{}
-	for k, v := range g.dashboards {
-		copied[k] = v
+	for k := range g.dashboards {
+		copied[k] = true
 	}
 	return copied
 }
@@ -63,9 +64,16 @@ func (g *Grafana) dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid, _ := body.Dashboard["uid"].(string)
+	raw, _ := json.Marshal(body.Dashboard)
 	g.mu.Lock()
-	g.dashboards[uid] = true
+	g.dashboards[uid] = string(raw)
 	g.mu.Unlock()
+}
+
+func (g *Grafana) DashboardJSON(uid string) string {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.dashboards[uid]
 }
 
 func echo(w http.ResponseWriter, r *http.Request) {
@@ -73,4 +81,10 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"path": r.URL.Path, "user": r.Header.Get("X-WEBAUTH-USER"), "role": r.Header.Get("X-WEBAUTH-ROLE"),
 	})
+}
+
+func (g *Grafana) deleteDashboard(w http.ResponseWriter, r *http.Request) {
+	g.mu.Lock()
+	delete(g.dashboards, r.PathValue("uid"))
+	g.mu.Unlock()
 }
