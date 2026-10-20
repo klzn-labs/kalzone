@@ -96,3 +96,30 @@ func Test_Preview_AttachAndDelete(t *testing.T) {
 	require.Contains(t, attach.Lines, approval.Line{Key: "service", After: "worker"})
 	require.Contains(t, remove.Lines, approval.Line{Key: "schema", Before: "shop", After: "dropped"})
 }
+
+func Test_ApplyApproved_ReleasesAnAdoptedDatabase(t *testing.T) {
+	f := adoptFixture(t)
+	d := platefulDraft()
+	d.Services = nil
+	f.adopt(t, d)
+	o := databases.Proposal{Kind: approval.KindDatabaseDelete, Environment: "prod", Name: "plateful"}
+
+	_, err := f.as(authz.Approved).ApplyApproved(ctx, approved, o)
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"kz_plateful"}, f.provisioner.released)
+	require.Empty(t, f.provisioner.dropped)
+	require.Empty(t, f.store.databases)
+	require.Equal(t, "c1", f.events.events[1].Details["request_id"])
+}
+
+func Test_Preview_ReleaseKeepsTheSchema(t *testing.T) {
+	f := adoptFixture(t)
+	f.adopt(t, platefulDraft())
+
+	preview, err := f.open().Preview(ctx, databases.Proposal{Kind: approval.KindDatabaseDelete, Environment: "prod", Name: "plateful"})
+
+	require.NoError(t, err)
+	require.Contains(t, preview.Lines, approval.Line{Key: "database", Before: "plateful", After: "released"})
+	require.Contains(t, preview.Lines, approval.Line{Key: "schema", Before: "plateful", After: "kept"})
+}

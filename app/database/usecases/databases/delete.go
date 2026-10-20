@@ -13,17 +13,12 @@ import (
 var (
 	errAttached     = apperror.Conflict("the database still has attached services")
 	errStillRunning = apperror.Conflict("services still run with this database's credentials")
-	errAdopted      = apperror.Conflict("an adopted database cannot be deleted here").
-			WithHint("adopted databases are released, not dropped; that is not available yet")
 )
 
 func (u DatabasesUsecase) Delete(ctx context.Context, a actor.Actor, environment, name string) error {
 	db, gate, err := u.editable(ctx, a, environment, name)
 	if err != nil {
 		return err
-	}
-	if db.Adopted {
-		return errAdopted
 	}
 	if err := u.clearAttachments(ctx, db); err != nil {
 		return err
@@ -35,6 +30,9 @@ func (u DatabasesUsecase) Delete(ctx context.Context, a actor.Actor, environment
 }
 
 func (u DatabasesUsecase) drop(ctx context.Context, a actor.Actor, gate authz.Gate, db entities.Database) error {
+	if db.Adopted {
+		return u.release(ctx, a, gate, db)
+	}
 	if err := u.provisioner.Drop(ctx, db.Schema, db.Username); err != nil {
 		return err
 	}
@@ -42,6 +40,17 @@ func (u DatabasesUsecase) drop(ctx context.Context, a actor.Actor, gate authz.Ga
 		return err
 	}
 	u.publish(ctx, a, gate, "database.deleted", db, map[string]any{"schema": db.Schema})
+	return nil
+}
+
+func (u DatabasesUsecase) release(ctx context.Context, a actor.Actor, gate authz.Gate, db entities.Database) error {
+	if err := u.provisioner.Release(ctx, db.Username); err != nil {
+		return err
+	}
+	if err := u.store.Delete(ctx, db.ID); err != nil {
+		return err
+	}
+	u.publish(ctx, a, gate, "database.released", db, map[string]any{"schema": db.Schema, "data": "kept"})
 	return nil
 }
 

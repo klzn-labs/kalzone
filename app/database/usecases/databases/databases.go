@@ -37,6 +37,8 @@ type Provisioner interface {
 	SchemaExists(ctx context.Context, schema string) (bool, error)
 	Create(ctx context.Context, schema, user, password string, maxConnections int) error
 	Drop(ctx context.Context, schema, user string) error
+	Adopt(ctx context.Context, schema, user, password string, maxConnections int) error
+	Release(ctx context.Context, user string) error
 }
 
 type Catalog interface {

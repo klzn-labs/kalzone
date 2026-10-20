@@ -28,7 +28,7 @@ func (u DatabasesUsecase) propose(ctx context.Context, a actor.Actor, db entitie
 	o.Environment, o.Name = db.Environment, db.Name
 	pending, err := u.requests.Submit(ctx, a, approval.Change{
 		Kind: o.Kind, Subject: subjectOf(o), Resource: "database " + db.Name, TeamID: db.TeamID,
-		Environment: db.Environment, Summary: summaryOf(o), Proposal: o,
+		Environment: db.Environment, Summary: summaryFor(o, db), Proposal: o,
 	})
 	if err != nil {
 		return err
@@ -41,6 +41,13 @@ func subjectOf(o Proposal) string {
 		return "database." + o.Name
 	}
 	return "database." + o.Name + "." + o.Service
+}
+
+func summaryFor(o Proposal, db entities.Database) string {
+	if o.Kind == approval.KindDatabaseDelete && db.Adopted {
+		return "release database " + o.Name
+	}
+	return summaryOf(o)
 }
 
 func summaryOf(o Proposal) string {
@@ -139,8 +146,16 @@ func (u DatabasesUsecase) previewDelete(ctx context.Context, o Proposal) (approv
 	if err != nil {
 		return approval.Preview{}, err
 	}
+	database, schema := removalOf(db)
 	return approval.Preview{Lines: []approval.Line{
-		{Key: "database", Before: db.Name, After: "deleted"}, {Key: "schema", Before: db.Schema, After: "dropped"},
+		{Key: "database", Before: db.Name, After: database}, {Key: "schema", Before: db.Schema, After: schema},
 		{Key: "team", Before: team},
 	}}, nil
+}
+
+func removalOf(db entities.Database) (string, string) {
+	if db.Adopted {
+		return "released", "kept"
+	}
+	return "deleted", "dropped"
 }
