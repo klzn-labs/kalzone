@@ -67,6 +67,8 @@ var matrix = []rule{
 	{authz.ManageTeams, "", []string{"admin"}},
 	{authz.ManageAdmins, "", []string{"admin"}},
 	{authz.ApproveRequest, "", []string{"maintainer", "admin"}},
+	{authz.AdoptDatabase, "dev", []string{"admin"}},
+	{authz.AdoptDatabase, "prod", []string{"admin"}},
 }
 
 func Test_Policy_Matrix(t *testing.T) {

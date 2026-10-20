@@ -121,7 +121,7 @@ func (u DatabasesUsecase) create(ctx context.Context, a actor.Actor, gate authz.
 		return entities.Database{}, err
 	}
 	if err := u.store.Create(ctx, db); err != nil {
-		return entities.Database{}, u.undoProvision(ctx, db, err)
+		return entities.Database{}, u.undo(ctx, db, err, func(c context.Context) error { return u.provisioner.Drop(c, db.Schema, db.Username) })
 	}
 	u.publish(ctx, a, gate, "database.created", db, map[string]any{"schema": db.Schema, "max_connections": db.MaxConnections})
 	return db, nil
@@ -138,14 +138,14 @@ func (u DatabasesUsecase) checkSchemaAbsent(ctx context.Context, schema string) 
 	return nil
 }
 
-func (u DatabasesUsecase) undoProvision(ctx context.Context, db entities.Database, cause error) error {
+func (u DatabasesUsecase) undo(ctx context.Context, db entities.Database, cause error, revert func(context.Context) error) error {
 	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), undoTimeout)
 	defer cancel()
 	_, err := u.store.GetByID(cleanup, db.ID)
 	if apperror.CodeOf(err) != apperror.CodeNotFound {
 		return errors.Join(cause, err)
 	}
-	if err := u.provisioner.Drop(cleanup, db.Schema, db.Username); err != nil {
+	if err := revert(cleanup); err != nil {
 		return errors.Join(cause, err)
 	}
 	return cause

@@ -25,11 +25,14 @@ var ana = actor.Actor{UserID: "u-ana", Login: "ana"}
 var errBroken = errors.New("broken")
 
 type store struct {
-	databases   map[string]entities.Database
-	attachments []entities.Attachment
-	failCreate  error
-	savedAnyway bool
-	forgotten   []string
+	databases    map[string]entities.Database
+	attachments  []entities.Attachment
+	failCreate   error
+	savedAnyway  bool
+	forgotten    []string
+	rival        *entities.Database
+	failAttachOn string
+	failDelete   error
 }
 
 func newStore() *store {
@@ -37,6 +40,9 @@ func newStore() *store {
 }
 
 func (s *store) Create(_ context.Context, d entities.Database) error {
+	if s.rival != nil {
+		s.databases[s.rival.ID] = *s.rival
+	}
 	if s.failCreate == nil || s.savedAnyway {
 		s.databases[d.ID] = d
 	}
@@ -71,12 +77,18 @@ func (s *store) List(_ context.Context, environment, teamID string) ([]entities.
 }
 
 func (s *store) Delete(_ context.Context, id string) error {
+	if s.failDelete != nil {
+		return s.failDelete
+	}
 	delete(s.databases, id)
 	s.attachments = slices.DeleteFunc(s.attachments, func(a entities.Attachment) bool { return a.DatabaseID == id })
 	return nil
 }
 
 func (s *store) Attach(_ context.Context, a entities.Attachment) error {
+	if a.ServiceID == s.failAttachOn {
+		return errBroken
+	}
 	s.attachments = slices.DeleteFunc(s.attachments, func(o entities.Attachment) bool {
 		return o.DatabaseID == a.DatabaseID && o.ServiceID == a.ServiceID
 	})
@@ -141,6 +153,9 @@ type provisioner struct {
 	reads      int
 	writes     int
 	failCreate error
+	adopted    []created
+	released   []string
+	failAdopt  error
 }
 
 func (p *provisioner) SchemaExists(_ context.Context, schema string) (bool, error) {
@@ -163,10 +178,27 @@ func (p *provisioner) Drop(_ context.Context, schema, user string) error {
 	return nil
 }
 
+func (p *provisioner) Adopt(_ context.Context, schema, user, password string, maxConnections int) error {
+	p.writes++
+	if p.failAdopt != nil {
+		return p.failAdopt
+	}
+	p.adopted = append(p.adopted, created{schema, user, password, maxConnections})
+	return nil
+}
+
+func (p *provisioner) Release(_ context.Context, user string) error {
+	p.writes++
+	p.released = append(p.released, user)
+	return nil
+}
+
 var services = map[string]databases.ServiceRef{
-	"shop":   {ID: "s-shop", Slug: "shop", OwnerTeamID: "t-plateful"},
-	"worker": {ID: "s-worker", Slug: "worker", OwnerTeamID: "t-plateful"},
-	"other":  {ID: "s-other", Slug: "other", OwnerTeamID: "t-reviews"},
+	"api":      {ID: "s-api", Slug: "api", OwnerTeamID: "t-plateful"},
+	"importer": {ID: "s-importer", Slug: "importer", OwnerTeamID: "t-plateful"},
+	"shop":     {ID: "s-shop", Slug: "shop", OwnerTeamID: "t-plateful"},
+	"worker":   {ID: "s-worker", Slug: "worker", OwnerTeamID: "t-plateful"},
+	"other":    {ID: "s-other", Slug: "other", OwnerTeamID: "t-reviews"},
 }
 
 type catalog struct{}

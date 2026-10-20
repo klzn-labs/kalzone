@@ -19,6 +19,7 @@ const (
 	EditSecrets     Action = "secrets.edit"
 	EditQueue       Action = "queue.edit"
 	EditDatabase    Action = "database.edit"
+	AdoptDatabase   Action = "database.adopt"
 	CreateRelease   Action = "release.create"
 	Deploy          Action = "deploy"
 	ManageMembers   Action = "team.members"

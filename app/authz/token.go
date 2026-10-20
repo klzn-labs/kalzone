@@ -11,7 +11,7 @@ import (
 
 var scopeOf = map[Action]scope.Scope{
 	CreateService: scope.Services, EditService: scope.Services, EditQueue: scope.Services, EditDatabase: scope.Services,
-	DeleteService: scope.ServicesAdmin, TransferService: scope.ServicesAdmin,
+	DeleteService: scope.ServicesAdmin, TransferService: scope.ServicesAdmin, AdoptDatabase: scope.ServicesAdmin,
 	CreateRelease: scope.Builds, EditConfig: scope.Config, EditSecrets: scope.Secrets, Deploy: scope.Deploy, ReadLogs: scope.Logs,
 	ManageMembers: scope.TeamsAdmin, ManageTeams: scope.TeamsAdmin, ManageTokens: scope.TokensAdmin,
 }

@@ -105,15 +105,54 @@ func Test_Delete_ProtectedEnvSubmits(t *testing.T) {
 	require.Len(t, f.store.databases, 1)
 }
 
-func Test_Delete_RefusesAnAdoptedDatabase(t *testing.T) {
-	f := newFixture(t)
-	db := f.created(t, shopDraft())
-	db.Adopted = true
-	f.store.databases[db.ID] = db
+func Test_Delete_ReleasesAnAdoptedDatabase(t *testing.T) {
+	f := adoptFixture(t)
+	d := platefulDraft()
+	d.Services = nil
+	db := f.adopt(t, d)
 
-	err := f.open().Delete(ctx, ana, "dev", "shop")
+	require.NoError(t, f.open().Delete(ctx, ana, "prod", "plateful"))
 
-	require.Equal(t, apperror.CodeConflict, apperror.CodeOf(err))
+	require.Equal(t, []string{"kz_plateful"}, f.provisioner.released)
+	require.Empty(t, f.provisioner.dropped)
+	require.Empty(t, f.store.databases)
+	require.Equal(t, []string{"database.adopted", "database.released"}, f.events.actions())
+	released := f.events.events[1]
+	require.Equal(t, db.ID, released.TargetID)
+	require.Equal(t, "plateful", released.Details["schema"])
+}
+
+func Test_Delete_RefusesReleaseWhileAttachedOrRunning(t *testing.T) {
+	f := adoptFixture(t)
+	f.adopt(t, platefulDraft())
+
+	attached := f.open().Delete(ctx, ana, "prod", "plateful")
+	for _, slug := range []string{"api", "worker", "importer"} {
+		_, err := f.open().Detach(ctx, ana, "prod", "plateful", slug)
+		require.NoError(t, err)
+	}
+	f.running["s-worker"] = true
+	running := f.open().Delete(ctx, ana, "prod", "plateful")
+
+	require.Equal(t, "the database still has attached services", attached.Error())
+	require.Equal(t, "detach these first: api, worker, importer", hintOf(t, attached))
+	require.Equal(t, "services still run with this database's credentials", running.Error())
+	require.Equal(t, "redeploy or remove these first: worker", hintOf(t, running))
+	require.Empty(t, f.provisioner.released)
 	require.Empty(t, f.provisioner.dropped)
 	require.Len(t, f.store.databases, 1)
+}
+
+func Test_Delete_ProposesAReleaseForAnAdoptedDatabase(t *testing.T) {
+	f := adoptFixture(t)
+	d := platefulDraft()
+	d.Services = nil
+	f.adopt(t, d)
+
+	err := f.as(authz.NeedsApproval).Delete(ctx, ana, "prod", "plateful")
+
+	var pending *approval.Pending
+	require.ErrorAs(t, err, &pending)
+	require.Equal(t, "release database plateful", f.requests.changes[0].Summary)
+	require.Empty(t, f.provisioner.released)
 }
