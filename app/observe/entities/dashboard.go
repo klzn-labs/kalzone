@@ -13,11 +13,29 @@ const (
 	PanelCPU      = 5
 	PanelLogs     = 6
 	PanelTraffic  = 7
+
+	PanelDatabaseRow  = 8
+	PanelConnections  = 9
+	PanelQueryTime    = 10
+	PanelMySQLCPU     = 11
+	PanelQueryLatency = 12
+	PanelSlowQueries  = 13
+
+	servicePanelsHeight = 16
 )
 
 type Service struct {
-	Slug string
-	Name string
+	Slug      string
+	Name      string
+	Databases []Database
+}
+
+type Database struct {
+	Environment    string
+	Schema         string
+	User           string
+	MaxConnections int
+	SharedWith     []string
 }
 
 func DashboardUID(serviceSlug string) string {
@@ -30,7 +48,7 @@ func Dashboard(s Service) map[string]any {
 		"timezone": "browser", "refresh": "30s", "schemaVersion": 39,
 		"time":       map[string]string{"from": "now-6h", "to": "now"},
 		"templating": map[string]any{"list": []any{envVariable()}},
-		"panels":     panels(s.Slug),
+		"panels":     panels(s),
 	}
 }
 
@@ -42,7 +60,17 @@ func envVariable() map[string]any {
 	}
 }
 
-func panels(slug string) []any {
+func panels(s Service) []any {
+	all := servicePanels(s.Slug)
+	logsAt := servicePanelsHeight
+	if len(s.Databases) > 0 {
+		all = append(all, databasePanels(s, servicePanelsHeight)...)
+		logsAt += databasePanelsHeight
+	}
+	return append(all, logs(PanelLogs, logsAt, fmt.Sprintf(`{container=~"%s-${env}-(blue|green)"}`, s.Slug)))
+}
+
+func servicePanels(slug string) []any {
 	name := slug + "-${env}"
 	traefik := fmt.Sprintf(`service=~"%s-(blue|green)@file"`, name)
 	container := fmt.Sprintf(`name=~"%s-(blue|green)"`, name)
@@ -56,7 +84,6 @@ func panels(slug string) []any {
 		timeseries(PanelCPU, "CPU", "percentunit", 8, 8, fmt.Sprintf("sum by (name) (rate(container_cpu_usage_seconds_total{%s}[1m]))", container)),
 		stepped(timeseries(PanelTraffic, "Traffic weight", "percent", 16, 8, fmt.Sprintf(
 			"max by (colour) (plateful_traffic_weight_percent{service=\"%s\"})", name))),
-		logs(PanelLogs, fmt.Sprintf(`{container=~"%s-(blue|green)"}`, name)),
 	}
 }
 
@@ -78,11 +105,11 @@ func stepped(panel map[string]any) map[string]any {
 	return panel
 }
 
-func logs(id int, expr string) map[string]any {
+func logs(id, y int, expr string) map[string]any {
 	return map[string]any{
 		"id": id, "type": "logs", "title": "Logs",
 		"datasource": map[string]string{"type": "loki", "uid": "loki"},
-		"gridPos":    map[string]int{"x": 0, "y": 16, "w": 24, "h": 12},
+		"gridPos":    map[string]int{"x": 0, "y": y, "w": 24, "h": 12},
 		"options":    map[string]any{"showTime": true, "wrapLogMessage": true, "sortOrder": "Descending"},
 		"targets":    []map[string]any{{"refId": "A", "expr": expr, "datasource": map[string]string{"type": "loki", "uid": "loki"}}},
 	}
