@@ -40,7 +40,7 @@
           <button class="btn btn-primary" {{if or (not $v.Releases) $v.Current}}disabled{{end}}>{{icon "zap"}}Deploy</button>
         </form>
         <div class="form-error"></div>
-        {{if $v.PromoteFrom}}
+        {{if $v.OffersPromotion}}
         <form class="promote" method="post" action="{{$base}}/promotions" hx-post="{{$base}}/promotions" hx-target="next .form-error">
           {{template "csrf" $csrf}}<input type="hidden" name="from" value="{{$v.PromoteFrom}}">
           <span class="muted small">{{$v.PromoteFrom}} runs <b>r{{$v.PromoteLive.ReleaseNumber}}</b></span>
