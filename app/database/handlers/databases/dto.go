@@ -7,7 +7,11 @@ import (
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 )
 
-const nextDeployNote = "takes effect on each service's next deploy"
+const (
+	nextDeployNote  = "takes effect on each service's next deploy"
+	adoptedNote     = "services get the credentials on their next deploy; the schema was not changed"
+	releasedMessage = "the platform's user and record are removed; the schema and its data stay in MySQL"
+)
 
 type AttachmentDTO struct {
 	Service    string     `json:"service"`
@@ -38,6 +42,20 @@ type createDTO struct {
 	Environment    string `json:"environment" binding:"required"`
 	Team           string `json:"team" binding:"required"`
 	MaxConnections int    `json:"max_connections,omitempty" description:"most connections the database user may hold at once, 1 to 30; 10 when left out"`
+}
+
+type adoptDTO struct {
+	Schema         string   `json:"schema" binding:"required" description:"the existing MySQL schema, already prepared by the root step adopt-schema.sh"`
+	Name           string   `json:"name" binding:"required"`
+	Environment    string   `json:"environment" binding:"required"`
+	Team           string   `json:"team" binding:"required"`
+	MaxConnections int      `json:"max_connections,omitempty" description:"most connections the database user may hold at once, 1 to 30; 10 when left out"`
+	Services       []string `json:"services,omitempty" description:"services to attach in this environment; each gets the credentials on its next deploy"`
+}
+
+type releasedDTO struct {
+	Released bool   `json:"released"`
+	Message  string `json:"message"`
 }
 
 type attachDTO struct {

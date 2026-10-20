@@ -25,7 +25,13 @@ type Operation struct {
 	BodyType string
 	Status   int
 	Response any
+	Others   []Answer
 	Handler  gin.HandlerFunc
+}
+
+type Answer struct {
+	Status   int
+	Response any
 }
 
 type Catalog struct {

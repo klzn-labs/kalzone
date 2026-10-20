@@ -193,3 +193,14 @@ func Test_Build_DescribesAMergePatchBodyAsTheObjectItDecodesInto(t *testing.T) {
 	require.Equal(t, map[string]any{"$ref": "#/components/schemas/Apispec_testThingBody"}, schema)
 	require.Contains(t, at(doc, "components", "schemas"), "Apispec_testThingBody")
 }
+
+func Test_Build_DocumentsAnOperationsOtherAnswers(t *testing.T) {
+	c := apispec.NewCatalog()
+	c.Add(apispec.Operation{ID: "deleteThing", Method: http.MethodDelete, Path: "/things/:id", Summary: "Delete a thing", Params: thingParams{},
+		Status: http.StatusNoContent, Others: []apispec.Answer{{Status: http.StatusOK, Response: extraDTO{}}}})
+
+	responses := at(build(t, c), "paths", "/api/v1/things/{id}", "delete", "responses").(map[string]any)
+
+	require.Contains(t, responses, "204")
+	require.Contains(t, at(responses, "200", "content", "application/json", "schema", "$ref"), "Apispec_testExtra")
+}

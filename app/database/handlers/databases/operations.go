@@ -41,11 +41,14 @@ func writeOperations(h DatabasesHandler) []apispec.Operation {
 	return []apispec.Operation{
 		{ID: "createDatabase", Method: http.MethodPost, Path: "/databases", Summary: "Create a managed MySQL database: a schema and a user that may only use it",
 			Scope: scope.Services, Gated: true, Body: createDTO{}, Status: http.StatusCreated, Response: DatabaseDTO{}, Handler: h.Create},
+		{ID: "adoptDatabase", Method: http.MethodPost, Path: "/databases/adopt", Summary: "Platform admins only. Bring an existing MySQL schema under the platform in place after the root step (adopt-schema.sh) has prepared it; attaches the services, changes no data",
+			Scope: scope.ServicesAdmin, Body: adoptDTO{}, Status: http.StatusCreated, Response: DatabaseDTO{}, Handler: h.Adopt},
 		{ID: "attachDatabase", Method: http.MethodPost, Path: "/databases/:env/:name/attachments", Summary: "Give a service the database's credentials as PLATFORM_DB_* values; takes effect on its next deploy; the token also needs the secrets scope on the service's team",
 			Scope: scope.Services, Gated: true, Params: databaseParams{}, Body: attachDTO{}, Status: http.StatusOK, Response: DatabaseDTO{}, Handler: h.Attach},
 		{ID: "detachDatabase", Method: http.MethodDelete, Path: "/databases/:env/:name/attachments/:service", Summary: "Stop giving a service the database's credentials; takes effect on its next deploy; the token also needs the secrets scope on the service's team",
 			Scope: scope.Services, Gated: true, Params: attachmentParams{}, Status: http.StatusOK, Response: DatabaseDTO{}, Handler: h.Detach},
-		{ID: "deleteDatabase", Method: http.MethodDelete, Path: "/databases/:env/:name", Summary: "Drop a database's schema, user and data; refused while a service is attached or still runs with it",
-			Scope: scope.Services, Gated: true, Params: databaseParams{}, Status: http.StatusNoContent, Handler: h.Delete},
+		{ID: "deleteDatabase", Method: http.MethodDelete, Path: "/databases/:env/:name", Summary: "Drop a database's schema, user and data; an adopted database is released instead and answers 200 with released true, keeping its schema and data; refused while a service is attached or still runs with it",
+			Scope: scope.Services, Gated: true, Params: databaseParams{}, Status: http.StatusNoContent,
+			Others: []apispec.Answer{{Status: http.StatusOK, Response: releasedDTO{}}}, Handler: h.Delete},
 	}
 }

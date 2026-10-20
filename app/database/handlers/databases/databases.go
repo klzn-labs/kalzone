@@ -16,6 +16,7 @@ import (
 
 type Databases interface {
 	Create(ctx context.Context, a actor.Actor, d databases.Draft) (entities.Database, error)
+	Adopt(ctx context.Context, a actor.Actor, d databases.AdoptDraft) (entities.Database, error)
 	Attach(ctx context.Context, a actor.Actor, environment, name, serviceSlug string) (entities.Database, error)
 	Detach(ctx context.Context, a actor.Actor, environment, name, serviceSlug string) (entities.Database, error)
 	Delete(ctx context.Context, a actor.Actor, environment, name string) error
@@ -72,6 +73,19 @@ func (h DatabasesHandler) Create(c *gin.Context) {
 	h.respond(c, http.StatusCreated, db, err, "")
 }
 
+func (h DatabasesHandler) Adopt(c *gin.Context) {
+	var body adoptDTO
+	if !httperror.BindStrict(c, &body) {
+		return
+	}
+	draft := databases.AdoptDraft{
+		Schema: body.Schema, Name: body.Name, Environment: body.Environment, Team: body.Team,
+		MaxConnections: body.MaxConnections, Services: body.Services,
+	}
+	db, err := h.databases.Adopt(c.Request.Context(), requestctx.ActorFrom(c), draft)
+	h.respond(c, http.StatusCreated, db, err, adoptedNote)
+}
+
 func (h DatabasesHandler) Get(c *gin.Context) {
 	db, err := h.databases.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
 	h.respond(c, http.StatusOK, db, err, "")
@@ -92,9 +106,17 @@ func (h DatabasesHandler) Detach(c *gin.Context) {
 }
 
 func (h DatabasesHandler) Delete(c *gin.Context) {
-	err := h.databases.Delete(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"))
+	ctx, a := c.Request.Context(), requestctx.ActorFrom(c)
+	db, err := h.databases.GetFor(ctx, a, c.Param("env"), c.Param("name"))
+	if err == nil {
+		err = h.databases.Delete(ctx, a, db.Environment, db.Name)
+	}
 	if err != nil {
 		httperror.Abort(c, err)
+		return
+	}
+	if db.Adopted {
+		c.JSON(http.StatusOK, releasedDTO{Released: true, Message: releasedMessage})
 		return
 	}
 	c.Status(http.StatusNoContent)
