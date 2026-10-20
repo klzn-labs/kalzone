@@ -29,6 +29,11 @@ type Config struct {
 	Queues         Queues    `mapstructure:"queues"`
 	Approvals      Approvals `mapstructure:"approvals"`
 	Databases      Databases `mapstructure:"databases"`
+	Metrics        Metrics   `mapstructure:"metrics"`
+}
+
+type Metrics struct {
+	PushgatewayURL string `mapstructure:"pushgateway_url" default:"http://pushgateway:9091"`
 }
 
 type Databases struct {
@@ -150,7 +155,7 @@ var envKeys = []string{
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
 	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
-	"queues.gateway_url", "queues.token", "approvals.webhook_url",
+	"queues.gateway_url", "queues.token", "approvals.webhook_url", "metrics.pushgateway_url",
 	"databases.admin_dsn", "databases.host", "databases.port",
 }
 

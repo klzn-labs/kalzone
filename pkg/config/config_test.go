@@ -55,3 +55,10 @@ func Test_LoadConfig_ReadsTheManagedDatabaseSettings(t *testing.T) {
 	require.Equal(t, "mysql", cfg.Databases.Host)
 	require.Equal(t, 3306, cfg.Databases.Port)
 }
+
+func Test_LoadConfig_PublishesMetricsToTheStackPushgateway(t *testing.T) {
+	cfg, err := config.LoadConfig()
+
+	require.NoError(t, err)
+	require.Equal(t, "http://pushgateway:9091", cfg.Metrics.PushgatewayURL)
+}
