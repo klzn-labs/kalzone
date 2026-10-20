@@ -152,6 +152,9 @@ func waitedStatus(status int) int {
 
 func respond(oc openapi.OperationContext, op Operation) {
 	answer(oc, op, op.Response, op.Status)
+	for _, other := range op.Others {
+		answer(oc, op, other.Response, other.Status)
+	}
 	if op.Waits && !answersChangeRequest(op) {
 		answer(oc, op, op.Response, waitedStatus(op.Status))
 	}

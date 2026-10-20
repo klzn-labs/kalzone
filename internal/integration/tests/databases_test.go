@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	driver "github.com/go-sql-driver/mysql"
 	"github.com/klzn-labs/kalzone/internal/integration"
 	"github.com/klzn-labs/kalzone/internal/testdb"
+	"github.com/klzn-labs/kalzone/pkg/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -218,4 +220,168 @@ func Test_ResourcesListDatabases(t *testing.T) {
 
 	require.Equal(t, []resourceDTO{{Kind: "database", Name: testDatabase, Environment: "dev", Attached: []string{"places-api"}}}, attached.Items)
 	require.Equal(t, []resourceDTO{{Kind: "database", Name: testDatabase, Environment: "dev", Attached: []string{}}}, detached.Items)
+}
+
+const (
+	oldSchema   = "kzt_old"
+	oldUser     = "kz_" + oldSchema
+	oldDatabase = "kzt-old"
+	oldPath     = "/api/v1/databases/dev/" + oldDatabase
+)
+
+type adoptedDTO struct {
+	databaseDTO
+	Adopted bool `json:"adopted"`
+}
+
+func setupOldSchema(t *testing.T, admin *sql.DB) {
+	t.Helper()
+	t.Cleanup(func() { dropOldSchema(admin) })
+	for _, statement := range []string{
+		"CREATE DATABASE `" + oldSchema + "`",
+		"CREATE TABLE `" + oldSchema + "`.places (name VARCHAR(32))",
+		"INSERT INTO `" + oldSchema + "`.places VALUES ('lisbon')",
+	} {
+		_, err := admin.Exec(statement)
+		require.NoError(t, err)
+	}
+}
+
+func dropOldSchema(admin *sql.DB) {
+	_, _ = admin.Exec("DROP DATABASE IF EXISTS `" + oldSchema + "`")
+	_, _ = admin.Exec("DROP USER IF EXISTS '" + oldUser + "'@'%'")
+}
+
+func playRootStep(t *testing.T, admin *sql.DB) {
+	t.Helper()
+	for _, statement := range []string{
+		"CREATE USER IF NOT EXISTS '" + oldUser + "'@'%' IDENTIFIED BY '" + uuid.NewUUID() + "' ACCOUNT LOCK",
+		"GRANT ALL PRIVILEGES ON `" + oldSchema + "`.* TO '" + oldUser + "'@'%'",
+	} {
+		_, err := admin.Exec(statement)
+		require.NoError(t, err)
+	}
+}
+
+func adoptBody() map[string]any {
+	return map[string]any{"schema": oldSchema, "name": oldDatabase, "environment": "dev", "team": "places", "services": []string{"places-api"}}
+}
+
+func platformAdmin(t *testing.T, s *integration.Suite, p people, scopes ...string) *integration.Client {
+	t.Helper()
+	return agentFor(t, s, p.root, tokenBody("platform-admin", scopes...))
+}
+
+func adoptOld(t *testing.T, s *integration.Suite, p people) integration.Response {
+	t.Helper()
+	return platformAdmin(t, s, p, "read", "services:admin").Do(t, http.MethodPost, "/api/v1/databases/adopt", adoptBody())
+}
+
+func readPlace(t *testing.T, dsn string) string {
+	t.Helper()
+	conn, err := sql.Open("mysql", dsn)
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+	var name string
+	require.NoError(t, conn.QueryRow("SELECT name FROM places").Scan(&name))
+	return name
+}
+
+func userExists(t *testing.T, admin *sql.DB, user string) bool {
+	t.Helper()
+	var found int
+	require.NoError(t, admin.QueryRow("SELECT COUNT(*) FROM mysql.user WHERE user = ?", user).Scan(&found))
+	return found > 0
+}
+
+func Test_AdoptDatabase_EndToEnd(t *testing.T) {
+	s, p, admin := setupDatabases(t)
+	setupOldSchema(t, admin)
+	playRootStep(t, admin)
+	releaseID := builtRelease(t, s, p)
+
+	adopted := adoptOld(t, s, p)
+	require.Equal(t, http.StatusCreated, adopted.Status, adopted.Body)
+	var d adoptedDTO
+	require.NoError(t, json.Unmarshal([]byte(adopted.Body), &d))
+	deployPlaces(t, p.bob, releaseID)
+	w := runToSuccess(t, s)
+
+	require.True(t, d.Adopted)
+	require.Equal(t, oldUser, d.Username)
+	require.Equal(t, "services get the credentials on their next deploy; the schema was not changed", d.Note)
+	require.NotContains(t, adopted.Body, `"password"`)
+	require.Equal(t, "lisbon", readPlace(t, w.Secrets["PLATFORM_DB_DSN"]))
+}
+
+func Test_AdoptDatabase_WithoutRootStep(t *testing.T) {
+	s, p, admin := setupDatabases(t)
+	setupOldSchema(t, admin)
+	var refused apiError
+	var list struct {
+		Items []databaseDTO `json:"items"`
+	}
+
+	platformAdmin(t, s, p, "read", "services:admin").MustJSON(t, http.MethodPost, "/api/v1/databases/adopt", adoptBody(), http.StatusConflict, &refused)
+	p.root.MustJSON(t, http.MethodGet, "/api/v1/databases", nil, http.StatusOK, &list)
+
+	require.Contains(t, refused.Error.Hint, "adopt-schema.sh "+oldSchema)
+	require.Empty(t, list.Items)
+}
+
+func Test_AdoptDatabase_NeedsServicesAdmin(t *testing.T) {
+	s, p, admin := setupDatabases(t)
+	setupOldSchema(t, admin)
+	playRootStep(t, admin)
+	var refused apiError
+
+	platformAdmin(t, s, p, "read", "services").MustJSON(t, http.MethodPost, "/api/v1/databases/adopt", adoptBody(), http.StatusForbidden, &refused)
+
+	require.Equal(t, "err_missing_scope", refused.Error.Code)
+}
+
+func Test_ReleaseDatabase_KeepsTheData(t *testing.T) {
+	s, p, admin := setupDatabases(t)
+	setupOldSchema(t, admin)
+	playRootStep(t, admin)
+	releaseID := builtRelease(t, s, p)
+	require.Equal(t, http.StatusCreated, adoptOld(t, s, p).Status)
+	p.bob.MustJSON(t, http.MethodDelete, oldPath+"/attachments/places-api", nil, http.StatusOK, nil)
+	deployPlaces(t, p.bob, releaseID)
+	runToSuccess(t, s)
+	var released struct {
+		Released bool   `json:"released"`
+		Message  string `json:"message"`
+	}
+
+	p.bob.MustJSON(t, http.MethodDelete, oldPath, nil, http.StatusOK, &released)
+
+	require.True(t, released.Released)
+	require.Equal(t, "the platform's user and record are removed; the schema and its data stay in MySQL", released.Message)
+	require.Equal(t, "lisbon", placeAsRoot(t, admin))
+	require.False(t, userExists(t, admin, oldUser))
+}
+
+func Test_ReleaseDatabase_InProdWaitsForApproval(t *testing.T) {
+	s, p, admin := setupDatabases(t)
+	setupOldSchema(t, admin)
+	playRootStep(t, admin)
+	body := adoptBody()
+	body["environment"], body["services"] = "prod", []string{}
+	platformAdmin(t, s, p, "read", "services:admin").MustJSON(t, http.MethodPost, "/api/v1/databases/adopt", body, http.StatusCreated, nil)
+
+	answer := prodAgent(t, s, p).Do(t, http.MethodDelete, "/api/v1/databases/prod/"+oldDatabase, nil)
+
+	require.Equal(t, http.StatusAccepted, answer.Status, answer.Body)
+	require.NotContains(t, answer.Body, `"released"`)
+	p.root.MustJSON(t, http.MethodGet, "/api/v1/databases/prod/"+oldDatabase, nil, http.StatusOK, nil)
+	require.True(t, userExists(t, admin, oldUser))
+	require.Equal(t, "lisbon", placeAsRoot(t, admin))
+}
+
+func placeAsRoot(t *testing.T, admin *sql.DB) string {
+	t.Helper()
+	var name string
+	require.NoError(t, admin.QueryRow("SELECT name FROM `"+oldSchema+"`.places").Scan(&name))
+	return name
 }

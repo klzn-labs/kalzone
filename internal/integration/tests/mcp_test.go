@@ -225,12 +225,14 @@ func Test_TheDocumentDescribesTheMergePatchBody(t *testing.T) {
 func Test_McpListsDatabaseTools(t *testing.T) {
 	s, p := setupPlaces(t)
 
-	tools := listTools(t, mcpSession(t, s, issue(t, p.bob, tokenBody("dba", "read", "services")).Token))
+	tools := listTools(t, mcpSession(t, s, issue(t, p.bob, tokenBody("dba", "read", "services", "services:admin")).Token))
 
-	for _, name := range []string{"listDatabases", "createDatabase", "getDatabase", "attachDatabase", "detachDatabase", "deleteDatabase"} {
+	for _, name := range []string{"listDatabases", "createDatabase", "getDatabase", "attachDatabase", "detachDatabase", "deleteDatabase", "adoptDatabase"} {
 		require.Contains(t, tools, name)
 	}
 	require.False(t, mcpserver.Excluded("deleteDatabase"))
 	require.Contains(t, tools["attachDatabase"].Description, "secrets scope")
 	require.Contains(t, tools["detachDatabase"].Description, "secrets scope")
+	require.Contains(t, tools["adoptDatabase"].Description, "Platform admins only")
+	require.Contains(t, tools["adoptDatabase"].Description, "after the root step (adopt-schema.sh)")
 }
