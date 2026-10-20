@@ -5,38 +5,84 @@ import (
 	"log"
 	"time"
 
-	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
-	"github.com/klzn-labs/kalzone/app/observe/entities"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"go.uber.org/fx"
 )
 
-type Writer interface {
-	Write(ctx context.Context, services []entities.Service) (int, error)
+const (
+	resyncEvery = 5 * time.Minute
+	syncTimeout = 2 * time.Minute
+)
+
+type Syncer interface {
+	SyncsOn(action string) bool
+	Sync(ctx context.Context) error
 }
 
-type Services interface {
-	List(ctx context.Context, filter catalog.ServiceFilter) ([]catalog.Service, error)
+type Worker struct {
+	syncer Syncer
+	every  time.Duration
+	dirty  chan struct{}
+	stop   chan struct{}
+	done   chan struct{}
 }
 
-func OnStart(lc fx.Lifecycle, writer Writer, services Services) {
-	lc.Append(fx.StartHook(func() {
-		go syncAll(writer, services)
-	}))
+func NewWorker(syncer Syncer, every time.Duration) *Worker {
+	return &Worker{syncer: syncer, every: every, dirty: make(chan struct{}, 1), stop: make(chan struct{}), done: make(chan struct{})}
 }
 
-func syncAll(writer Writer, services Services) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+func NewDefaultWorker(syncer Syncer) *Worker {
+	return NewWorker(syncer, resyncEvery)
+}
+
+func OnStart(lc fx.Lifecycle, w *Worker) {
+	lc.Append(fx.StartStopHook(w.Start, w.Stop))
+}
+
+func (w *Worker) Handle(_ context.Context, e events.Event) error {
+	if w.syncer.SyncsOn(e.Action) {
+		w.mark()
+	}
+	return nil
+}
+
+func (w *Worker) Start() {
+	w.mark()
+	go w.run()
+}
+
+func (w *Worker) Stop() {
+	close(w.stop)
+	<-w.done
+}
+
+func (w *Worker) mark() {
+	select {
+	case w.dirty <- struct{}{}:
+	default:
+	}
+}
+
+func (w *Worker) run() {
+	defer close(w.done)
+	tick := time.NewTicker(w.every)
+	defer tick.Stop()
+	for {
+		select {
+		case <-w.stop:
+			return
+		case <-w.dirty:
+			w.sync()
+		case <-tick.C:
+			w.sync()
+		}
+	}
+}
+
+func (w *Worker) sync() {
+	ctx, cancel := context.WithTimeout(context.Background(), syncTimeout)
 	defer cancel()
-	all, err := services.List(ctx, catalog.ServiceFilter{})
-	if err != nil {
+	if err := w.syncer.Sync(ctx); err != nil {
 		log.Printf("dashboards: %v", err)
-		return
-	}
-	list := make([]entities.Service, 0, len(all))
-	for _, s := range all {
-		list = append(list, entities.Service{Slug: s.Slug, Name: s.Name})
-	}
-	if written, err := writer.Write(ctx, list); err != nil || written > 0 {
-		log.Printf("dashboards: wrote %d, error: %v", written, err)
 	}
 }

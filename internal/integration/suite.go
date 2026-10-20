@@ -19,6 +19,7 @@ import (
 	"github.com/klzn-labs/kalzone/internal/fakegithub"
 	"github.com/klzn-labs/kalzone/internal/fakegrafana"
 	"github.com/klzn-labs/kalzone/internal/fakeoidc"
+	"github.com/klzn-labs/kalzone/internal/fakepushgateway"
 	"github.com/klzn-labs/kalzone/internal/fakeregistry"
 	"github.com/klzn-labs/kalzone/internal/httpserver/wait"
 	"github.com/klzn-labs/kalzone/internal/testdb"
@@ -39,24 +40,25 @@ const (
 )
 
 type Suite struct {
-	Server   *httptest.Server
-	GitHub   *fakegithub.Server
-	OIDC     *fakeoidc.Issuer
-	Registry *fakeregistry.Registry
-	Grafana  *fakegrafana.Grafana
-	Engine   *gin.Engine
-	Catalog  *apispec.Catalog
-	Drain    *wait.Drain
-	db       *gorm.DB
-	contract *contract
-	nextID   int64
+	Server      *httptest.Server
+	GitHub      *fakegithub.Server
+	OIDC        *fakeoidc.Issuer
+	Registry    *fakeregistry.Registry
+	Grafana     *fakegrafana.Grafana
+	Pushgateway *fakepushgateway.Pushgateway
+	Engine      *gin.Engine
+	Catalog     *apispec.Catalog
+	Drain       *wait.Drain
+	db          *gorm.DB
+	contract    *contract
+	nextID      int64
 }
 
 func NewSuite(t *testing.T) *Suite {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	testdb.Open(t)
-	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), Grafana: fakegrafana.New(), nextID: 1000}
+	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), Grafana: fakegrafana.New(), Pushgateway: fakepushgateway.New(), nextID: 1000}
 	app := fxtest.New(t,
 		options.Options(),
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
@@ -78,6 +80,7 @@ func (s *Suite) close(app *fxtest.App) {
 	s.Registry.Close()
 	s.Grafana.Close()
 	app.RequireStop()
+	s.Pushgateway.Close()
 	testdb.Close(s.db)
 }
 
@@ -93,6 +96,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Queues = config.Queues{GatewayURL: "http://queued:8080", Token: QueuedToken}
 	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token", PrometheusUID: "prometheus", LokiUID: "loki"}
 	cfg.Databases = testDatabases(t)
+	cfg.Metrics = config.Metrics{PushgatewayURL: s.Pushgateway.URL}
 	return cfg
 }
 

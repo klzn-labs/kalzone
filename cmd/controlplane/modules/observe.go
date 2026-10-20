@@ -3,15 +3,17 @@ package modules
 import (
 	"github.com/klzn-labs/kalzone/app/authz"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	logsHandler "github.com/klzn-labs/kalzone/app/observe/handlers/logs"
 	"github.com/klzn-labs/kalzone/app/observe/handlers/proxy"
 	"github.com/klzn-labs/kalzone/app/observe/handlers/sync"
 	observeCatalog "github.com/klzn-labs/kalzone/app/observe/repositories/catalog"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
+	"github.com/klzn-labs/kalzone/app/observe/repositories/pushgateway"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
+	"github.com/klzn-labs/kalzone/internal/eventbus"
 	"github.com/klzn-labs/kalzone/pkg/config"
-	"github.com/klzn-labs/kalzone/pkg/events"
 	"go.uber.org/fx"
 )
 
@@ -20,13 +22,21 @@ func Observe() fx.Option {
 		fx.Provide(
 			grafana.NewClient, dashboards.NewDashboardsUsecase, proxy.NewGrafanaProxy,
 			func(c grafana.Client) dashboards.Grafana { return c },
-			func(u services.ServicesUsecase) sync.Services { return u },
-			func(u dashboards.DashboardsUsecase) sync.Writer { return u },
-			fx.Annotate(func(u dashboards.DashboardsUsecase) events.Subscriber { return u }, fx.ResultTags(`group:"subscribers"`)),
+			pushgateway.NewClient,
+			func(c pushgateway.Client) dashboards.Publisher { return c },
+			func(u services.ServicesUsecase, d databases.DatabasesUsecase) dashboards.Catalog {
+				return observeCatalog.NewServices(u, d)
+			},
+			func(u dashboards.DashboardsUsecase) sync.Syncer { return u },
+			sync.NewDefaultWorker,
 		),
 		observeLogs(),
-		fx.Invoke(proxy.RegisterProxyRoutes, sync.OnStart, logsHandler.RegisterLogsRoutes),
+		fx.Invoke(proxy.RegisterProxyRoutes, sync.OnStart, logsHandler.RegisterLogsRoutes, subscribeDashboards),
 	)
+}
+
+func subscribeDashboards(b *eventbus.Bus, w *sync.Worker) {
+	b.Subscribe(w)
 }
 
 func observeLogs() fx.Option {

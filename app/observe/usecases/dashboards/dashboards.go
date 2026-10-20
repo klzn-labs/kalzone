@@ -3,10 +3,8 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/klzn-labs/kalzone/app/observe/entities"
-	"github.com/klzn-labs/kalzone/pkg/events"
 )
 
 type Grafana interface {
@@ -16,12 +14,23 @@ type Grafana interface {
 	DeleteDashboard(ctx context.Context, uid string) error
 }
 
-type DashboardsUsecase struct {
-	grafana Grafana
+type Catalog interface {
+	Services(ctx context.Context) ([]entities.Service, error)
 }
 
-func NewDashboardsUsecase(grafana Grafana) DashboardsUsecase {
-	return DashboardsUsecase{grafana: grafana}
+type Publisher interface {
+	Enabled() bool
+	PublishAttachments(ctx context.Context, services []entities.Service) error
+}
+
+type DashboardsUsecase struct {
+	grafana   Grafana
+	catalog   Catalog
+	publisher Publisher
+}
+
+func NewDashboardsUsecase(grafana Grafana, catalog Catalog, publisher Publisher) DashboardsUsecase {
+	return DashboardsUsecase{grafana: grafana, catalog: catalog, publisher: publisher}
 }
 
 func (u DashboardsUsecase) Write(ctx context.Context, services []entities.Service) (int, error) {
@@ -46,14 +55,6 @@ func (u DashboardsUsecase) Delete(ctx context.Context, serviceSlug string) error
 	return u.grafana.DeleteDashboard(ctx, entities.DashboardUID(serviceSlug))
 }
 
-func (u DashboardsUsecase) Handle(ctx context.Context, e events.Event) error {
-	if e.Action != "service.created" && e.Action != "service.updated" {
-		return nil
-	}
-	name, _ := e.Details["name"].(string)
-	_, err := u.Write(ctx, []entities.Service{{Slug: e.TargetName, Name: name}})
-	if err != nil {
-		log.Printf("dashboards: %v", err)
-	}
-	return err
+func (u DashboardsUsecase) SyncsOn(action string) bool {
+	return syncedOn[action]
 }
