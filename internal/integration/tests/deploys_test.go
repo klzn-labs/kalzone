@@ -153,3 +153,18 @@ func Test_TheEnvironmentPageDeploysPromotesAndRollsBack(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, promoted.Status, promoted.Body)
 	require.Contains(t, agentsPage.Body, "vps-1")
 }
+
+func Test_ProdOffersNoPromotionOfTheReleaseItAlreadyRuns(t *testing.T) {
+	s, p := setupPlaces(t)
+	releaseID := builtRelease(t, s, p)
+	prod := "/services/places-api/env/prod"
+	p.bob.Form(t, "/services/places-api/env/dev/deployments", url.Values{"_csrf": {p.bob.CSRFToken}, "release_id": {releaseID}, "strategy": {"bluegreen"}})
+	runToSuccess(t, s)
+	p.mia.Form(t, prod+"/promotions", url.Values{"_csrf": {p.mia.CSRFToken}, "from": {"dev"}})
+	runToSuccess(t, s)
+
+	prodPage := p.mia.Do(t, http.MethodGet, prod, nil)
+
+	require.Contains(t, prodPage.Body, "Live in Production")
+	require.NotContains(t, prodPage.Body, "Promote r1 from dev")
+}

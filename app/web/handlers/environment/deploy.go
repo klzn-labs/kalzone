@@ -60,6 +60,10 @@ func (h EnvironmentHandler) deployView(ctx context.Context, a actor.Actor, d dat
 	return v, err
 }
 
+func (v DeployView) OffersPromotion() bool {
+	return v.PromoteFrom != "" && !(v.HasLive && v.Live.ReleaseID == v.PromoteLive.ReleaseID)
+}
+
 func (h EnvironmentHandler) liveAndHistory(ctx context.Context, serviceSlug, envSlug string) (DeployView, error) {
 	var v DeployView
 	var err error
