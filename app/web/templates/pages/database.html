@@ -6,6 +6,7 @@
     <div class="row">
       {{template "env-badge" $db.Environment}}
       <span class="badge badge-ok">MySQL</span>
+      {{if $db.Adopted}}<span class="badge">Adopted</span>{{end}}
       <span class="muted small">Team {{$d.Team}} · created <span title="{{date $db.CreatedAt}}">{{ago $db.CreatedAt}}</span></span>
     </div>
   </div>
@@ -56,11 +57,11 @@
   <div class="card danger-zone">
     <div class="card-body">
       <div class="danger-row">
-        <div><h3>Delete this database</h3>{{if $d.Blocker}}<p>{{$d.Blocker}}</p>{{else}}<p>The schema and its user are dropped; the data is lost. Type the database name to confirm.</p>{{end}}</div>
+        <div><h3>{{if $db.Adopted}}Release{{else}}Delete{{end}} this database</h3>{{if $d.Blocker}}<p>{{$d.Blocker}}</p>{{else if $db.Adopted}}<p>Removes the platform's user and record. The schema <span class="mono">{{$db.Schema}}</span> and its data stay in MySQL. Type the database name to confirm.</p>{{else}}<p>The schema and its user are dropped; the data is lost. Type the database name to confirm.</p>{{end}}</div>
         <form class="form-inline" method="post" action="{{$base}}/delete" hx-post="{{$base}}/delete" hx-target="next .form-error">
           {{template "csrf" $csrf}}
           <input type="text" name="confirm" class="mono confirm-input" placeholder="{{$db.Name}}" aria-label="Type the database name to confirm"{{if $d.Blocker}} disabled{{end}}>
-          <button class="btn btn-danger"{{if $d.Blocker}} disabled{{end}}>{{icon "trash"}}Delete {{$db.Name}}</button>
+          <button class="btn btn-danger"{{if $d.Blocker}} disabled{{end}}>{{icon "trash"}}{{if $db.Adopted}}Release{{else}}Delete{{end}} {{$db.Name}}</button>
         </form>
         <div class="form-error"></div>
       </div>
