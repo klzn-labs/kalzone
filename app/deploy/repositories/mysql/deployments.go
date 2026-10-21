@@ -23,6 +23,7 @@ var (
 				WithHint("list deployments with GET /api/v1/deployments?service=<slug>&env=<env>")
 	errDeploymentChanged = apperror.Conflict("the deployment changed meanwhile, reload and try again")
 	activeStatuses       = []entities.Status{entities.StatusPending, entities.StatusInProgress}
+	finishedStatuses     = []entities.Status{entities.StatusSucceeded, entities.StatusFailed}
 )
 
 type DeploymentRepository struct {
@@ -109,6 +110,11 @@ func (r DeploymentRepository) Environments(ctx context.Context, serviceID string
 
 func (r DeploymentRepository) AllLive(ctx context.Context) ([]entities.Deployment, error) {
 	return r.list(r.db.WithContext(ctx).Where(latestSucceeded).Order("service_id, environment"))
+}
+
+func (r DeploymentRepository) FinishedSince(ctx context.Context, environment string, since time.Time) ([]entities.Deployment, error) {
+	return r.list(r.db.WithContext(ctx).Where("environment = ? AND status IN ? AND finished_at >= ?", environment, finishedStatuses, since).
+		Order("finished_at"))
 }
 
 func (r DeploymentRepository) StaleInProgress(ctx context.Context, startedBefore time.Time) ([]entities.Deployment, error) {

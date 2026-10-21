@@ -140,3 +140,36 @@ func Test_EnvironmentsListsEveryEnvironmentAServiceWasDeployedTo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"dev", "prod"}, environments)
 }
+
+func Test_FinishedSinceKeepsFinishedDeploysOfOneEnvironmentInOrder(t *testing.T) {
+	repo := mysql.NewDeploymentRepository(testdb.Open(t))
+	now := time.Now().UTC().Truncate(time.Second)
+	for _, d := range []entities.Deployment{
+		deployment("late", "s", "prod", entities.StatusSucceeded, now),
+		deployment("early", "t", "prod", entities.StatusFailed, now),
+		deployment("old", "u", "prod", entities.StatusSucceeded, now),
+		deployment("running", "v", "prod", entities.StatusInProgress, now),
+		deployment("dev", "s", "dev", entities.StatusSucceeded, now),
+	} {
+		_, err := repo.Create(ctx, d)
+		require.NoError(t, err)
+	}
+	finish(t, repo, "late", entities.StatusSucceeded, now.Add(-time.Hour))
+	finish(t, repo, "early", entities.StatusFailed, now.Add(-2*time.Hour))
+	finish(t, repo, "old", entities.StatusSucceeded, now.Add(-30*24*time.Hour))
+	finish(t, repo, "dev", entities.StatusSucceeded, now.Add(-time.Hour))
+
+	found, err := repo.FinishedSince(ctx, "prod", now.Add(-14*24*time.Hour))
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"early", "late"}, []string{found[0].ID, found[1].ID})
+	require.Len(t, found, 2)
+}
+
+func finish(t *testing.T, repo mysql.DeploymentRepository, id string, status entities.Status, at time.Time) {
+	t.Helper()
+	d, err := repo.FindByID(ctx, id)
+	require.NoError(t, err)
+	d.Status, d.FinishedAt = status, &at
+	require.NoError(t, repo.Transition(ctx, d, d.Status))
+}
