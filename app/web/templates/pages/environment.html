@@ -247,8 +247,3 @@
   {{else}}{{template "empty" dict "Icon" "activity" "Title" "Observability isn't connected" "Text" "Set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN to embed dashboards here." "Href" "" "Action" ""}}{{end}}
 </div>
 {{end}}
-
-{{define "panel"}}<div class="panel {{.Class}}">
-  <iframe class="theme-light" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=light"></iframe>
-  <iframe class="theme-dark" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=dark"></iframe>
-</div>{{end}}

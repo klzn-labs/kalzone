@@ -104,6 +104,7 @@ func catalogPageInjections() fx.Option {
 		func(u deployments.DeploymentsUsecase) environmentPage.Deployments { return u },
 		func(u releases.ReleasesUsecase) environmentPage.Releases { return u },
 		func(c grafana.Client) environmentPage.Grafana { return c },
+		func(c grafana.Client) platformPage.Grafana { return c },
 		func(u services.ServicesUsecase) releasesPage.Services { return u },
 		func(u releases.ReleasesUsecase) releasesPage.Releases { return u },
 		func(u changelogs.ChangelogsUsecase) releasesPage.Changelogs { return u },
