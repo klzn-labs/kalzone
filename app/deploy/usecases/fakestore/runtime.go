@@ -26,3 +26,13 @@ func (s *Store) DeleteRuntime(_ context.Context, serviceID string) error {
 	}
 	return nil
 }
+
+func (s *Store) SavePlatform(_ context.Context, c entities.PlatformComponent) error {
+	s.Platforms[c.Name] = c
+	return nil
+}
+
+func (s *Store) Platform(_ context.Context, name string) (entities.PlatformComponent, bool, error) {
+	c, found := s.Platforms[name]
+	return c, found, nil
+}
