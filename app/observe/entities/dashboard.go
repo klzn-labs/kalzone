@@ -83,7 +83,7 @@ func servicePanels(slug string) []any {
 		timeseries(PanelMemory, "Memory", "bytes", 0, 8, fmt.Sprintf("sum by (name) (container_memory_working_set_bytes{%s})", container)),
 		timeseries(PanelCPU, "CPU", "percentunit", 8, 8, fmt.Sprintf("sum by (name) (rate(container_cpu_usage_seconds_total{%s}[1m]))", container)),
 		stepped(timeseries(PanelTraffic, "Traffic weight", "percent", 16, 8, fmt.Sprintf(
-			"max by (colour) (plateful_traffic_weight_percent{service=\"%s\"})", name))),
+			"max by (colour) (kalzone_traffic_weight_percent{service=\"%s\"})", name))),
 	}
 }
 

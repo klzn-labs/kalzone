@@ -1,0 +1,16 @@
+{{define "platform-card"}}<a class="card service-card platform-card" href="/platform/{{.Name}}">
+  <div class="top">
+    <span class="service-icon platform-icon">K</span>
+    <div style="min-width:0;flex:1">
+      <div class="name">Kalzone {{.Name}}</div>
+      <div class="slug">{{.Name}}</div>
+    </div>
+    <span class="badge badge-outline">{{icon "lock"}}Read-only</span>
+  </div>
+  <p class="desc">The platform itself. Deployed from kalzone-infra, so it can still roll back when Kalzone is down.</p>
+  <div class="meta">
+    <span class="badge">platform</span>
+    <span class="spacer"></span>
+    <span class="envs"><span class="env-chip" title="version live in prod">prod <b class="mono">{{short .Live.Commit 7}}</b></span></span>
+  </div>
+</a>{{end}}

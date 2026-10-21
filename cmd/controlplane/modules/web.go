@@ -11,6 +11,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/agents"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/platform"
 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/users"
@@ -30,6 +31,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/web/handlers/login"
 	overviewPage "github.com/klzn-labs/kalzone/app/web/handlers/overview"
 	peoplePage "github.com/klzn-labs/kalzone/app/web/handlers/people"
+	platformPage "github.com/klzn-labs/kalzone/app/web/handlers/platform"
 	queuesPage "github.com/klzn-labs/kalzone/app/web/handlers/queues"
 	releasesPage "github.com/klzn-labs/kalzone/app/web/handlers/releases"
 	requestsPage "github.com/klzn-labs/kalzone/app/web/handlers/requests"
@@ -49,7 +51,7 @@ func Web() fx.Option {
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
-			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, queuesPage.NewQueuesHandler, databasesPage.NewDatabasesHandler, resourcesPage.NewResourcesHandler,
+			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, platformPage.NewPlatformHandler, queuesPage.NewQueuesHandler, databasesPage.NewDatabasesHandler, resourcesPage.NewResourcesHandler,
 			tokensPage.NewTokensHandler, requestsPage.NewRequestsHandler,
 		),
 		viewInjections(),
@@ -65,6 +67,8 @@ func viewInjections() fx.Option {
 		func(u configs.ConfigUsecase) web.ConfigReader { return u },
 		func(u deployments.DeploymentsUsecase) web.LiveReader { return u },
 		func(u agents.AgentsUsecase) agentsPage.Agents { return u },
+		func(u platform.PlatformUsecase) platformPage.Platform { return u },
+		func(u platform.PlatformUsecase) servicesPage.Platform { return u },
 		func(u queues.QueuesUsecase) queuesPage.Queues { return u },
 		func(l queueCatalog.Lookup) queuesPage.ServiceNames { return l },
 		func(h queuesPage.QueuesHandler) resourcesPage.QueueSection { return h },
@@ -141,7 +145,7 @@ func pageRoutes() fx.Option {
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
-		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, queuesPage.RegisterQueuesRoutes, databasesPage.RegisterDatabasesRoutes, resourcesPage.RegisterResourcesRoutes,
+		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, platformPage.RegisterPlatformRoutes, queuesPage.RegisterQueuesRoutes, databasesPage.RegisterDatabasesRoutes, resourcesPage.RegisterResourcesRoutes,
 		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes,
 	)
 }

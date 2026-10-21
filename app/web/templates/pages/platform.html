@@ -1,0 +1,71 @@
+{{define "content"}}
+{{$d := .Data}}{{$c := $d.Component}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/services">Services</a> / <a href="/services?filter=platform">Platform</a></div>
+    <div class="title-row">
+      <span class="service-icon platform-icon lg">K</span>
+      <div>
+        <h1>Kalzone {{$c.Name}}</h1>
+        <div class="row" style="margin-top:4px">
+          <span class="mono muted">{{$c.Name}}</span>
+          {{if $d.Stale}}<span class="badge badge-warn">no report for {{ago $c.ObservedAt}}</span>{{else if $c.Healthy}}<span class="badge badge-ok"><span class="dot"></span>Healthy</span>{{else}}<span class="badge badge-danger"><span class="dot"></span>{{if $c.Container.Found}}{{$c.Container.State}} {{$c.Container.Health}}{{else}}container missing{{end}}</span>{{end}}
+          <span class="badge badge-outline">{{icon "lock"}}Read-only</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-info" style="margin-bottom:20px">{{icon "lock"}}<div>This is the platform itself. Its release workflow in <span class="mono">{{$d.Repository}}</span> deploys it straight from <span class="mono">{{$d.DeployedFrom}}</span>, so a bad release can still roll back when Kalzone is down. Nothing here can be changed from this page.</div></div>
+
+<div class="split">
+  <div class="stack">
+    <div class="card live-card">
+      <div class="card-header"><div><h2>Live in prod</h2><p>Reported by agent {{$c.Agent}} {{ago $c.ObservedAt}}</p></div>{{template "env-badge" "prod"}}</div>
+      <div class="card-body">
+        <dl class="kv">
+          <div><dt>Version</dt><dd class="mono"><a href="https://github.com/{{$d.Repository}}/commit/{{$c.Live.Commit}}" target="_blank" rel="noopener">{{short $c.Live.Commit 7}}</a></dd></div>
+          <div><dt>Deployed</dt><dd><span title="{{date $c.Live.UpdatedAt}}">{{ago $c.Live.UpdatedAt}}</span></dd></div>
+          <div><dt>Colour</dt><dd>{{$c.Live.Colour}}</dd></div>
+          <div><dt>Config</dt><dd class="mono">{{if $c.Live.Config}}{{$c.Live.Config}}{{else}}—{{end}}</dd></div>
+          <div><dt>Restarts</dt><dd>{{$c.Container.Restarts}}</dd></div>
+          <div><dt>Memory limit</dt><dd>{{if $c.Container.MemoryLimitMB}}{{$c.Container.MemoryLimitMB}} MB{{else}}—{{end}}</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div><h2>Recent deploys</h2><p>From deployctl's own records, newest first</p></div></div>
+      {{if $d.Rows}}
+      <div class="table-scroll"><table class="table">
+        <thead><tr><th>When</th><th>Version</th><th>Outcome</th><th>Why</th><th></th></tr></thead>
+        <tbody>{{range $d.Rows}}
+          <tr>
+            <td><time datetime="{{iso .Deploy.At}}" title="{{date .Deploy.At}}">{{ago .Deploy.At}}</time></td>
+            <td class="mono">{{short .Deploy.Commit 7}}</td>
+            <td>{{if .Deploy.RolledBack}}<span class="badge badge-warn">Rolled back</span>{{else}}<span class="badge badge-ok">Deployed</span>{{end}}</td>
+            <td>{{if .Deploy.RolledBack}}{{.Deploy.Reason}}{{if .Deploy.Step}} <span class="muted">({{.Deploy.Step}})</span>{{end}}{{else}}<span class="muted">—</span>{{end}}</td>
+            <td class="nowrap">{{if .Deploy.RunURL}}<a href="{{.Deploy.RunURL}}" target="_blank" rel="noopener">Run</a> · {{end}}<a href="{{.GraphURL}}" target="_blank" rel="noopener">Graph</a></td>
+          </tr>{{end}}
+        </tbody>
+      </table></div>
+      {{else}}
+      <div class="card-body"><p class="muted">No deploys recorded yet. The next release of Kalzone writes the first entry.</p></div>
+      {{end}}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div><h2>Links</h2></div></div>
+    <div class="card-body">
+      <dl class="details">
+        <dt>Repository</dt><dd><a class="mono" href="https://github.com/{{$d.Repository}}" target="_blank" rel="noopener">{{$d.Repository}}</a></dd>
+        <dt>Deployed by</dt><dd><a class="mono" href="https://github.com/{{$d.DeployedFrom}}" target="_blank" rel="noopener">{{$d.DeployedFrom}}</a></dd>
+        <dt>Dashboard</dt><dd><a href="{{$d.DashboardURL}}" target="_blank" rel="noopener">HTTP · {{$c.Name}}</a></dd>
+        <dt>Image</dt><dd class="mono">{{if $c.Live.Image}}{{$c.Live.Image}}{{else}}—{{end}}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{{end}}

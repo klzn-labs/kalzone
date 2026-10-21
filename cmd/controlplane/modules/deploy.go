@@ -20,6 +20,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/announce"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/autodeploy"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
+	"github.com/klzn-labs/kalzone/app/deploy/usecases/platform"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/runtime"
 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
@@ -40,7 +41,7 @@ func Deploy() fx.Option {
 			mysql.NewDeploymentRepository, deployCatalog.NewLookup, deployRelease.NewLookup, deployConfig.NewSource, deployChangelog.NewShipments,
 			deployments.NewDeploymentsUsecase, agents.NewAgentsUsecase,
 			deploymentsHandler.NewDeploymentsHandler, agentapi.NewAgentAPIHandler,
-			runtime.NewRuntimeUsecase, runtimeHandler.NewRuntimeHandler, autodeploy.NewAutoDeployUsecase,
+			runtime.NewRuntimeUsecase, runtimeHandler.NewRuntimeHandler, autodeploy.NewAutoDeployUsecase, platform.NewPlatformUsecase,
 			announce.NewAnnounceUsecase,
 		),
 		deployAdapterInjections(),
@@ -92,6 +93,7 @@ func deployUsecaseInjections() fx.Option {
 func deployRuntimeInjections() fx.Option {
 	return fx.Provide(
 		func(r mysql.DeploymentRepository) runtime.Store { return r },
+		func(r mysql.DeploymentRepository) platform.Store { return r },
 		func(l deployCatalog.Lookup) runtime.ServiceLookup { return l },
 		func(m metrics.Metrics) runtime.Meter { return m },
 		func(u runtime.RuntimeUsecase) runtimeHandler.Runtime { return u },

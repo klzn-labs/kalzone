@@ -18,7 +18,7 @@ func Test_Dashboard_QueriesTheServicesWorkloadsPerEnvironment(t *testing.T) {
 	require.Contains(t, body, `service=~\"places-api-${env}-(blue|green)@file\"`)
 	require.Contains(t, body, `name=~\"places-api-${env}-(blue|green)\"`)
 	require.Contains(t, body, `{container=~\"places-api-${env}-(blue|green)\"}`)
-	require.Contains(t, body, `plateful_traffic_weight_percent{service=\"places-api-${env}\"}`)
+	require.Contains(t, body, `kalzone_traffic_weight_percent{service=\"places-api-${env}\"}`)
 	require.Contains(t, body, `"lineInterpolation":"stepAfter"`)
 	require.Contains(t, body, `"uid":"loki"`)
 	require.Contains(t, body, `"query":"dev,prod"`)

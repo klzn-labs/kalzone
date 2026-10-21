@@ -35,6 +35,7 @@ type Agents interface {
 	Desired(ctx context.Context) ([]entities.Desired, error)
 	Drift(ctx context.Context, agent string, drift entities.Drift) (entities.Deployment, bool, error)
 	ReportStatus(ctx context.Context, agent string, at time.Time, snapshots []entities.Snapshot) error
+	ReportPlatform(ctx context.Context, agent string, at time.Time, c entities.PlatformComponent) error
 }
 
 type AgentAPIHandler struct {
@@ -152,4 +153,5 @@ func RegisterAgentAPIRoutes(public httpserver.Public, h AgentAPIHandler) {
 	group.GET("/desired", h.Desired)
 	group.POST("/drift", h.Drift)
 	group.POST("/status", h.Status)
+	group.PUT("/platform/:name", h.Platform)
 }

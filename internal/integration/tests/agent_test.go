@@ -35,6 +35,10 @@ func (r *recordingRuntime) Inspect(_ context.Context, container string) (agentap
 	return agentapi.Container{}, nil
 }
 
+func (r *recordingRuntime) Platform(context.Context, string) (agentapi.PlatformReport, bool, error) {
+	return agentapi.PlatformReport{}, false, nil
+}
+
 func (r *recordingRuntime) Logs(context.Context, string, int) ([]string, error) {
 	return []string{"boot", "crash"}, nil
 }

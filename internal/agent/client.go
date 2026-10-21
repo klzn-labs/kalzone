@@ -50,6 +50,11 @@ func (c Client) Status(ctx context.Context, snapshots []agentapi.Snapshot) error
 	return err
 }
 
+func (c Client) Platform(ctx context.Context, name string, report agentapi.PlatformReport) error {
+	_, err := c.call(ctx, http.MethodPut, agentapi.PlatformPath(name), report, nil)
+	return err
+}
+
 func (c Client) Desired(ctx context.Context) ([]agentapi.Desired, error) {
 	var list agentapi.DesiredList
 	_, err := c.call(ctx, http.MethodGet, agentapi.DesiredPath, nil, &list)

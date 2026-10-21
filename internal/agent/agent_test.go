@@ -22,6 +22,15 @@ type plane struct {
 	drifts   []agentapi.Drift
 	failures map[string]*agentapi.Failure
 	reports  [][]agentapi.Snapshot
+	platform map[string]agentapi.PlatformReport
+}
+
+func (p *plane) Platform(_ context.Context, name string, report agentapi.PlatformReport) error {
+	if p.platform == nil {
+		p.platform = map[string]agentapi.PlatformReport{}
+	}
+	p.platform[name] = report
+	return nil
 }
 
 func (p *plane) Claim(context.Context) (agentapi.Workload, bool, error) {
@@ -59,6 +68,7 @@ func (p *plane) Drift(_ context.Context, d agentapi.Drift) error {
 }
 
 type runtime struct {
+	platform   map[string]agentapi.PlatformReport
 	fail       bool
 	failWith   error
 	observed   map[string]agent.Observed
@@ -83,6 +93,11 @@ func (r runtime) Inspect(_ context.Context, container string) (agentapi.Containe
 
 func (r runtime) Logs(context.Context, string, int) ([]string, error) {
 	return r.logs, nil
+}
+
+func (r runtime) Platform(_ context.Context, name string) (agentapi.PlatformReport, bool, error) {
+	report, found := r.platform[name]
+	return report, found, nil
 }
 
 func (r runtime) Observe(_ context.Context, name string) (agent.Observed, error) {
@@ -133,4 +148,23 @@ func Test_ReconcileOnce_ReportsOnlyDifferences(t *testing.T) {
 	require.Equal(t, "b-dev is not running", p.drifts[0].Observed)
 	require.Equal(t, "c-dev runs img@old instead of img@3", p.drifts[1].Observed)
 	require.Equal(t, "d-dev has never been deployed on this host", p.drifts[2].Observed)
+}
+
+func Test_PlatformOnce_ReportsTheControlPlaneWhenThisHostRunsIt(t *testing.T) {
+	p := &plane{}
+	report := agentapi.PlatformReport{Live: agentapi.PlatformRelease{Version: "abc", Colour: "green"}}
+
+	reported := newAgent(p, runtime{platform: map[string]agentapi.PlatformReport{"controlplane": report}}).PlatformOnce(ctx)
+
+	require.Equal(t, 1, reported)
+	require.Equal(t, "abc", p.platform["controlplane"].Live.Version)
+}
+
+func Test_PlatformOnce_SkipsHostsWithoutTheControlPlane(t *testing.T) {
+	p := &plane{}
+
+	reported := newAgent(p, runtime{}).PlatformOnce(ctx)
+
+	require.Zero(t, reported)
+	require.Empty(t, p.platform)
 }
