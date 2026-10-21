@@ -82,6 +82,9 @@ as a callback URL.
 | `PLATFORM_QUEUES_TOKEN` | | shared secret the queue gateway authenticates with; the gateway API answers 503 without it |
 | `PLATFORM_QUEUES_GATEWAY_URL` | `http://queued:8080` | gateway address handed to services as `PLATFORM_QUEUE_URL` |
 | `PLATFORM_APPROVALS_WEBHOOK_URL` | | Discord webhook told about every new change request and every deployment that succeeds on prod; empty sends nothing |
+| `PLATFORM_HEALTH_RESPONSE_MS` | `300` | prod p95 response time at or above which a service is broken, unless the service sets its own |
+| `PLATFORM_HEALTH_CPU_PERCENT` | `70` | busiest prod container's CPU, as a share of its `cpu_millis`, at or above which a service is broken |
+| `PLATFORM_HEALTH_DB_CPU_PERCENT` | `70` | CPU of the shared MySQL, in percent of one core, at or above which every service with a prod database is broken |
 
 Never run production with the default secrets key.
 
