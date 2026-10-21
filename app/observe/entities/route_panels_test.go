@@ -14,7 +14,8 @@ func Test_AccessLog_ReadsTheServicesTraefikLinesWithIDsCollapsed(t *testing.T) {
 	require.Contains(t, query, `{container="plateful-traefik-1"} |= "RequestPath" | json | __error__=""`)
 	require.Contains(t, query, `ServiceName=~"api-${env}-(blue|green)@file"`)
 	require.Contains(t, query, "regexReplaceAll `/[0-9]+\\\\b`")
-	require.Contains(t, query, "regexReplaceAll `/[0-9a-fA-F-]{16,}\\\\b` .RequestPath `/:id`")
+	require.Contains(t, query, "regexReplaceAll `/[0-9a-fA-F-]{16,}\\\\b` (regexReplaceAll")
+	require.Contains(t, query, "regexReplaceAll `/[0-9]{4}-[0-9]{2}-[0-9]{2}\\\\b` .RequestPath `/:date`")
 }
 
 func Test_Dashboard_CountsRequestsInsteadOfRates(t *testing.T) {
