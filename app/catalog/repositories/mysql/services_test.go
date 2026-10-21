@@ -103,3 +103,18 @@ func Test_List_FiltersByGitHubRepo(t *testing.T) {
 	require.True(t, found[0].AutoBuild)
 	require.True(t, found[0].AutoDeployDev)
 }
+
+func Test_AServiceKeepsItsHealthLimits(t *testing.T) {
+	repo := mysql.NewServiceRepository(testdb.Open(t))
+	api := service("s1", "api", "t1")
+	require.NoError(t, repo.Create(ctx, api))
+	fresh, _ := repo.FindByID(ctx, "s1")
+	api.Limits = entities.Limits{ResponseMS: 500, CPUPercent: 0, DBCPUPercent: 150}
+	require.NoError(t, repo.Update(ctx, api))
+
+	found, err := repo.FindBySlug(ctx, "api")
+
+	require.NoError(t, err)
+	require.Equal(t, entities.Limits{}, fresh.Limits)
+	require.Equal(t, entities.Limits{ResponseMS: 500, DBCPUPercent: 150}, found.Limits)
+}

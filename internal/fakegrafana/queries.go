@@ -39,8 +39,52 @@ func (g *Grafana) LokiQueries() []string {
 	return append([]string{}, g.lokiQueries...)
 }
 
+func (g *Grafana) SetSeries(match string, values ...float64) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.series[match] = values
+}
+
+func (g *Grafana) seriesFor(query string) ([]float64, bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	for match, values := range g.series {
+		if strings.Contains(query, match) && len(values) > 0 {
+			return values, true
+		}
+	}
+	return nil, false
+}
+
+func (g *Grafana) prometheusRange(w http.ResponseWriter, r *http.Request) {
+	result := []any{}
+	if values, ok := g.seriesFor(r.URL.Query().Get("query")); ok {
+		result = append(result, map[string]any{"metric": map[string]string{}, "values": spread(values, r.URL.Query().Get("end"))})
+	}
+	writeJSON(w, map[string]any{"status": "success", "data": map[string]any{"resultType": "matrix", "result": result}})
+}
+
+func writeVector(w http.ResponseWriter, value string) {
+	vector := []any{map[string]any{"metric": map[string]string{}, "value": []any{time.Now().Unix(), value}}}
+	writeJSON(w, map[string]any{"status": "success", "data": map[string]any{"resultType": "vector", "result": vector}})
+}
+
+func spread(values []float64, end string) [][2]any {
+	last, _ := strconv.ParseInt(end, 10, 64)
+	points := make([][2]any, 0, len(values))
+	for i, v := range values {
+		at := last - int64(len(values)-1-i)*300
+		points = append(points, [2]any{at, strconv.FormatFloat(v, 'f', -1, 64)})
+	}
+	return points
+}
+
 func (g *Grafana) prometheus(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("query")
+	if values, ok := g.seriesFor(query); ok {
+		writeVector(w, strconv.FormatFloat(values[len(values)-1], 'f', -1, 64))
+		return
+	}
 	match := containerName.FindStringSubmatch(query)
 	g.mu.Lock()
 	found, known := usage{}, false

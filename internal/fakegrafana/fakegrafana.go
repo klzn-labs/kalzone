@@ -13,18 +13,20 @@ type Grafana struct {
 	folder      bool
 	dashboards  map[string]string
 	usage       map[string]usage
+	series      map[string][]float64
 	lines       []LokiLine
 	lokiQueries []string
 }
 
 func New() *Grafana {
-	g := &Grafana{dashboards: map[string]string{}, usage: map[string]usage{}}
+	g := &Grafana{dashboards: map[string]string{}, usage: map[string]usage{}, series: map[string][]float64{}}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /grafana/api/folders/platform", g.getFolder)
 	mux.HandleFunc("POST /grafana/api/folders", g.createFolder)
 	mux.HandleFunc("POST /grafana/api/dashboards/db", g.dashboard)
 	mux.HandleFunc("DELETE /grafana/api/dashboards/uid/{uid}", g.deleteDashboard)
 	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/prometheus/api/v1/query", g.prometheus)
+	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/prometheus/api/v1/query_range", g.prometheusRange)
 	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/loki/loki/api/v1/query_range", g.loki)
 	mux.HandleFunc("/grafana/", echo)
 	g.Server = httptest.NewServer(mux)

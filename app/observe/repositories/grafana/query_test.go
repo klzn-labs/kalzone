@@ -91,3 +91,28 @@ func Test_DeleteDashboard_RemovesByUIDAndToleratesAMissingOne(t *testing.T) {
 	require.NoError(t, missing.DeleteDashboard(context.Background(), "platform-api"))
 	require.Error(t, broken.DeleteDashboard(context.Background(), "platform-api"))
 }
+
+func Test_Range_ReadsTheFirstSeriesOfAMatrix(t *testing.T) {
+	var seen url.URL
+	c := server(t, `{"status":"success","data":{"resultType":"matrix","result":[{"metric":{},"values":[[1700000000,"0.18"],[1700000300,"NaN"],[1700000600,"0.25"]]}]}}`, 200, &seen)
+	end := time.Unix(1700000600, 0)
+
+	samples, err := c.Range(context.Background(), "prom", "up", end.Add(-10*time.Minute), end, 5*time.Minute)
+
+	require.NoError(t, err)
+	require.Equal(t, "/grafana/api/datasources/proxy/uid/prom/api/v1/query_range", seen.Path)
+	require.Equal(t, []string{"1700000000", "1700000600", "300"}, []string{seen.Query().Get("start"), seen.Query().Get("end"), seen.Query().Get("step")})
+	require.Len(t, samples, 2)
+	require.Equal(t, 0.25, samples[1].Value)
+	require.Equal(t, time.Unix(1700000600, 0).UTC(), samples[1].At)
+}
+
+func Test_Range_FindsNothingInAnEmptyMatrix(t *testing.T) {
+	var seen url.URL
+	c := server(t, `{"status":"success","data":{"resultType":"matrix","result":[]}}`, 200, &seen)
+
+	samples, err := c.Range(context.Background(), "prom", "up", time.Now().Add(-time.Hour), time.Now(), time.Minute)
+
+	require.NoError(t, err)
+	require.Empty(t, samples)
+}

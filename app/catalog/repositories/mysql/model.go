@@ -31,6 +31,9 @@ type service struct {
 	AutoDeployDev   bool
 	BuildWorkflow   string
 	Status          string
+	LimitResponseMS int `gorm:"column:limit_response_ms"`
+	LimitCPU        int `gorm:"column:limit_cpu_percent"`
+	LimitDBCPU      int `gorm:"column:limit_db_cpu_percent"`
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
 }
@@ -42,6 +45,7 @@ func (s service) toEntity() entities.Service {
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
 		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
 		BuildWorkflow: s.BuildWorkflow, Status: entities.Status(s.Status),
+		Limits:    entities.Limits{ResponseMS: s.LimitResponseMS, CPUPercent: s.LimitCPU, DBCPUPercent: s.LimitDBCPU},
 		CreatedAt: s.CreatedAt, DeletedAt: s.DeletedAt,
 	}
 }
@@ -51,6 +55,7 @@ func fromService(s entities.Service) service {
 		ID: s.ID, Slug: s.Slug, Name: s.Name, Description: s.Description, OwnerTeamID: s.OwnerTeamID,
 		GitHubRepo: s.GitHubRepo, ImageRepository: s.ImageRepository, AutoBuild: s.AutoBuild, AutoDeployDev: s.AutoDeployDev,
 		BuildWorkflow: s.BuildWorkflow, Status: string(statusOrActive(s.Status)),
+		LimitResponseMS: s.Limits.ResponseMS, LimitCPU: s.Limits.CPUPercent, LimitDBCPU: s.Limits.DBCPUPercent,
 		CreatedAt: s.CreatedAt, DeletedAt: s.DeletedAt,
 	}
 }

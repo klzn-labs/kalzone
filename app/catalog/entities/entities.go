@@ -21,8 +21,15 @@ type Service struct {
 	AutoDeployDev   bool
 	BuildWorkflow   string
 	Status          Status
+	Limits          Limits
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
+}
+
+type Limits struct {
+	ResponseMS   int
+	CPUPercent   int
+	DBCPUPercent int
 }
 
 type Status string

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"sort"
@@ -28,6 +29,14 @@ type vector struct {
 	} `json:"data"`
 }
 
+type matrix struct {
+	Data struct {
+		Result []struct {
+			Values [][2]any `json:"values"`
+		} `json:"result"`
+	} `json:"data"`
+}
+
 type streams struct {
 	Data struct {
 		Result []struct {
@@ -48,6 +57,37 @@ func (c Client) Instant(ctx context.Context, uid, query string) (float64, bool, 
 	raw, _ := answer.Data.Result[0].Value[1].(string)
 	value, err := strconv.ParseFloat(raw, 64)
 	return value, err == nil, nil
+}
+
+func (c Client) Range(ctx context.Context, uid, query string, start, end time.Time, step time.Duration) ([]entities.Sample, error) {
+	params := url.Values{
+		"query": {query}, "start": {seconds(start)}, "end": {seconds(end)}, "step": {strconv.Itoa(int(step.Seconds()))},
+	}
+	var answer matrix
+	if err := c.query(ctx, "/api/datasources/proxy/uid/"+uid+"/api/v1/query_range", params, &answer); err != nil {
+		return nil, err
+	}
+	if len(answer.Data.Result) == 0 {
+		return []entities.Sample{}, nil
+	}
+	return samplesOf(answer.Data.Result[0].Values), nil
+}
+
+func samplesOf(values [][2]any) []entities.Sample {
+	samples := make([]entities.Sample, 0, len(values))
+	for _, v := range values {
+		at, _ := v[0].(float64)
+		raw, _ := v[1].(string)
+		value, err := strconv.ParseFloat(raw, 64)
+		if err == nil && !math.IsNaN(value) {
+			samples = append(samples, entities.Sample{At: time.Unix(int64(at), 0).UTC(), Value: value})
+		}
+	}
+	return samples
+}
+
+func seconds(t time.Time) string {
+	return strconv.FormatInt(t.Unix(), 10)
 }
 
 func (c Client) LogLines(ctx context.Context, uid, query string, start, end time.Time, limit int) ([]entities.LogLine, error) {
