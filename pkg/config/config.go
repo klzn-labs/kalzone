@@ -30,6 +30,13 @@ type Config struct {
 	Approvals      Approvals `mapstructure:"approvals"`
 	Databases      Databases `mapstructure:"databases"`
 	Metrics        Metrics   `mapstructure:"metrics"`
+	Health         Health    `mapstructure:"health"`
+}
+
+type Health struct {
+	ResponseMS   int `mapstructure:"response_ms" default:"300" validate:"gt=0"`
+	CPUPercent   int `mapstructure:"cpu_percent" default:"70" validate:"gt=0"`
+	DBCPUPercent int `mapstructure:"db_cpu_percent" default:"70" validate:"gt=0"`
 }
 
 type Metrics struct {
@@ -157,6 +164,7 @@ var envKeys = []string{
 	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
 	"queues.gateway_url", "queues.token", "approvals.webhook_url", "metrics.pushgateway_url",
 	"databases.admin_dsn", "databases.host", "databases.port",
+	"health.response_ms", "health.cpu_percent", "health.db_cpu_percent",
 }
 
 func bindEnvVars() {

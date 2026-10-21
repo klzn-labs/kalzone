@@ -44,13 +44,16 @@ func (s Service) Decommissioning() bool {
 }
 
 type ServiceChanges struct {
-	Name            *string
-	Description     *string
-	GitHubRepo      *string
-	ImageRepository *string
-	AutoBuild       *bool
-	AutoDeployDev   *bool
-	BuildWorkflow   *string
+	Name              *string
+	Description       *string
+	GitHubRepo        *string
+	ImageRepository   *string
+	AutoBuild         *bool
+	AutoDeployDev     *bool
+	BuildWorkflow     *string
+	ResponseLimitMS   *int
+	CPULimitPercent   *int
+	DBCPULimitPercent *int
 }
 
 type ServiceFilter struct {

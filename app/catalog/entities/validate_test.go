@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/klzn-labs/kalzone/app/catalog/entities"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,4 +47,25 @@ func Test_ServiceChanges_SetAndClearAutoDeployDev(t *testing.T) {
 	require.True(t, enabled.AutoBuild)
 	require.False(t, disabled.AutoDeployDev)
 	require.True(t, untouched.AutoDeployDev)
+}
+
+func Test_ServiceChanges_SetAndClearLimits(t *testing.T) {
+	slow, unset := 800, 0
+	before := entities.Service{Limits: entities.Limits{ResponseMS: 500, CPUPercent: 80}}
+
+	after := entities.ServiceChanges{ResponseLimitMS: &slow, CPULimitPercent: &unset}.ApplyTo(before)
+
+	require.Equal(t, entities.Limits{ResponseMS: 800}, after.Limits)
+}
+
+func Test_LimitsAreBounded(t *testing.T) {
+	require.NoError(t, entities.Limits{}.Validate())
+	require.NoError(t, entities.Limits{ResponseMS: 60000, CPUPercent: 100, DBCPUPercent: 400}.Validate())
+
+	err := entities.Limits{CPUPercent: 101}.Validate()
+	negative := entities.Limits{ResponseMS: -1}.Validate()
+
+	require.ErrorIs(t, err, apperror.Invalid(""))
+	require.Equal(t, "limits.cpu_percent", err.(*apperror.AppError).Field)
+	require.Equal(t, "limits.response_ms", negative.(*apperror.AppError).Field)
 }

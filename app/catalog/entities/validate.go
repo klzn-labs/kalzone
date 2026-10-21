@@ -27,6 +27,9 @@ func (s Service) Validate() error {
 	if err := validateSources(s.GitHubRepo, s.ImageRepository); err != nil {
 		return err
 	}
+	if err := s.Limits.Validate(); err != nil {
+		return err
+	}
 	return s.validateBuild()
 }
 
@@ -65,6 +68,7 @@ func (c ServiceChanges) ApplyTo(s Service) Service {
 	s.BuildWorkflow = valueOr(c.BuildWorkflow, s.BuildWorkflow)
 	s.AutoBuild = flagOr(c.AutoBuild, s.AutoBuild)
 	s.AutoDeployDev = flagOr(c.AutoDeployDev, s.AutoDeployDev)
+	s.Limits = c.applyLimits(s.Limits)
 	return s
 }
 
