@@ -34,6 +34,8 @@ type Changelogs interface {
 	Many(ctx context.Context, releaseIDs []string) (map[string]release.Changelog, error)
 }
 
+const recentReleases = 5
+
 type catalogEnv = catalog.Environment
 
 type Row struct {
@@ -55,6 +57,14 @@ type data struct {
 	Wiring   Wiring
 	Snippet  string
 	Uses     string
+}
+
+func (d data) RecentRows() []Row {
+	return d.Rows[:min(len(d.Rows), recentReleases)]
+}
+
+func (d data) OlderRows() []Row {
+	return d.Rows[min(len(d.Rows), recentReleases):]
 }
 
 type EnvTab struct {

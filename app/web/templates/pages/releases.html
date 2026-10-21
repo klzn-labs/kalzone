@@ -15,29 +15,31 @@
     <div class="table-scroll">
       <table class="table release-table">
         <thead><tr><th>Release</th><th>Status</th><th>Source</th><th>Image</th><th>Trigger</th><th class="right">When</th></tr></thead>
-        <tbody>
-        {{range $d.Rows}}{{$r := .Release}}
-          <tr class="{{if $r.Failure}}has-failure{{end}}">
-            <td><a class="revision-number" href="/services/{{$slug}}/releases/{{$r.Number}}">r{{$r.Number}}</a></td>
-            <td>{{template "release-status" (print $r.Status)}}</td>
-            <td>
-              {{if eq (print $r.Source) "registered"}}<span class="ref">{{icon "tag"}}{{$r.Tag}}</span>
-              {{else}}<span class="ref">{{icon "branch"}}{{$r.GitRef}}</span>{{if $r.CommitSHA}} <span class="ref muted">@{{short $r.CommitSHA 7}}</span>{{end}}{{end}}
-              {{if eq (print $r.Source) "shared"}}<div class="small muted">shared from a build of the same image</div>{{end}}
-              {{if .Changes}}<div class="small"><a href="/services/{{$slug}}/releases/{{$r.Number}}">{{.Changes}}</a></div>{{end}}
-            </td>
-            <td class="nowrap">{{if $r.Digest}}<span class="ref" title="{{$r.Reference}}">{{icon "package"}}{{short $r.Digest 12}}</span>{{else}}<span class="muted">—</span>{{end}}{{if $r.RunURL}} <a class="small" href="{{$r.RunURL}}" target="_blank" rel="noopener">run {{icon "external"}}</a>{{end}}</td>
-            <td class="muted nowrap">{{if eq (print $r.Trigger) "push"}}push{{else if eq (print $r.Source) "registered"}}registered{{else if .RequestedBy.Login}}@{{.RequestedBy.Login}}{{end}}</td>
-            <td class="right muted nowrap" title="{{date $r.CreatedAt}}">{{ago $r.CreatedAt}}</td>
-          </tr>
-          {{if $r.Failure}}{{template "release-failure" dict "Row" . "Uses" $d.Uses}}{{end}}
-        {{end}}
-        </tbody>
+        <tbody>{{range $d.RecentRows}}{{template "release-row" (dict "Row" . "Slug" $slug "Uses" $d.Uses)}}{{end}}</tbody>
+        {{with $d.OlderRows}}<tbody class="older">{{range .}}{{template "release-row" (dict "Row" . "Slug" $slug "Uses" $d.Uses)}}{{end}}</tbody>{{end}}
       </table>
     </div>
+    {{with $d.OlderRows}}<div class="expander"><label class="btn btn-ghost btn-sm"><input type="checkbox" class="sr-only expand-toggle"><span class="closed-only">Show {{len .}} older</span><span class="open-only">Show fewer</span></label></div>{{end}}
     {{else}}{{template "empty" dict "Icon" "package" "Title" "No releases yet" "Text" "Build a ref or register a tag to create the first one." "Href" "" "Action" ""}}{{end}}
   </div>
 </div>
+{{end}}
+
+{{define "release-row"}}{{$r := .Row.Release}}
+<tr class="{{if $r.Failure}}has-failure{{end}}">
+  <td><a class="revision-number" href="/services/{{.Slug}}/releases/{{$r.Number}}">r{{$r.Number}}</a></td>
+  <td>{{template "release-status" (print $r.Status)}}</td>
+  <td>
+    {{if eq (print $r.Source) "registered"}}<span class="ref">{{icon "tag"}}{{$r.Tag}}</span>
+    {{else}}<span class="ref">{{icon "branch"}}{{$r.GitRef}}</span>{{if $r.CommitSHA}} <span class="ref muted">@{{short $r.CommitSHA 7}}</span>{{end}}{{end}}
+    {{if eq (print $r.Source) "shared"}}<div class="small muted">shared from a build of the same image</div>{{end}}
+    {{if .Row.Changes}}<div class="small"><a href="/services/{{.Slug}}/releases/{{$r.Number}}">{{.Row.Changes}}</a></div>{{end}}
+  </td>
+  <td class="nowrap">{{if $r.Digest}}<span class="ref" title="{{$r.Reference}}">{{icon "package"}}{{short $r.Digest 12}}</span>{{else}}<span class="muted">—</span>{{end}}{{if $r.RunURL}} <a class="small" href="{{$r.RunURL}}" target="_blank" rel="noopener">run {{icon "external"}}</a>{{end}}</td>
+  <td class="muted nowrap">{{if eq (print $r.Trigger) "push"}}push{{else if eq (print $r.Source) "registered"}}registered{{else if .Row.RequestedBy.Login}}@{{.Row.RequestedBy.Login}}{{end}}</td>
+  <td class="right muted nowrap" title="{{date $r.CreatedAt}}">{{ago $r.CreatedAt}}</td>
+</tr>
+{{if $r.Failure}}{{template "release-failure" dict "Row" .Row "Uses" .Uses}}{{end}}
 {{end}}
 
 {{define "release-actions"}}{{$s := .D.Service}}{{$ready := and $s.GitHubRepo $s.ImageRepository}}
