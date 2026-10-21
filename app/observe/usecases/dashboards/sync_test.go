@@ -44,7 +44,7 @@ func Test_Sync_WritesEveryDashboardAndPublishesTheAttachments(t *testing.T) {
 
 	require.NoError(t, dashboards.NewDashboardsUsecase(g, apiAndWeb(), p).Sync(context.Background()))
 
-	require.Equal(t, []string{"platform-api", "platform-web"}, g.written)
+	require.Equal(t, []string{"platform-api", "platform-web", "kalzone-controlplane"}, g.written)
 	require.Equal(t, []string{"api", "web"}, []string{p.published[0].Slug, p.published[1].Slug})
 }
 
@@ -63,7 +63,15 @@ func Test_Sync_WritesDashboardsWhenThePublisherFails(t *testing.T) {
 	err := dashboards.NewDashboardsUsecase(g, apiAndWeb(), p).Sync(context.Background())
 
 	require.ErrorContains(t, err, "pushgateway down")
-	require.Len(t, g.written, 2)
+	require.Len(t, g.written, 3)
+}
+
+func Test_Sync_WritesThePlatformDashboardWithoutServices(t *testing.T) {
+	g := &grafana{enabled: true}
+
+	require.NoError(t, dashboards.NewDashboardsUsecase(g, &catalog{}, &publisher{}).Sync(context.Background()))
+
+	require.Equal(t, []string{"kalzone-controlplane"}, g.written)
 }
 
 func Test_Sync_SkipsADisabledPublisher(t *testing.T) {

@@ -61,7 +61,7 @@ func envVariable() map[string]any {
 }
 
 func panels(s Service) []any {
-	all := servicePanels(s.Slug)
+	all := workloadPanels(s.Slug + "-${env}")
 	logsAt := servicePanelsHeight
 	if len(s.Databases) > 0 {
 		all = append(all, databasePanels(s, servicePanelsHeight)...)
@@ -70,8 +70,7 @@ func panels(s Service) []any {
 	return append(all, logs(PanelLogs, logsAt, fmt.Sprintf(`{container=~"%s-${env}-(blue|green)"}`, s.Slug)))
 }
 
-func servicePanels(slug string) []any {
-	name := slug + "-${env}"
+func workloadPanels(name string) []any {
 	traefik := fmt.Sprintf(`service=~"%s-(blue|green)@file"`, name)
 	container := fmt.Sprintf(`name=~"%s-(blue|green)"`, name)
 	return []any{

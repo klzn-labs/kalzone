@@ -20,7 +20,7 @@ func (u DashboardsUsecase) Sync(ctx context.Context) error {
 	}
 	services = WithSharing(services)
 	_, writeErr := u.Write(ctx, services)
-	return errors.Join(writeErr, u.publish(ctx, services))
+	return errors.Join(writeErr, u.WritePlatform(ctx), u.publish(ctx, services))
 }
 
 func (u DashboardsUsecase) publish(ctx context.Context, services []entities.Service) error {
