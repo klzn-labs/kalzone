@@ -19,4 +19,5 @@ type Runtime interface {
 	Observe(ctx context.Context, name string) (Observed, error)
 	Inspect(ctx context.Context, container string) (agentapi.Container, error)
 	Logs(ctx context.Context, container string, lines int) ([]string, error)
+	Platform(ctx context.Context, name string) (agentapi.PlatformReport, bool, error)
 }

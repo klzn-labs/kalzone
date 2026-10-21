@@ -6,12 +6,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
+	deploy "github.com/klzn-labs/kalzone/app/deploy/entities"
 	team "github.com/klzn-labs/kalzone/app/team/entities"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
 	"github.com/klzn-labs/kalzone/internal/requestctx"
 	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
+
+const filterPlatform = "platform"
 
 type Services interface {
 	List(ctx context.Context, filter catalog.ServiceFilter) ([]catalog.Service, error)
@@ -22,12 +26,18 @@ type Teams interface {
 	List(ctx context.Context) ([]team.Team, error)
 }
 
+type Platform interface {
+	Component(ctx context.Context, name string) (deploy.PlatformComponent, error)
+}
+
 type listData struct {
-	Filter string
-	Team   string
-	Teams  []teamTab
-	Cards  []web.ServiceCard
-	Total  int
+	Filter   string
+	Team     string
+	Teams    []teamTab
+	Cards    []web.ServiceCard
+	Platform *deploy.PlatformComponent
+	ShowCard bool
+	Total    int
 }
 
 type teamTab struct {
@@ -47,10 +57,11 @@ type ServicesHandler struct {
 	views    web.Views
 	services Services
 	teams    Teams
+	platform Platform
 }
 
-func NewServicesHandler(renderer *web.Renderer, views web.Views, services Services, teams Teams) ServicesHandler {
-	return ServicesHandler{renderer: renderer, views: views, services: services, teams: teams}
+func NewServicesHandler(renderer *web.Renderer, views web.Views, services Services, teams Teams, platform Platform) ServicesHandler {
+	return ServicesHandler{renderer: renderer, views: views, services: services, teams: teams, platform: platform}
 }
 
 func (h ServicesHandler) List(c *gin.Context) {
@@ -71,16 +82,42 @@ func (h ServicesHandler) list(ctx context.Context, a actor.Actor, filter, teamSl
 	if err != nil {
 		return listData{}, err
 	}
-	shown, err := h.filtered(ctx, a, filter, all)
+	cards, err := h.cards(ctx, a, filter, teamSlug, all, teams)
 	if err != nil {
 		return listData{}, err
 	}
-	shown = ownedBy(shown, teams, teamSlug)
-	cards, err := h.views.ServiceCards(ctx, shown)
-	return listData{Filter: filter, Team: teamSlug, Teams: teamTabs(teams, all), Cards: cards, Total: len(all)}, err
+	platform, err := h.controlPlane(ctx)
+	d := listData{Filter: filter, Team: teamSlug, Teams: teamTabs(teams, all), Cards: cards, Platform: platform, Total: len(all)}
+	d.ShowCard = platform != nil && filter != "mine" && teamSlug == ""
+	if platform != nil {
+		d.Total++
+	}
+	return d, err
+}
+
+func (h ServicesHandler) cards(ctx context.Context, a actor.Actor, filter, teamSlug string, all []catalog.Service, teams []team.Team) ([]web.ServiceCard, error) {
+	shown, err := h.filtered(ctx, a, filter, all)
+	if err != nil {
+		return nil, err
+	}
+	return h.views.ServiceCards(ctx, ownedBy(shown, teams, teamSlug))
+}
+
+func (h ServicesHandler) controlPlane(ctx context.Context) (*deploy.PlatformComponent, error) {
+	c, err := h.platform.Component(ctx, deploy.PlatformControlPlane)
+	if apperror.CodeOf(err) == apperror.CodeNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
 }
 
 func (h ServicesHandler) filtered(ctx context.Context, a actor.Actor, filter string, all []catalog.Service) ([]catalog.Service, error) {
+	if filter == filterPlatform {
+		return []catalog.Service{}, nil
+	}
 	if filter != "mine" {
 		return all, nil
 	}

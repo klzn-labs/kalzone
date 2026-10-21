@@ -16,6 +16,7 @@ type ControlPlane interface {
 	Desired(ctx context.Context) ([]agentapi.Desired, error)
 	Drift(ctx context.Context, d agentapi.Drift) error
 	Status(ctx context.Context, snapshots []agentapi.Snapshot) error
+	Platform(ctx context.Context, name string, report agentapi.PlatformReport) error
 }
 
 type Agent struct {
@@ -45,6 +46,7 @@ func (a Agent) Run(ctx context.Context) {
 			a.ReconcileOnce(ctx)
 		case <-status.C:
 			a.StatusOnce(ctx)
+			a.PlatformOnce(ctx)
 		}
 	}
 }

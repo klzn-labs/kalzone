@@ -13,13 +13,16 @@
   <nav class="segmented" aria-label="Filter services">
     <a href="/services" class="{{if and (ne $d.Filter "mine") (not $d.Team)}}active{{end}}">All <span class="muted">{{$d.Total}}</span></a>
     <a href="/services?filter=mine" class="{{if eq $d.Filter "mine"}}active{{end}}">My teams</a>
+    {{if $d.Platform}}<a href="/services?filter=platform" class="{{if eq $d.Filter "platform"}}active{{end}}">Platform <span class="muted">1</span></a>{{end}}
     {{if $d.Teams}}<span class="segmented-divider" aria-hidden="true"></span>{{end}}
     {{range $d.Teams}}<a href="/services?team={{.Slug}}" class="{{if eq $d.Team .Slug}}active{{end}}">{{.Name}} <span class="muted">{{.Count}}</span></a>{{end}}
   </nav>
 </div>
 
-{{if $d.Cards}}
-  <div class="grid grid-cards">{{range $d.Cards}}{{template "service-card" .}}{{end}}</div>
+{{if or $d.Cards $d.ShowCard}}
+  <div class="grid grid-cards">{{if $d.ShowCard}}{{template "platform-card" $d.Platform}}{{end}}{{range $d.Cards}}{{template "service-card" .}}{{end}}</div>
+{{else if eq $d.Filter "platform"}}
+  <div class="card">{{template "empty" dict "Icon" "server" "Title" "The platform has not reported yet" "Text" "The agent on the host running Kalzone reports it every few seconds."}}</div>
 {{else if $d.Team}}
   <div class="card">{{template "empty" dict "Icon" "users" "Title" "This team owns no services" "Text" "Pick another team, or register a service for it." "Href" (printf "/services/new?team=%s" $d.Team) "Action" "New service"}}</div>
 {{else if eq $d.Filter "mine"}}

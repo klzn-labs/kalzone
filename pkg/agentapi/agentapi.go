@@ -109,3 +109,33 @@ type Drift struct {
 	Environment string `json:"environment"`
 	Observed    string `json:"observed"`
 }
+
+var PlatformComponents = []string{"controlplane"}
+
+func PlatformPath(name string) string {
+	return "/agent/v1/platform/" + name
+}
+
+type PlatformRelease struct {
+	Version   string    `json:"version"`
+	Image     string    `json:"image"`
+	Colour    string    `json:"colour"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type PlatformDeploy struct {
+	At       time.Time `json:"at"`
+	Version  string    `json:"version"`
+	Outcome  string    `json:"outcome"`
+	Step     string    `json:"step,omitempty"`
+	Reason   string    `json:"reason,omitempty"`
+	Strategy string    `json:"strategy"`
+	Colour   string    `json:"colour"`
+	RunURL   string    `json:"run_url,omitempty"`
+}
+
+type PlatformReport struct {
+	Live      PlatformRelease  `json:"live"`
+	Container Container        `json:"container"`
+	History   []PlatformDeploy `json:"history"`
+}

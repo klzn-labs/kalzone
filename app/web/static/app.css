@@ -256,6 +256,8 @@ p { margin: 0; }
 .service-card .desc { color: var(--text-2); font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 39px; }
 .service-card .meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding-top: 12px; border-top: 1px dashed var(--border); }
 .service-card .meta .spacer { flex: 1; }
+.platform-card { border-style: dashed; border-color: var(--border-strong); }
+.service-icon.platform-icon { background: var(--text); color: var(--bg); }
 
 .envs { display: flex; gap: 6px; }
 .env-chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11.5px; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); color: var(--muted); background: var(--surface-2); }
