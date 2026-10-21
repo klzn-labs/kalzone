@@ -20,6 +20,16 @@ func Test_Ago(t *testing.T) {
 	require.Equal(t, "Jan 1, 2026", web.Ago(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)))
 }
 
+func Test_Left(t *testing.T) {
+	now := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC)
+	clock.WithTime(now)
+
+	require.Equal(t, "23 hours", web.Left(now.Add(23*time.Hour+31*time.Minute)))
+	require.Equal(t, "1 minute", web.Left(now.Add(90*time.Second)))
+	require.Equal(t, "under a minute", web.Left(now.Add(10*time.Second)))
+	require.Equal(t, "no time", web.Left(now.Add(-time.Second)))
+}
+
 func Test_Initials(t *testing.T) {
 	require.Equal(t, "PA", web.Initials("Places API"))
 	require.Equal(t, "PA", web.Initials("places-api"))

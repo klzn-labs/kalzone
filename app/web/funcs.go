@@ -15,6 +15,7 @@ func funcs() template.FuncMap {
 	return template.FuncMap{
 		"icon":      icon,
 		"ago":       Ago,
+		"left":      Left,
 		"date":      func(t time.Time) string { return t.UTC().Format("Jan 2, 2006 15:04 UTC") },
 		"iso":       func(t time.Time) string { return t.UTC().Format(time.RFC3339) },
 		"initials":  Initials,
@@ -45,6 +46,19 @@ func Ago(t time.Time) string {
 		return plural(int(d.Hours()/24), "day") + " ago"
 	}
 	return t.UTC().Format("Jan 2, 2006")
+}
+
+func Left(t time.Time) string {
+	d := t.Sub(clock.Now())
+	switch {
+	case d <= 0:
+		return "no time"
+	case d < time.Minute:
+		return "under a minute"
+	case d < time.Hour:
+		return plural(int(d.Minutes()), "minute")
+	}
+	return plural(int(d.Hours()), "hour")
 }
 
 func plural(n int, unit string) string {

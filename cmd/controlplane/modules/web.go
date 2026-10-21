@@ -87,11 +87,11 @@ func pageInjections() fx.Option {
 }
 
 func overviewInjections() fx.Option {
-	return fx.Provide(
-		func(u services.ServicesUsecase) overviewPage.Services { return u },
-		func(u teams.TeamsUsecase) overviewPage.Teams { return u },
-		func(u query.QueryUsecase) overviewPage.Events { return u },
-	)
+	return fx.Provide(overviewDeps)
+}
+
+func overviewDeps(s services.ServicesUsecase, t teams.TeamsUsecase, q query.QueryUsecase, r requests.RequestsUsecase, d deployments.DeploymentsUsecase, a agents.AgentsUsecase) overviewPage.Deps {
+	return overviewPage.Deps{Services: s, Teams: t, Events: q, Requests: r, Deployments: d, Agents: a}
 }
 
 func catalogPageInjections() fx.Option {

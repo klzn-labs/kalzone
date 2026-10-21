@@ -1,44 +1,115 @@
 {{define "content"}}
-{{$d := .Data}}
+{{$d := .Data}}{{$csrf := .Viewer.CSRFToken}}
 <div class="page-header">
   <div>
-    <div class="eyebrow">Overview</div>
-    <h1>Welcome back, {{if .Viewer.Name}}{{.Viewer.Name}}{{else}}@{{.Viewer.Actor.Login}}{{end}}</h1>
-    <p class="lead">Here's what your teams own and what changed recently.</p>
+    <h1>Overview</h1>
+    <p class="lead">{{template "finding" $d}}</p>
   </div>
-  <div class="actions">
-    <a class="btn" href="/services">{{icon "box"}}Browse services</a>
-    <a class="btn btn-primary" href="/services/new">{{icon "plus"}}New service</a>
-  </div>
+  <div class="actions"><a class="btn" href="/services/new">{{icon "plus"}}New service</a></div>
 </div>
 
-<div class="grid grid-3">
-  <div class="card stat"><div class="stat-label">Your services</div><div class="stat-value">{{$d.MyServices}}</div><div class="stat-hint">across {{len $d.MyTeams}} team{{if ne (len $d.MyTeams) 1}}s{{end}}</div></div>
-  <div class="card stat"><div class="stat-label">All services</div><div class="stat-value">{{$d.TotalServices}}</div><div class="stat-hint">in the catalog</div></div>
-  <div class="card stat"><div class="stat-label">Teams</div><div class="stat-value">{{$d.TotalTeams}}</div><div class="stat-hint">building on the platform</div></div>
-</div>
+<div class="overview">
+  <section class="card span-7" aria-labelledby="waiting-title">
+    <div class="card-header">
+      <h2 id="waiting-title">Waiting on you</h2>
+      <div class="row"><span class="muted small">{{$d.WaitingCount}} open</span><a class="small" href="/requests">All requests</a></div>
+    </div>
+    {{range $d.Waiting}}{{template "ask" dict "Request" . "CSRF" $csrf}}{{else}}
+      <div class="empty"><div class="empty-icon">{{icon "shield"}}</div><h3>Nothing waits for your approval</h3><p>Changes to protected environments that you can decide show up here.</p></div>
+    {{end}}
+    {{if $d.Decided}}
+    <div class="subhead">Decided recently</div>
+    <ul class="rows">{{range $d.Decided}}
+      <li class="decided">
+        <div class="cell"><a class="line1" href="/requests/{{.ID}}">{{.Summary}}</a><div class="line2">{{.Target}} · {{if .DeciderLogin}}@{{.DeciderLogin}}{{else if .Reason}}{{.Reason}}{{else}}platform{{end}}</div></div>
+        {{template "request-status" .Status}}
+        <span class="when">{{if .DecidedAt}}{{ago (deref .DecidedAt)}}{{else}}{{ago .CreatedAt}}{{end}}</span>
+      </li>{{end}}
+    </ul>
+    {{end}}
+  </section>
 
-<div class="split" style="margin-top:28px">
-  <div>
-    {{if not $d.MyTeams}}
-      <div class="card">{{template "empty" dict "Icon" "users" "Title" "You're not on a team yet" "Text" (printf "Ask a team maintainer to add @%s. Until then you can browse everything." .Viewer.Actor.Login) "Href" "" "Action" ""}}</div>
-    {{end}}
-    {{range $d.MyTeams}}
-      <div class="section-title">
-        <div class="row"><h2><a href="/teams/{{.Team.Slug}}" style="color:inherit">{{.Team.Name}}</a></h2>{{template "role-badge" (print .Role)}}</div>
-        <a class="btn btn-sm btn-ghost" href="/services/new?team={{.Team.Slug}}">{{icon "plus"}}Add service</a>
-      </div>
-      {{if .Services}}
-        <div class="grid grid-2">{{range .Services}}{{template "service-card" .}}{{end}}</div>
-      {{else}}
-        <div class="card">{{template "empty" dict "Icon" "box" "Title" "No services yet" "Text" "Register the first service this team owns." "Href" (printf "/services/new?team=%s" .Team.Slug) "Action" "New service"}}</div>
-      {{end}}
-    {{end}}
-  </div>
-  <div class="card">
-    <div class="card-header"><div><h2>Recent activity</h2><p>Everything that changed on the platform</p></div><a class="btn btn-sm btn-ghost" href="/audit">View all {{icon "arrow"}}</a></div>
+  <section class="card span-5" aria-labelledby="changed-title">
+    <div class="card-header"><h2 id="changed-title">What changed</h2><a class="small" href="/audit">Audit log</a></div>
     {{if $d.Activity}}<ul class="timeline">{{range $d.Activity}}{{template "activity-line" .}}{{end}}</ul>
-    {{else}}{{template "empty" dict "Icon" "activity" "Title" "Quiet so far" "Text" "Changes show up here as they happen." "Href" "" "Action" ""}}{{end}}
+    {{else}}<div class="empty"><div class="empty-icon">{{icon "activity"}}</div><h3>Quiet so far</h3><p>Changes show up here as they happen.</p></div>{{end}}
+  </section>
+
+  {{if $d.To.Slug}}
+  <section class="card span-12" aria-labelledby="lanes-title">
+    <div class="card-header">
+      <h2 id="lanes-title">{{$d.From.Name}} to {{$d.To.Name}}</h2>
+      <span class="muted small">{{$d.Services}} service{{if ne $d.Services 1}}s{{end}} · {{$d.Behind}} waiting to be promoted</span>
+    </div>
+    {{if $d.Lanes}}
+    <div class="table-scroll"><table class="table lanes">
+      <thead><tr><th>Service</th><th>In {{$d.From.Name}}</th><th class="lane-col">Promotion</th><th>In {{$d.To.Name}}</th><th class="right">Owner</th></tr></thead>
+      <tbody>{{range $d.Lanes}}{{template "lane" dict "Lane" . "To" $d.To}}{{end}}</tbody>
+    </table></div>
+    {{else}}<div class="empty"><div class="empty-icon">{{icon "box"}}</div><h3>No services yet</h3><p>Register a service and its releases show up here.</p><a class="btn btn-primary" href="/services/new">{{icon "plus"}}New service</a></div>{{end}}
+  </section>
+
+  <section class="card span-8" aria-labelledby="deploys-title">
+    <div class="card-header"><h2 id="deploys-title">Deploys to {{$d.To.Name}}</h2><span class="muted small">Last 14 days</span></div>
+    <div class="figure"><strong>{{$d.Deploys.Total}}</strong><span>{{$d.Deploys.Failed}} failed{{if $d.Deploys.Median}} · median deploy {{span $d.Deploys.Median}}{{end}}</span></div>
+    {{template "deploy-chart" $d.Deploys}}
+  </section>
+  {{end}}
+
+  <section class="card {{if $d.To.Slug}}span-4{{else}}span-12{{end}}" aria-labelledby="platform-title">
+    <div class="card-header"><h2 id="platform-title">Platform</h2><a class="small" href="/agents">Agents</a></div>
+    <dl class="facts">
+      {{range $d.Agents}}<div><dt>Agent</dt><dd><span class="row"><span class="dot {{if .Healthy}}dot-ok{{else}}dot-bad{{end}}"></span>{{.Agent.Name}}</span><small>{{if .Healthy}}seen {{ago .Agent.LastSeenAt}}{{else}}silent since {{ago .Agent.LastSeenAt}}{{end}}</small></dd></div>
+      {{else}}<div><dt>Agent</dt><dd class="muted">None has reported yet</dd></div>{{end}}
+      <div><dt>Environments</dt><dd>{{range $i, $e := $d.Environments}}{{if $i}}, {{end}}{{$e.Name}}{{end}}{{if $d.To.Slug}}<small>{{$d.To.Name}} needs approval</small>{{end}}</dd></div>
+      <div><dt>Services</dt><dd>{{$d.Services}}</dd></div>
+      <div><dt>Teams</dt><dd>{{$d.Teams}}</dd></div>
+    </dl>
+  </section>
+</div>
+{{end}}
+
+{{define "finding"}}{{if .Waiting}}{{with index .Waiting 0}}<b>{{.Summary}}</b> on {{.Target}} waits for your approval.{{end}}{{if gt .WaitingCount 1}} {{add .WaitingCount -1}} more wait too.{{end}} {{end}}{{if .Behind}}{{.Behind}} service{{if ne .Behind 1}}s run{{else}} runs{{end}} an older release in {{.To.Name}} than in {{.From.Name}}.{{else if .InStep}}{{.InStep}} service{{if ne .InStep 1}}s run{{else}} runs{{end}} the same release in {{.From.Name}} and {{.To.Name}}.{{else if not .Waiting}}Nothing waits for you.{{end}}{{end}}
+
+{{define "ask"}}{{$r := .Request}}
+<div class="ask">
+  <div>
+    <div class="ask-title"><a href="/requests/{{$r.ID}}">{{$r.Summary}}</a>{{template "env-badge" $r.Environment}}</div>
+    <div class="ask-sub">{{$r.Target}} · @{{$r.RequesterLogin}}{{if $r.TokenName}} via <span class="mono">{{$r.TokenName}}</span>{{end}} · {{ago $r.CreatedAt}} · expires in {{left $r.ExpiresAt}}</div>
   </div>
+  <div class="ask-actions">
+    <form method="post" action="/requests/{{$r.ID}}/reject" hx-post="/requests/{{$r.ID}}/reject">{{template "csrf" .CSRF}}<button class="btn">Reject</button></form>
+    <form method="post" action="/requests/{{$r.ID}}/approve" hx-post="/requests/{{$r.ID}}/approve" hx-confirm="Approve and run it now?">{{template "csrf" .CSRF}}<button class="btn btn-primary">Approve</button></form>
+  </div>
+</div>
+{{end}}
+
+{{define "lane"}}{{$l := .Lane}}
+<tr>
+  <td><a class="stacked" href="/services/{{$l.Service.Slug}}"><b>{{$l.Service.Name}}</b><small class="mono">{{$l.Service.Slug}}</small></a></td>
+  <td>{{template "stage" $l.From}}</td>
+  <td class="lane-col">
+    <div class="lane {{if $l.Behind}}behind{{else if $l.NotPromoted}}absent{{else if not $l.From.Release}}idle{{end}}">
+      <span class="lane-track" aria-hidden="true"><i class="from"></i><i class="to"></i></span>
+      {{if $l.Behind}}<a class="lane-note" href="/services/{{$l.Service.Slug}}/env/{{.To.Slug}}">{{.To.Name}} {{$l.Behind}} release{{if ne $l.Behind 1}}s{{end}} behind</a>
+      {{else if $l.NotPromoted}}<a class="lane-note" href="/services/{{$l.Service.Slug}}/env/{{.To.Slug}}">Not in {{.To.Name}} yet</a>
+      {{else if $l.From.Release}}<span class="lane-note">Same release</span>
+      {{else}}<span class="lane-note">Nothing deployed</span>{{end}}
+    </div>
+  </td>
+  <td>{{template "stage" $l.To}}</td>
+  <td class="right muted">{{$l.Team.Name}}</td>
+</tr>
+{{end}}
+
+{{define "stage"}}{{if .Release}}<span class="stacked"><b class="mono">#{{.Release}}</b><small>{{if .At}}{{ago (deref .At)}}{{end}}</small></span>{{else}}<span class="muted">—</span>{{end}}{{end}}
+
+{{define "deploy-chart"}}
+<div class="bars" role="img" aria-label="{{.Total}} deploys over the last 14 days">
+  <div class="bars-plot">
+    {{range .Ticks}}<div class="bars-tick" style="bottom: {{.Bottom}}%"><span>{{.Value}}</span></div>{{end}}
+    <div class="bars-days">{{range .Days}}<div class="bars-day" title="{{.Label}}: {{.Count}}"><div class="bar" style="height: {{.Height}}%"></div></div>{{end}}</div>
+  </div>
+  <div class="bars-labels">{{range .Days}}<span>{{if .ShowLabel}}{{.Label}}{{end}}</span>{{end}}</div>
 </div>
 {{end}}
