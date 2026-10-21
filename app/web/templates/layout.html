@@ -2,7 +2,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{if .Title}}{{.Title}} · {{end}}Kalzone</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235b4cf5'/%3E%3Cstop offset='1' stop-color='%230ea5e9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M16 7 8 11.5v9L16 25l8-4.5v-9L16 7Z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231b6c80'/%3E%3Cpath d='M16 7 8 11.5v9L16 25l8-4.5v-9L16 7Z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/static/app.css">
 <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}],"includeIndicatorStyles":false}'>
 <script src="/static/htmx-2.0.4.min.js" defer></script>
@@ -13,17 +15,23 @@
 <head>{{template "head" .}}</head>
 <body hx-headers='{"X-CSRF-Token": "{{.Viewer.CSRFToken}}"}'>
 <div class="shell">
+  <input type="checkbox" id="nav-toggle" class="nav-toggle sr-only" aria-label="Show navigation">
+  <header class="topbar">
+    <label class="menu" for="nav-toggle" title="Menu">{{icon "menu"}}</label>
+    <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span>Kalzone</a>
+  </header>
   <aside class="sidebar">
-    <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span><span>Kalzone<small>Internal developer platform</small></span></a>
-    <div class="nav-label">Workspace</div>
+    <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span>Kalzone</a>
     <a class="nav-link {{if eq .Nav "overview"}}active{{end}}" href="/">{{icon "home"}}Overview</a>
     <a class="nav-link {{if eq .Nav "services"}}active{{end}}" href="/services">{{icon "box"}}Services</a>
+    <a class="nav-link {{if eq .Nav "requests"}}active{{end}}" href="/requests">{{icon "shield"}}Requests<span class="nav-count" hx-get="/requests/badge" hx-trigger="load, every 30s"></span></a>
+    <a class="nav-link {{if eq .Nav "resources"}}active{{end}}" href="/resources">{{icon "layers"}}Resources</a>
+    <div class="nav-label">Organisation</div>
     <a class="nav-link {{if eq .Nav "teams"}}active{{end}}" href="/teams">{{icon "users"}}Teams</a>
     <a class="nav-link {{if eq .Nav "people"}}active{{end}}" href="/people">{{icon "user"}}People</a>
-    <a class="nav-link {{if eq .Nav "resources"}}active{{end}}" href="/resources">{{icon "layers"}}Resources</a>
-    <a class="nav-link {{if eq .Nav "requests"}}active{{end}}" href="/requests">{{icon "shield"}}Requests<span class="nav-count" hx-get="/requests/badge" hx-trigger="load, every 30s"></span></a>
     <a class="nav-link {{if eq .Nav "agents"}}active{{end}}" href="/agents">{{icon "server"}}Agents</a>
     <a class="nav-link {{if eq .Nav "audit"}}active{{end}}" href="/audit">{{icon "activity"}}Audit log</a>
+    <a class="nav-link {{if eq .Nav "tokens"}}active{{end}}" href="/tokens">{{icon "key"}}Access tokens</a>
     <div class="sidebar-footer">
       <div class="me">
         {{template "avatar" dict "Name" .Viewer.Name "Login" .Viewer.Actor.Login "URL" .Viewer.AvatarURL "Class" ""}}
@@ -31,7 +39,6 @@
           <div class="me-name">{{if .Viewer.Name}}{{.Viewer.Name}}{{else}}{{.Viewer.Actor.Login}}{{end}}</div>
           <div class="me-login">@{{.Viewer.Actor.Login}}{{if .Viewer.Actor.Admin}} · admin{{end}}</div>
         </div>
-        <a class="btn btn-ghost btn-icon btn-sm {{if eq .Nav "tokens"}}active{{end}}" href="/tokens" title="Access tokens" aria-label="Access tokens">{{icon "key"}}</a>
         <form method="post" action="/logout">
           <input type="hidden" name="_csrf" value="{{.Viewer.CSRFToken}}">
           <button class="btn btn-ghost btn-icon btn-sm" title="Sign out" aria-label="Sign out">{{icon "logout"}}</button>
@@ -39,7 +46,7 @@
       </div>
     </div>
   </aside>
-  <main class="main"><div class="container">{{template "content" .}}</div></main>
+  <main class="main"><div class="sheet"><div class="container">{{template "content" .}}</div></div></main>
 </div>
 {{template "flash" .Flash}}
 </body>
