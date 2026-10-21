@@ -2,6 +2,7 @@ package deployments
 
 import (
 	"context"
+	"time"
 
 	"github.com/klzn-labs/kalzone/app/authz"
 	"github.com/klzn-labs/kalzone/app/deploy/entities"
@@ -23,6 +24,7 @@ type Store interface {
 	ScheduleAll(ctx context.Context, ds []entities.Deployment) ([]entities.Deployment, error)
 	Environments(ctx context.Context, serviceID string) ([]string, error)
 	DeleteRuntime(ctx context.Context, serviceID string) error
+	FinishedSince(ctx context.Context, environment string, since time.Time) ([]entities.Deployment, error)
 }
 
 type ServiceLookup interface {

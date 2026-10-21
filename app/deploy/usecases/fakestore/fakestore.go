@@ -163,6 +163,13 @@ func (s *Store) TouchAgent(_ context.Context, a entities.Agent) error {
 
 func (s *Store) Agents(context.Context) ([]entities.Agent, error) { return nil, nil }
 
+func (s *Store) FinishedSince(_ context.Context, environment string, since time.Time) ([]entities.Deployment, error) {
+	return s.matching(func(d entities.Deployment) bool {
+		finished := d.Status == entities.StatusSucceeded || d.Status == entities.StatusFailed
+		return finished && d.Environment == environment && d.FinishedAt != nil && !d.FinishedAt.Before(since)
+	}), nil
+}
+
 func (s *Store) matching(keep func(entities.Deployment) bool) []entities.Deployment {
 	result := []entities.Deployment{}
 	for _, d := range s.ByID {
