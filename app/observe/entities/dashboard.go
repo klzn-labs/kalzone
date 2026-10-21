@@ -21,7 +21,12 @@ const (
 	PanelQueryLatency = 12
 	PanelSlowQueries  = 13
 
-	servicePanelsHeight = 16
+	PanelRouteCounts = 18
+	PanelRouteP95    = 19
+
+	routePanelsY        = 16
+	countInterval       = "1m"
+	servicePanelsHeight = 24
 )
 
 type Service struct {
@@ -61,7 +66,7 @@ func envVariable() map[string]any {
 }
 
 func panels(s Service) []any {
-	all := workloadPanels(s.Slug + "-${env}")
+	all := append(workloadPanels(s.Slug+"-${env}"), routePanels(s.Slug+"-${env}", routePanelsY)...)
 	logsAt := servicePanelsHeight
 	if len(s.Databases) > 0 {
 		all = append(all, databasePanels(s, servicePanelsHeight)...)
@@ -74,7 +79,7 @@ func workloadPanels(name string) []any {
 	traefik := fmt.Sprintf(`service=~"%s-(blue|green)@file"`, name)
 	container := fmt.Sprintf(`name=~"%s-(blue|green)"`, name)
 	return []any{
-		timeseries(PanelRequests, "Requests per second", "reqps", 0, 0, fmt.Sprintf("sum(rate(traefik_service_requests_total{%s}[1m]))", traefik)),
+		counted(timeseries(PanelRequests, "Requests", "short", 0, 0, fmt.Sprintf("sum(increase(traefik_service_requests_total{%s}[$__interval]))", traefik))),
 		timeseries(PanelErrors, "5xx ratio", "percentunit", 8, 0, fmt.Sprintf(
 			"sum(rate(traefik_service_requests_total{%s,code=~\"5..\"}[1m])) / sum(rate(traefik_service_requests_total{%s}[1m]))", traefik, traefik)),
 		timeseries(PanelLatency, "p95 latency", "s", 16, 0, fmt.Sprintf(
@@ -94,6 +99,15 @@ func timeseries(id int, title, unit string, x, y int, expr string) map[string]an
 		"fieldConfig": map[string]any{"defaults": map[string]any{"unit": unit}, "overrides": []any{}},
 		"targets":     []map[string]any{{"refId": "A", "expr": expr, "datasource": map[string]string{"type": "prometheus", "uid": "prometheus"}}},
 	}
+}
+
+func counted(panel map[string]any) map[string]any {
+	panel["interval"] = countInterval
+	defaults := panel["fieldConfig"].(map[string]any)["defaults"].(map[string]any)
+	defaults["decimals"] = 0
+	defaults["custom"] = map[string]any{"drawStyle": "bars", "fillOpacity": 80, "stacking": map[string]string{"mode": "normal"}}
+	panel["options"] = map[string]any{"legend": map[string]any{"displayMode": "list", "placement": "bottom", "calcs": []string{"sum"}}}
+	return panel
 }
 
 func stepped(panel map[string]any) map[string]any {
