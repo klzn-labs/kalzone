@@ -145,3 +145,15 @@ func Test_TeamPageSuggestsSignedInPeopleToAdd(t *testing.T) {
 	require.Contains(t, page.Body, `list="member-logins"`)
 	require.Contains(t, page.Body, `<option value="eve">`)
 }
+
+func Test_EveryPageCanSwitchTheme(t *testing.T) {
+	_, p := setupPlaces(t)
+
+	page := p.mia.Do(t, http.MethodGet, "/services", nil)
+	script := p.mia.Do(t, http.MethodGet, "/static/theme.js", nil)
+
+	require.Contains(t, page.Body, `<script src="/static/theme.js"></script>`)
+	require.Contains(t, page.Body, "data-theme-toggle")
+	require.Equal(t, http.StatusOK, script.Status)
+	require.Contains(t, script.Body, "kalzone-theme")
+}

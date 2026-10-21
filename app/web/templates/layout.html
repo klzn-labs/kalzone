@@ -6,6 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/static/app.css">
+<script src="/static/theme.js"></script>
 <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}],"includeIndicatorStyles":false}'>
 <script src="/static/htmx-2.0.4.min.js" defer></script>
 {{end}}
@@ -39,6 +40,7 @@
           <div class="me-name">{{if .Viewer.Name}}{{.Viewer.Name}}{{else}}{{.Viewer.Actor.Login}}{{end}}</div>
           <div class="me-login">@{{.Viewer.Actor.Login}}{{if .Viewer.Actor.Admin}} · admin{{end}}</div>
         </div>
+        <button type="button" class="btn btn-ghost btn-icon btn-sm theme-toggle" data-theme-toggle title="Theme: system, light or dark" aria-label="Switch theme"><span class="theme-system">{{icon "monitor"}}</span><span class="theme-light">{{icon "sun"}}</span><span class="theme-dark">{{icon "moon"}}</span></button>
         <form method="post" action="/logout">
           <input type="hidden" name="_csrf" value="{{.Viewer.CSRFToken}}">
           <button class="btn btn-ghost btn-icon btn-sm" title="Sign out" aria-label="Sign out">{{icon "logout"}}</button>
