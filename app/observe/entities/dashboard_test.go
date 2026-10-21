@@ -36,7 +36,7 @@ func Test_Dashboard_HasNoDatabaseRowWithoutAttachments(t *testing.T) {
 
 	require.NotContains(t, body, "kalzone_database_attachment")
 	require.NotContains(t, body, `"type":"row"`)
-	require.Contains(t, body, `"gridPos":{"h":12,"w":24,"x":0,"y":16}`)
+	require.Contains(t, body, `"gridPos":{"h":12,"w":24,"x":0,"y":24}`)
 }
 
 func Test_Dashboard_AddsTheDatabaseRowFilteredByServiceAndEnv(t *testing.T) {
@@ -53,7 +53,7 @@ func Test_Dashboard_AddsTheDatabaseRowFilteredByServiceAndEnv(t *testing.T) {
 	require.Contains(t, body, "Shared by every service on this MySQL server")
 	require.Contains(t, body, `increase(mysql_perf_schema_events_statements_seconds_total[$__range])`)
 	require.Contains(t, body, `"title":"Slowest queries"`)
-	require.Contains(t, body, `"gridPos":{"h":12,"w":24,"x":0,"y":35}`)
+	require.Contains(t, body, `"gridPos":{"h":12,"w":24,"x":0,"y":43}`)
 }
 
 func Test_Dashboard_NeverMatchesAnotherServicesAttachment(t *testing.T) {

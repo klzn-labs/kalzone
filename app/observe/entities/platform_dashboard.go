@@ -39,8 +39,8 @@ func runtimePanels() []any {
 	requests := fmt.Sprintf("platform_http_request_duration_seconds_count{%s,%s}", job, internalRoutes)
 	buckets := fmt.Sprintf("platform_http_request_duration_seconds_bucket{%s,%s}", job, internalRoutes)
 	return []any{
-		legend(timeseries(PanelRouteRequests, "Requests by route", "reqps", 0, runtimeRowY, fmt.Sprintf(
-			"topk(8, sum by (route) (rate(%s[5m])))", requests)), "{{route}}"),
+		legend(counted(timeseries(PanelRouteRequests, "Requests by route", "short", 0, runtimeRowY, fmt.Sprintf(
+			"topk(8, sum by (route) (increase(%s[$__interval])))", requests))), "{{route}}"),
 		legend(timeseries(PanelRouteLatency, "p95 by route", "s", 8, runtimeRowY, fmt.Sprintf(
 			"topk(8, histogram_quantile(0.95, sum by (le, route) (rate(%s[5m]))))", buckets)), "{{route}}"),
 		timeseries(PanelGoroutines, "Goroutines", "short", 16, runtimeRowY, fmt.Sprintf("sum(go_goroutines{%s})", job)),
