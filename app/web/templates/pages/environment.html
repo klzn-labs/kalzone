@@ -241,7 +241,7 @@
   {{if .Enabled}}
   <div class="panels">
     {{$uid := .UID}}{{$env := .Env}}
-    {{range $panel := (list 1 2 3 4)}}{{template "panel" dict "UID" $uid "Env" $env "Panel" $panel "Class" ""}}{{end}}
+    {{range $panel := (list 1 18 3 19 2 4)}}{{template "panel" dict "UID" $uid "Env" $env "Panel" $panel "Class" ""}}{{end}}
     {{template "panel" dict "UID" $uid "Env" $env "Panel" 6 "Class" "wide"}}
   </div>
   {{else}}{{template "empty" dict "Icon" "activity" "Title" "Observability isn't connected" "Text" "Set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN to embed dashboards here." "Href" "" "Action" ""}}{{end}}
