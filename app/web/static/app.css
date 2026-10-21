@@ -383,6 +383,11 @@ details.disclosure > summary { list-style: none; cursor: pointer; }
 details.disclosure > summary::-webkit-details-marker { display: none; }
 details.disclosure[open] > summary .closed-only { display: none; }
 details.disclosure:not([open]) > summary .open-only { display: none; }
+.expander { padding: 8px 20px; border-top: 1px solid var(--border); text-align: center; }
+.card:not(:has(.expand-toggle:checked)) tbody.older { display: none; }
+.table tbody.older tr:first-child td { border-top: 1px solid var(--border); }
+.card:has(.expand-toggle:checked) .expander .closed-only { display: none; }
+.card:not(:has(.expand-toggle:checked)) .expander .open-only { display: none; }
 .inline-panel { margin-top: 14px; padding: 16px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
 
 .toast {

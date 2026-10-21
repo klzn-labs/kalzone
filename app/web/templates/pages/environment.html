@@ -57,27 +57,29 @@
     {{if $v.Rows}}
     <table class="table">
       <thead><tr><th>#</th><th>Status</th><th>Release</th><th>Trigger</th><th class="right">When</th></tr></thead>
-      <tbody>
-      {{range $v.Rows}}{{$dep := .Deployment}}
-        <tr>
-          <td><span class="revision-number">#{{$dep.Number}}</span></td>
-          <td>{{template "deploy-status" (print $dep.Status)}}{{if .IsLive}} <span class="badge badge-ok">live</span>{{end}}{{if and $dep.Message (ne $dep.Message "live")}}<div class="small muted" style="max-width:280px;margin-top:4px">{{$dep.Message}}</div>{{end}}</td>
-          <td><span class="mono">r{{$dep.ReleaseNumber}} · c{{$dep.ConfigRevision}}</span></td>
-          <td><span class="small">{{$dep.Trigger}}</span>{{if .RequestedBy.Login}}<div class="small muted">by @{{.RequestedBy.Login}}</div>{{end}}</td>
-          <td class="right nowrap"><span class="muted" title="{{date $dep.CreatedAt}}">{{ago $dep.CreatedAt}}</span>
-            {{if and $v.CanDeploy (eq (print $dep.Status) "succeeded") (not .IsLive)}}
-            <form method="post" action="{{$base}}/deployments/{{$dep.ID}}/rollback" hx-post="{{$base}}/deployments/{{$dep.ID}}/rollback" hx-confirm="Roll {{$d.Env.Name}} back to r{{$dep.ReleaseNumber}} with config c{{$dep.ConfigRevision}}?" hx-target="closest .card" hx-swap="afterbegin" style="display:inline">
-              {{template "csrf" $csrf}}<button class="btn btn-ghost btn-sm" title="Roll back to this deployment">{{icon "history"}}Roll back</button>
-            </form>
-            {{end}}
-          </td>
-        </tr>
-      {{end}}
-      </tbody>
+      <tbody>{{range $v.RecentRows}}{{template "deployment-row" (dict "Row" . "Base" $base "CSRF" $csrf "CanDeploy" $v.CanDeploy "EnvName" $d.Env.Name)}}{{end}}</tbody>
+      {{with $v.OlderRows}}<tbody class="older">{{range .}}{{template "deployment-row" (dict "Row" . "Base" $base "CSRF" $csrf "CanDeploy" $v.CanDeploy "EnvName" $d.Env.Name)}}{{end}}</tbody>{{end}}
     </table>
+    {{with $v.OlderRows}}<div class="expander"><label class="btn btn-ghost btn-sm"><input type="checkbox" class="sr-only expand-toggle"><span class="closed-only">Show {{len .}} older</span><span class="open-only">Show fewer</span></label></div>{{end}}
     {{else}}{{template "empty" dict "Icon" "server" "Title" "No deployments yet" "Text" "Pick a built release above to deploy it." "Href" "" "Action" ""}}{{end}}
   </div>
 </div>
+{{end}}
+
+{{define "deployment-row"}}{{$dep := .Row.Deployment}}
+<tr>
+  <td><span class="revision-number">#{{$dep.Number}}</span></td>
+  <td>{{template "deploy-status" (print $dep.Status)}}{{if .Row.IsLive}} <span class="badge badge-ok">live</span>{{end}}{{if and $dep.Message (ne $dep.Message "live")}}<div class="small muted" style="max-width:280px;margin-top:4px">{{$dep.Message}}</div>{{end}}</td>
+  <td><span class="mono">r{{$dep.ReleaseNumber}} · c{{$dep.ConfigRevision}}</span></td>
+  <td><span class="small">{{$dep.Trigger}}</span>{{if .Row.RequestedBy.Login}}<div class="small muted">by @{{.Row.RequestedBy.Login}}</div>{{end}}</td>
+  <td class="right nowrap"><span class="muted" title="{{date $dep.CreatedAt}}">{{ago $dep.CreatedAt}}</span>
+    {{if and .CanDeploy (eq (print $dep.Status) "succeeded") (not .Row.IsLive)}}
+    <form method="post" action="{{.Base}}/deployments/{{$dep.ID}}/rollback" hx-post="{{.Base}}/deployments/{{$dep.ID}}/rollback" hx-confirm="Roll {{.EnvName}} back to r{{$dep.ReleaseNumber}} with config c{{$dep.ConfigRevision}}?" hx-target="closest .card" hx-swap="afterbegin" style="display:inline">
+      {{template "csrf" .CSRF}}<button class="btn btn-ghost btn-sm" title="Roll back to this deployment">{{icon "history"}}Roll back</button>
+    </form>
+    {{end}}
+  </td>
+</tr>
 {{end}}
 
 {{define "content"}}

@@ -11,6 +11,8 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
+const recentDeployments = 5
+
 type Deployments interface {
 	History(ctx context.Context, serviceSlug, environment string, limit int) ([]deploy.Deployment, error)
 	Live(ctx context.Context, serviceSlug, environment string) (deploy.Deployment, bool, error)
@@ -62,6 +64,14 @@ func (h EnvironmentHandler) deployView(ctx context.Context, a actor.Actor, d dat
 
 func (v DeployView) OffersPromotion() bool {
 	return v.PromoteFrom != "" && !(v.HasLive && v.Live.ReleaseID == v.PromoteLive.ReleaseID)
+}
+
+func (v DeployView) RecentRows() []DeploymentRow {
+	return v.Rows[:min(len(v.Rows), recentDeployments)]
+}
+
+func (v DeployView) OlderRows() []DeploymentRow {
+	return v.Rows[min(len(v.Rows), recentDeployments):]
 }
 
 func (h EnvironmentHandler) liveAndHistory(ctx context.Context, serviceSlug, envSlug string) (DeployView, error) {
