@@ -2,32 +2,68 @@
 {{$d := .Data}}
 <div class="page-header">
   <div>
-    <div class="eyebrow">Catalog</div>
     <h1>Services</h1>
-    <p class="lead">Every service on the platform, who owns it and which config each environment runs.</p>
+    <p class="lead counts"><span>{{$d.Total}} service{{if ne $d.Total 1}}s{{end}}</span>{{if $d.Broken}}<span class="attn">{{$d.Broken}} need{{if eq $d.Broken 1}}s{{end}} attention</span>{{else}}<span>all fine</span>{{end}}{{if $d.Deploying}}<span>{{$d.Deploying}} deploying</span>{{end}}</p>
   </div>
   <div class="actions"><a class="btn btn-primary" href="/services/new">{{icon "plus"}}New service</a></div>
 </div>
 
-<div class="filters">
-  <nav class="segmented" aria-label="Filter services">
-    <a href="/services" class="{{if and (ne $d.Filter "mine") (not $d.Team)}}active{{end}}">All <span class="muted">{{$d.Total}}</span></a>
-    <a href="/services?filter=mine" class="{{if eq $d.Filter "mine"}}active{{end}}">My teams</a>
-    {{if $d.Platform}}<a href="/services?filter=platform" class="{{if eq $d.Filter "platform"}}active{{end}}">Platform <span class="muted">1</span></a>{{end}}
-    {{if $d.Teams}}<span class="segmented-divider" aria-hidden="true"></span>{{end}}
-    {{range $d.Teams}}<a href="/services?team={{.Slug}}" class="{{if eq $d.Team .Slug}}active{{end}}">{{.Name}} <span class="muted">{{.Count}}</span></a>{{end}}
-  </nav>
-</div>
-
-{{if or $d.Cards $d.ShowCard}}
-  <div class="grid grid-cards">{{if $d.ShowCard}}{{template "platform-card" $d.Platform}}{{end}}{{range $d.Cards}}{{template "service-card" .}}{{end}}</div>
-{{else if eq $d.Filter "platform"}}
-  <div class="card">{{template "empty" dict "Icon" "server" "Title" "The platform has not reported yet" "Text" "The agent on the host running Kalzone reports it every few seconds."}}</div>
-{{else if $d.Team}}
-  <div class="card">{{template "empty" dict "Icon" "users" "Title" "This team owns no services" "Text" "Pick another team, or register a service for it." "Href" (printf "/services/new?team=%s" $d.Team) "Action" "New service"}}</div>
-{{else if eq $d.Filter "mine"}}
-  <div class="card">{{template "empty" dict "Icon" "users" "Title" "Your teams don't own any services" "Text" "Register one, or ask to join a team that does." "Href" "/services/new" "Action" "New service"}}</div>
+{{range $d.Sections}}
+<details class="team-section" open data-team="{{.Team.Slug}}">
+  <summary class="team-head">
+    <span class="chev" aria-hidden="true">{{icon "chevron"}}</span>
+    <h2>{{.Team.Name}}</h2>
+    <span class="muted">{{len .Rows}}</span>
+    {{if .Broken}}<span class="attn">{{.Broken}} need{{if eq .Broken 1}}s{{end}} attention</span>{{else}}<span class="muted small">all fine</span>{{end}}
+  </summary>
+  <div class="card"><div class="table-scroll"><table class="table service-rows"><colgroup><col class="c-mark"><col class="c-svc"><col class="c-rel"><col class="c-build"><col class="c-prod"><col></colgroup>
+    <thead><tr><th class="mark-col"><span class="sr-only">State</span></th><th>Service</th><th>Latest release</th><th>Build</th><th>In {{$d.Prod.Name}}</th><th>Now</th></tr></thead>
+    <tbody>{{range .Rows}}{{template "service-row" dict "Status" . "Prod" $d.Prod}}{{end}}</tbody>
+  </table></div></div>
+</details>
 {{else}}
   <div class="card">{{template "empty" dict "Icon" "box" "Title" "The catalog is empty" "Text" "Register the first service to get started." "Href" "/services/new" "Action" "New service"}}</div>
 {{end}}
+
+{{with $d.Platform}}
+<details class="team-section" open data-team="platform">
+  <summary class="team-head"><span class="chev" aria-hidden="true">{{icon "chevron"}}</span><h2>Platform</h2><span class="muted">1</span><span class="muted small">read-only</span></summary>
+  <div class="card"><div class="table-scroll"><table class="table service-rows"><colgroup><col class="c-mark"><col class="c-svc"><col class="c-rel"><col class="c-build"><col class="c-prod"><col></colgroup>
+    <tbody><tr>
+      <td class="mark-col">{{if .Healthy}}<span class="calm" title="Running"><i></i></span>{{else}}<span class="alarm" title="Not running" role="img" aria-label="Not running"><i></i></span>{{end}}</td>
+      <td><a class="stacked" href="/platform/{{.Name}}"><b>Kalzone {{.Name}}</b><small>deployed from kalzone-infra</small></a></td>
+      <td colspan="2" class="muted">—</td>
+      <td><span class="stacked"><b class="mono">{{short .Live.Commit 7}}</b><small>seen {{ago .ObservedAt}}</small></span></td>
+      <td>{{if .Healthy}}<span class="muted">—</span>{{else}}<span class="why">Control plane not running</span>{{end}}</td>
+    </tr></tbody>
+  </table></div></div>
+</details>
 {{end}}
+<script>
+document.querySelectorAll('details.team-section').forEach(function (el) {
+  var key = 'kalzone-team-' + el.dataset.team;
+  try { if (localStorage.getItem(key) === 'closed') el.open = false; } catch (e) {}
+  el.addEventListener('toggle', function () {
+    try { localStorage.setItem(key, el.open ? 'open' : 'closed'); } catch (e) {}
+  });
+});
+</script>
+{{end}}
+
+{{define "service-row"}}{{$st := .Status}}{{$latest := $st.Latest}}{{$live := $st.Live}}{{$running := $st.Running}}
+<tr>
+  <td class="mark-col">{{if $st.Broken}}<span class="alarm" title="{{index $st.Problems 0}}" role="img" aria-label="Has problems"><i></i></span>{{else}}<span class="calm" title="All fine"><i></i></span>{{end}}</td>
+  <td><a class="stacked" href="/services/{{$st.Service.Slug}}"><b>{{$st.Service.Name}}</b><small class="mono">{{$st.Service.Slug}}</small></a></td>
+  <td>{{if $latest}}<span class="stacked"><b class="mono">#{{$latest.Number}}</b><small>{{ago $latest.CreatedAt}}</small></span>{{else}}<span class="muted">—</span>{{end}}</td>
+  <td>{{if $latest}}{{template "build-pill" $latest.Status}}{{else}}<span class="muted">—</span>{{end}}</td>
+  <td>{{if $live}}<span class="stacked"><b class="mono">#{{$live.ReleaseNumber}}</b><small>since {{ago (deref $live.FinishedAt)}}</small></span>{{else}}<span class="muted">Never deployed</span>{{end}}</td>
+  <td><span class="now">
+    {{range $st.Problems}}<span class="why">{{.}}</span>{{end}}
+    {{if $running}}<span class="row"><span class="spin" aria-hidden="true"></span>Deploying #{{$running.ReleaseNumber}} to {{.Prod.Name}}</span>{{end}}
+    {{with $st.Waiting}}<a class="badge badge-warn" href="/requests/{{.ID}}">Waits for you: {{.Summary}}</a>{{end}}
+    {{if and (not $st.Problems) (not $running) (not $st.Waiting)}}<span class="muted">—</span>{{end}}
+  </span></td>
+</tr>
+{{end}}
+
+{{define "build-pill"}}{{$s := print .}}{{if eq $s "built"}}<span class="badge badge-ok">Built</span>{{else if eq $s "failed"}}<span class="badge badge-danger">Failed</span>{{else}}<span class="badge"><span class="spin" aria-hidden="true"></span>Building</span>{{end}}{{end}}

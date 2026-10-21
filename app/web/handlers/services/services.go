@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
@@ -14,8 +15,6 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/actor"
 	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
-
-const filterPlatform = "platform"
 
 type Services interface {
 	List(ctx context.Context, filter catalog.ServiceFilter) ([]catalog.Service, error)
@@ -30,20 +29,19 @@ type Platform interface {
 	Component(ctx context.Context, name string) (deploy.PlatformComponent, error)
 }
 
-type listData struct {
-	Filter   string
-	Team     string
-	Teams    []teamTab
-	Cards    []web.ServiceCard
-	Platform *deploy.PlatformComponent
-	ShowCard bool
-	Total    int
+type Section struct {
+	Team   team.Team
+	Rows   []web.ServiceStatus
+	Broken int
 }
 
-type teamTab struct {
-	Slug  string
-	Name  string
-	Count int
+type listData struct {
+	Sections  []Section
+	Platform  *deploy.PlatformComponent
+	Prod      catalog.Environment
+	Total     int
+	Broken    int
+	Deploying int
 }
 
 type newData struct {
@@ -55,17 +53,18 @@ type newData struct {
 type ServicesHandler struct {
 	renderer *web.Renderer
 	views    web.Views
+	statuses web.Statuses
 	services Services
 	teams    Teams
 	platform Platform
 }
 
-func NewServicesHandler(renderer *web.Renderer, views web.Views, services Services, teams Teams, platform Platform) ServicesHandler {
-	return ServicesHandler{renderer: renderer, views: views, services: services, teams: teams, platform: platform}
+func NewServicesHandler(renderer *web.Renderer, views web.Views, statuses web.Statuses, services Services, teams Teams, platform Platform) ServicesHandler {
+	return ServicesHandler{renderer: renderer, views: views, statuses: statuses, services: services, teams: teams, platform: platform}
 }
 
 func (h ServicesHandler) List(c *gin.Context) {
-	d, err := h.list(c.Request.Context(), requestctx.ActorFrom(c), c.Query("filter"), c.Query("team"))
+	d, err := h.list(c.Request.Context(), requestctx.ActorFrom(c))
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)
 		return
@@ -73,34 +72,90 @@ func (h ServicesHandler) List(c *gin.Context) {
 	h.renderer.Render(c, http.StatusOK, "services", web.Page{Title: "Services", Nav: "services", Data: d})
 }
 
-func (h ServicesHandler) list(ctx context.Context, a actor.Actor, filter, teamSlug string) (listData, error) {
-	all, err := h.services.List(ctx, catalog.ServiceFilter{})
+func (h ServicesHandler) list(ctx context.Context, a actor.Actor) (listData, error) {
+	d, services, err := h.catalog(ctx, a)
+	if err != nil {
+		return listData{}, err
+	}
+	statuses, err := h.statuses.Now(ctx, a, services, d.Prod.Slug)
 	if err != nil {
 		return listData{}, err
 	}
 	teams, err := h.teams.List(ctx)
-	if err != nil {
-		return listData{}, err
-	}
-	cards, err := h.cards(ctx, a, filter, teamSlug, all, teams)
-	if err != nil {
-		return listData{}, err
-	}
-	platform, err := h.controlPlane(ctx)
-	d := listData{Filter: filter, Team: teamSlug, Teams: teamTabs(teams, all), Cards: cards, Platform: platform, Total: len(all)}
-	d.ShowCard = platform != nil && filter != "mine" && teamSlug == ""
-	if platform != nil {
-		d.Total++
-	}
+	d.Sections, d.Total = sections(teams, statuses), len(statuses)
+	d.Broken, d.Deploying = counts(statuses)
 	return d, err
 }
 
-func (h ServicesHandler) cards(ctx context.Context, a actor.Actor, filter, teamSlug string, all []catalog.Service, teams []team.Team) ([]web.ServiceCard, error) {
-	shown, err := h.filtered(ctx, a, filter, all)
+func (h ServicesHandler) catalog(ctx context.Context, a actor.Actor) (listData, []catalog.Service, error) {
+	all, err := h.services.List(ctx, catalog.ServiceFilter{})
 	if err != nil {
-		return nil, err
+		return listData{}, nil, err
 	}
-	return h.views.ServiceCards(ctx, ownedBy(shown, teams, teamSlug))
+	envs, err := h.views.Environments(ctx)
+	if err != nil {
+		return listData{}, nil, err
+	}
+	prod, _ := web.ProdEnvironment(envs)
+	platform, err := h.controlPlane(ctx)
+	return listData{Prod: prod, Platform: platform}, visible(a, all), err
+}
+
+func visible(a actor.Actor, all []catalog.Service) []catalog.Service {
+	shown := []catalog.Service{}
+	for _, s := range all {
+		if a.Sees(s.OwnerTeamID) {
+			shown = append(shown, s)
+		}
+	}
+	return shown
+}
+
+func sections(teams []team.Team, statuses []web.ServiceStatus) []Section {
+	result := []Section{}
+	for _, t := range teams {
+		s := Section{Team: t}
+		for _, st := range statuses {
+			s.add(st)
+		}
+		if len(s.Rows) > 0 {
+			result = append(result, s.sorted())
+		}
+	}
+	return result
+}
+
+func (s *Section) add(st web.ServiceStatus) {
+	if st.Service.OwnerTeamID != s.Team.ID {
+		return
+	}
+	s.Rows = append(s.Rows, st)
+	if st.Broken() {
+		s.Broken++
+	}
+}
+
+func (s Section) sorted() Section {
+	sort.SliceStable(s.Rows, func(i, j int) bool {
+		if s.Rows[i].Broken() != s.Rows[j].Broken() {
+			return s.Rows[i].Broken()
+		}
+		return s.Rows[i].Service.Name < s.Rows[j].Service.Name
+	})
+	return s
+}
+
+func counts(statuses []web.ServiceStatus) (int, int) {
+	broken, deploying := 0, 0
+	for _, st := range statuses {
+		if st.Broken() {
+			broken++
+		}
+		if st.Running() != nil {
+			deploying++
+		}
+	}
+	return broken, deploying
 }
 
 func (h ServicesHandler) controlPlane(ctx context.Context) (*deploy.PlatformComponent, error) {
@@ -112,57 +167,6 @@ func (h ServicesHandler) controlPlane(ctx context.Context) (*deploy.PlatformComp
 		return nil, err
 	}
 	return &c, nil
-}
-
-func (h ServicesHandler) filtered(ctx context.Context, a actor.Actor, filter string, all []catalog.Service) ([]catalog.Service, error) {
-	if filter == filterPlatform {
-		return []catalog.Service{}, nil
-	}
-	if filter != "mine" {
-		return all, nil
-	}
-	mine, err := h.views.MyTeams(ctx, a.UserID)
-	if err != nil {
-		return nil, err
-	}
-	return h.services.List(ctx, catalog.ServiceFilter{OwnerTeamIDs: web.TeamIDs(mine)})
-}
-
-func ownedBy(services []catalog.Service, teams []team.Team, teamSlug string) []catalog.Service {
-	if teamSlug == "" {
-		return services
-	}
-	teamID := teamIDBySlug(teams, teamSlug)
-	owned := []catalog.Service{}
-	for _, s := range services {
-		if s.OwnerTeamID == teamID {
-			owned = append(owned, s)
-		}
-	}
-	return owned
-}
-
-func teamIDBySlug(teams []team.Team, slug string) string {
-	for _, t := range teams {
-		if t.Slug == slug {
-			return t.ID
-		}
-	}
-	return ""
-}
-
-func teamTabs(teams []team.Team, services []catalog.Service) []teamTab {
-	counts := map[string]int{}
-	for _, s := range services {
-		counts[s.OwnerTeamID]++
-	}
-	tabs := []teamTab{}
-	for _, t := range teams {
-		if counts[t.ID] > 0 {
-			tabs = append(tabs, teamTab{Slug: t.Slug, Name: t.Name, Count: counts[t.ID]})
-		}
-	}
-	return tabs
 }
 
 func (h ServicesHandler) New(c *gin.Context) {

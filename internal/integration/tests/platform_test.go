@@ -37,25 +37,12 @@ func Test_TheControlPlaneShowsReadOnlyInTheCatalog(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, catalog.Status)
 	require.Contains(t, catalog.Body, `href="/platform/controlplane"`)
-	require.Contains(t, catalog.Body, `href="/services?filter=platform"`)
+	require.Contains(t, catalog.Body, `data-team="platform"`)
 	require.Equal(t, http.StatusOK, page.Status)
 	require.Contains(t, page.Body, "c63f05e")
 	require.Contains(t, page.Body, "p95 latency 331ms above limit 293ms (baseline 93ms)")
 	require.Contains(t, page.Body, "https://github.com/run/1")
 	require.NotContains(t, page.Body, `action="/platform`)
-}
-
-func Test_ThePlatformTabShowsOnlyTheControlPlane(t *testing.T) {
-	s, p := setupPlaces(t)
-	reportControlPlane(t, s)
-
-	platformTab := p.eve.Do(t, http.MethodGet, "/services?filter=platform", nil)
-	mine := p.bob.Do(t, http.MethodGet, "/services?filter=mine", nil)
-
-	require.Contains(t, platformTab.Body, `href="/platform/controlplane"`)
-	require.NotContains(t, platformTab.Body, `href="/services/places-api"`)
-	require.NotContains(t, mine.Body, `href="/platform/controlplane"`)
-	require.Contains(t, mine.Body, `href="/services/places-api"`)
 }
 
 func Test_TheCatalogWorksBeforeTheControlPlaneIsReported(t *testing.T) {

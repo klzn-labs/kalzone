@@ -16,6 +16,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/users"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/health"
 	queueCatalog "github.com/klzn-labs/kalzone/app/queue/repositories/catalog"
 	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
 	"github.com/klzn-labs/kalzone/app/release/usecases/changelogs"
@@ -47,7 +48,7 @@ import (
 func Web() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			web.NewRenderer, web.NewViews,
+			web.NewRenderer, web.NewViews, web.NewStatuses, statusSources,
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
@@ -151,6 +152,10 @@ func pageRoutes() fx.Option {
 	)
 }
 
-func serviceDeps(s services.ServicesUsecase, d decommission.DecommissionUsecase, t teams.TeamsUsecase, c configs.ConfigUsecase, q query.QueryUsecase, qu queues.QueuesUsecase, db databases.DatabasesUsecase) servicePage.Deps {
-	return servicePage.Deps{Services: s, Decommission: d, Teams: t, Configs: c, Events: q, Queues: qu, Databases: db}
+func serviceDeps(s services.ServicesUsecase, d decommission.DecommissionUsecase, t teams.TeamsUsecase, c configs.ConfigUsecase, q query.QueryUsecase, qu queues.QueuesUsecase, db databases.DatabasesUsecase, st web.Statuses) servicePage.Deps {
+	return servicePage.Deps{Services: s, Decommission: d, Teams: t, Configs: c, Events: q, Queues: qu, Databases: db, Statuses: st}
+}
+
+func statusSources(r releases.ReleasesUsecase, d deployments.DeploymentsUsecase, c configs.ConfigUsecase, db databases.DatabasesUsecase, h health.HealthUsecase, q requests.RequestsUsecase) web.StatusSources {
+	return web.StatusSources{Releases: r, Deployments: d, Configs: c, Databases: db, Health: h, Requests: q}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/pushgateway"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/health"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
 	"github.com/klzn-labs/kalzone/internal/eventbus"
 	"github.com/klzn-labs/kalzone/pkg/config"
@@ -29,6 +30,7 @@ func Observe() fx.Option {
 			},
 			func(u dashboards.DashboardsUsecase) sync.Syncer { return u },
 			sync.NewDefaultWorker,
+			func(c grafana.Client, cfg config.Config) health.HealthUsecase { return health.NewHealthUsecase(c, cfg) },
 		),
 		observeLogs(),
 		fx.Invoke(proxy.RegisterProxyRoutes, sync.OnStart, logsHandler.RegisterLogsRoutes, subscribeDashboards),

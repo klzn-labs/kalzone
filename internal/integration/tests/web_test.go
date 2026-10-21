@@ -122,19 +122,19 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 	require.NotContains(t, page.Body, "panelId=19")
 }
 
-func Test_CatalogFiltersByTeam(t *testing.T) {
+func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {
 	_, p := setupPlaces(t)
 	createReviews(t, p)
 	p.root.MustJSON(t, http.MethodPost, "/api/v1/services", reviewsService(), http.StatusCreated, nil)
 
-	all := p.mia.Do(t, http.MethodGet, "/services", nil)
-	reviews := p.mia.Do(t, http.MethodGet, "/services?team=reviews", nil)
+	body := p.mia.Do(t, http.MethodGet, "/services", nil).Body
+	order := []int{
+		strings.Index(body, `data-team="places"`), strings.Index(body, `href="/services/places-api"`),
+		strings.Index(body, `data-team="reviews"`), strings.Index(body, `href="/services/reviews-api"`),
+	}
 
-	require.Contains(t, all.Body, `href="/services?team=places"`)
-	require.Contains(t, all.Body, `href="/services?team=reviews"`)
-	require.Contains(t, all.Body, "places-api")
-	require.Contains(t, reviews.Body, "reviews-api")
-	require.NotContains(t, reviews.Body, "places-api")
+	require.NotContains(t, order, -1)
+	require.IsIncreasing(t, order)
 }
 
 func Test_TeamPageSuggestsSignedInPeopleToAdd(t *testing.T) {

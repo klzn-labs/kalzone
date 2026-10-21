@@ -30,6 +30,11 @@ func funcs() template.FuncMap {
 		"digestOf":  digestOf,
 		"span":      Span,
 		"shipLines": shipLines,
+		"chart":     MetricChart,
+		"took":      Took,
+		"hasPrefix": strings.HasPrefix,
+		"rounded":   Rounded,
+		"clock":     func(t time.Time) string { return t.UTC().Format("15:04") },
 	}
 }
 
@@ -132,4 +137,11 @@ func Span(d time.Duration) string {
 		text = strings.TrimSuffix(text, "0m")
 	}
 	return text
+}
+
+func Took(start, end *time.Time) string {
+	if start == nil || end == nil {
+		return ""
+	}
+	return Span(end.Sub(*start).Round(time.Second))
 }
