@@ -48,6 +48,21 @@ func (u DashboardsUsecase) Write(ctx context.Context, services []entities.Servic
 	return len(services), nil
 }
 
+func (u DashboardsUsecase) WritePlatform(ctx context.Context) error {
+	if !u.grafana.Enabled() {
+		return nil
+	}
+	if err := u.grafana.EnsureFolder(ctx); err != nil {
+		return err
+	}
+	for _, name := range entities.PlatformComponents {
+		if err := u.grafana.UpsertDashboard(ctx, entities.PlatformDashboard(name)); err != nil {
+			return fmt.Errorf("dashboard for %s: %w", name, err)
+		}
+	}
+	return nil
+}
+
 func (u DashboardsUsecase) Delete(ctx context.Context, serviceSlug string) error {
 	if !u.grafana.Enabled() {
 		return nil
