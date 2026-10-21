@@ -14,5 +14,5 @@ func Test_GraphURLOpensTheDashboardOnTenMinutesAroundTheDeploy(t *testing.T) {
 
 	got := platform.GraphURL("controlplane", deploy.PlatformDeploy{At: at})
 
-	require.Equal(t, "/grafana/d/kalzone-http?var-service=controlplane&time=1792598971000&time.window=600000", got)
+	require.Equal(t, "/grafana/d/kalzone-controlplane?time=1792598971000&time.window=600000", got)
 }

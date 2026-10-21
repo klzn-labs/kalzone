@@ -22,3 +22,8 @@
 </li>{{end}}
 
 {{define "request-status"}}{{$s := print .}}<span class="badge {{if eq $s "pending"}}badge-warn{{else if eq $s "executed"}}badge-ok{{else if or (eq $s "failed") (eq $s "rejected")}}badge-danger{{else if eq $s "approved"}}badge-accent{{else}}badge-outline{{end}}"><span class="dot"></span>{{$s}}</span>{{end}}
+
+{{define "panel"}}<div class="panel {{.Class}}">
+  <iframe class="theme-light" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=light"></iframe>
+  <iframe class="theme-dark" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=dark"></iframe>
+</div>{{end}}

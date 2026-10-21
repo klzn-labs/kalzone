@@ -76,3 +76,16 @@ func Test_TheAgentCannotReportUnknownPlatformComponents(t *testing.T) {
 
 	require.Equal(t, http.StatusNotFound, resp.Status, resp.Body)
 }
+
+func Test_TheControlPlaneHasItsOwnDashboardEmbeddedOnItsPage(t *testing.T) {
+	s, p := setupPlaces(t)
+	reportControlPlane(t, s)
+
+	require.Eventually(t, func() bool { return s.Grafana.Dashboards()["kalzone-controlplane"] }, 5*time.Second, 50*time.Millisecond)
+	page := p.eve.Do(t, http.MethodGet, "/platform/controlplane", nil)
+
+	require.Contains(t, s.Grafana.DashboardJSON("kalzone-controlplane"), "platform_http_request_duration_seconds_count")
+	require.Contains(t, page.Body, "/grafana/d-solo/kalzone-controlplane?orgId=1&panelId=14")
+	require.Contains(t, page.Body, "/grafana/d-solo/kalzone-controlplane?orgId=1&panelId=6")
+	require.Contains(t, page.Body, `href="/grafana/d/kalzone-controlplane"`)
+}

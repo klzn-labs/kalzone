@@ -8,17 +8,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 	deploy "github.com/klzn-labs/kalzone/app/deploy/entities"
+	observe "github.com/klzn-labs/kalzone/app/observe/entities"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
 const (
-	dashboardUID    = "kalzone-http"
 	graphWindowMs   = 10 * 60 * 1000
 	repository      = "klzn-labs/kalzone"
 	deployedFromRef = "klzn-labs/kalzone-infra"
 )
+
+var panels = []int{
+	observe.PanelRequests, observe.PanelLatency, observe.PanelMemory, observe.PanelCPU,
+	observe.PanelRouteRequests, observe.PanelRouteLatency,
+}
+
+type Grafana interface {
+	Enabled() bool
+}
 
 type Platform interface {
 	Component(ctx context.Context, name string) (deploy.PlatformComponent, error)
@@ -34,6 +43,10 @@ type pageData struct {
 	Stale        bool
 	Rows         []Row
 	DashboardURL string
+	DashboardUID string
+	Grafana      bool
+	Panels       []int
+	LogsPanel    int
 	Repository   string
 	DeployedFrom string
 }
@@ -41,10 +54,11 @@ type pageData struct {
 type PlatformHandler struct {
 	renderer *web.Renderer
 	platform Platform
+	grafana  Grafana
 }
 
-func NewPlatformHandler(renderer *web.Renderer, platform Platform) PlatformHandler {
-	return PlatformHandler{renderer: renderer, platform: platform}
+func NewPlatformHandler(renderer *web.Renderer, platform Platform, grafana Grafana) PlatformHandler {
+	return PlatformHandler{renderer: renderer, platform: platform, grafana: grafana}
 }
 
 func (h PlatformHandler) Show(c *gin.Context) {
@@ -53,11 +67,16 @@ func (h PlatformHandler) Show(c *gin.Context) {
 		web.ErrorPage(c, h.renderer, err)
 		return
 	}
-	d := pageData{
-		Component: component, Stale: component.Stale(clock.Now()), Rows: rows(component),
-		DashboardURL: DashboardURL(component.Name), Repository: repository, DeployedFrom: deployedFromRef,
+	h.renderer.Render(c, http.StatusOK, "platform", web.Page{Title: "Kalzone " + component.Name, Nav: "services", Data: h.page(component)})
+}
+
+func (h PlatformHandler) page(c deploy.PlatformComponent) pageData {
+	return pageData{
+		Component: c, Stale: c.Stale(clock.Now()), Rows: rows(c),
+		DashboardURL: DashboardURL(c.Name), DashboardUID: observe.PlatformDashboardUID(c.Name),
+		Grafana: h.grafana.Enabled(), Panels: panels, LogsPanel: observe.PanelLogs,
+		Repository: repository, DeployedFrom: deployedFromRef,
 	}
-	h.renderer.Render(c, http.StatusOK, "platform", web.Page{Title: "Kalzone " + component.Name, Nav: "services", Data: d})
 }
 
 func rows(c deploy.PlatformComponent) []Row {
@@ -69,11 +88,11 @@ func rows(c deploy.PlatformComponent) []Row {
 }
 
 func DashboardURL(name string) string {
-	return "/grafana/d/" + dashboardUID + "?var-service=" + url.QueryEscape(name)
+	return "/grafana/d/" + url.PathEscape(observe.PlatformDashboardUID(name))
 }
 
 func GraphURL(name string, d deploy.PlatformDeploy) string {
-	return fmt.Sprintf("%s&time=%d&time.window=%d", DashboardURL(name), d.At.UnixMilli(), graphWindowMs)
+	return fmt.Sprintf("%s?time=%d&time.window=%d", DashboardURL(name), d.At.UnixMilli(), graphWindowMs)
 }
 
 func RegisterPlatformRoutes(routes httpserver.Web, h PlatformHandler) {

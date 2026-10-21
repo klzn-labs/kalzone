@@ -62,10 +62,21 @@
       <dl class="details">
         <dt>Repository</dt><dd><a class="mono" href="https://github.com/{{$d.Repository}}" target="_blank" rel="noopener">{{$d.Repository}}</a></dd>
         <dt>Deployed by</dt><dd><a class="mono" href="https://github.com/{{$d.DeployedFrom}}" target="_blank" rel="noopener">{{$d.DeployedFrom}}</a></dd>
-        <dt>Dashboard</dt><dd><a href="{{$d.DashboardURL}}" target="_blank" rel="noopener">HTTP · {{$c.Name}}</a></dd>
+        <dt>Dashboard</dt><dd><a href="{{$d.DashboardURL}}" target="_blank" rel="noopener">Kalzone {{$c.Name}}</a></dd>
         <dt>Image</dt><dd class="mono">{{if $c.Live.Image}}{{$c.Live.Image}}{{else}}—{{end}}</dd>
       </dl>
     </div>
   </div>
+</div>
+
+<div class="card" style="margin-top:20px">
+  <div class="card-header"><div><h2>Observability</h2><p>Live from Prometheus and Loki, last 6 hours</p></div>
+    {{if $d.Grafana}}<div class="actions"><a class="btn btn-sm" href="{{$d.DashboardURL}}" target="_blank" rel="noopener">{{icon "activity"}}Dashboard {{icon "external"}}</a></div>{{end}}</div>
+  {{if $d.Grafana}}
+  <div class="panels">
+    {{range $panel := $d.Panels}}{{template "panel" dict "UID" $d.DashboardUID "Env" "" "Panel" $panel "Class" ""}}{{end}}
+    {{template "panel" dict "UID" $d.DashboardUID "Env" "" "Panel" $d.LogsPanel "Class" "wide"}}
+  </div>
+  {{else}}{{template "empty" dict "Icon" "activity" "Title" "Observability isn't connected" "Text" "Set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN to embed dashboards here." "Href" "" "Action" ""}}{{end}}
 </div>
 {{end}}
