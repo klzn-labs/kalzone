@@ -97,6 +97,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token", PrometheusUID: "prometheus", LokiUID: "loki"}
 	cfg.Databases = testDatabases(t)
 	cfg.Metrics = config.Metrics{PushgatewayURL: s.Pushgateway.URL}
+	cfg.Health = config.Health{ResponseMS: 300, CPUPercent: 70, DBCPUPercent: 70}
 	return cfg
 }
 

@@ -1,8 +1,91 @@
 {{define "content"}}
-{{$d := .Data}}
+{{$d := .Data}}{{$st := $d.Status}}{{$prod := $d.Prod.Env}}{{$live := $st.Live}}{{$running := $st.Running}}
 {{template "service-header" dict "Service" $d.Service "Team" $d.Team "Envs" $d.Envs "Tab" "overview"}}
 
-<div class="split">
+<div class="prod-line">
+  <div class="row">
+    {{if $live}}<span class="badge badge-ok"><span class="dot"></span>Live in {{$prod.Name}}</span><span><b class="mono">#{{$live.ReleaseNumber}}</b> since {{ago (deref $live.FinishedAt)}}</span>
+    {{else}}<span class="badge">Not in {{$prod.Name}} yet</span>{{end}}
+    {{if $d.Prod.Revision.Spec.Internal}}<span class="muted">internal</span>{{else if $d.Prod.Revision.Spec.Host}}<span class="mono muted">{{join $d.Prod.Revision.Spec.Hosts ", "}}</span>{{end}}
+    {{with $running}}<span class="row muted"><span class="spin" aria-hidden="true"></span>Deploying #{{.ReleaseNumber}}</span>{{end}}
+  </div>
+  <div class="actions">
+    <a class="btn" href="/services/{{$d.Service.Slug}}/env/{{$prod.Slug}}">{{if $live}}Deploy or roll back{{else}}Deploy to {{$prod.Name}}{{end}}</a>
+    {{with $st.Waiting}}<a class="btn btn-primary" href="/requests/{{.ID}}">Review: {{.Summary}}</a>{{end}}
+  </div>
+</div>
+
+{{template "delivery-problems" $st}}
+{{template "health" $st.Health}}
+
+<div class="service-grid">
+  <section class="card" aria-labelledby="releases-title">
+    <div class="card-header"><h2 id="releases-title">Releases</h2><a href="/services/{{$d.Service.Slug}}/releases">All releases</a></div>
+    {{if $st.Releases}}
+    <div class="table-scroll"><table class="table">
+      <thead><tr><th>Release</th><th>Change</th><th>Build</th><th>In {{$prod.Name}}</th></tr></thead>
+      <tbody>{{range $st.Releases}}
+        <tr>
+          <td><span class="stacked"><b class="mono">#{{.Number}}</b><small>{{ago .CreatedAt}}</small></span></td>
+          <td><span class="stacked"><span class="mono">{{if .GitRef}}{{.GitRef}}{{else}}{{.Tag}}{{end}}</span><small class="mono">{{short .CommitSHA 7}}</small></span></td>
+          <td>{{template "build-state" .Status}}</td>
+          <td>{{template "in-prod" ($st.InProd .)}}</td>
+        </tr>{{end}}
+      </tbody>
+    </table></div>
+    {{else}}{{template "empty" dict "Icon" "package" "Title" "No releases yet" "Text" "Build one from the Releases tab." "Href" "" "Action" ""}}{{end}}
+  </section>
+
+  <section class="card" aria-labelledby="deploys-title">
+    <div class="card-header"><h2 id="deploys-title">{{$prod.Name}} deploys</h2>{{with $st.Stats}}<span class="muted small">{{.Total}} in 14 days · {{.Failed}} failed</span>{{end}}</div>
+    {{$shown := $st.FinishedDeploys 4}}
+    {{if $shown}}<ul class="deploys">{{range $shown}}
+      <li>
+        <span class="result {{if eq (print .Status) "failed"}}bad{{else if .Active}}running{{else}}ok{{end}}" aria-hidden="true">{{if eq (print .Status) "failed"}}{{icon "x"}}{{else if .Active}}<span class="spin"></span>{{else}}{{icon "check-mark"}}{{end}}</span>
+        <div><a href="/services/{{$d.Service.Slug}}/env/{{$prod.Slug}}"><b>#{{.ReleaseNumber}}</b></a> <span class="muted">· deploy #{{.Number}} · {{.Trigger}}</span><div class="sub">{{.Strategy}}{{with took .StartedAt .FinishedAt}} · {{.}}{{end}}{{if eq (print .Status) "failed"}} · failed{{end}}</div></div>
+        <time datetime="{{iso .CreatedAt}}" title="{{date .CreatedAt}}">{{ago .CreatedAt}}</time>
+      </li>{{end}}
+    </ul>
+    {{else}}{{template "empty" dict "Icon" "server" "Title" (printf "Nothing deployed to %s yet" $prod.Name) "Text" "Promote a release from the dev tab once it runs there." "Href" "" "Action" ""}}{{end}}
+  </section>
+</div>
+
+{{template "service-settings" $}}
+{{end}}
+
+{{define "delivery-problems"}}{{range .Problems}}{{if or (hasPrefix . "Build") (hasPrefix . "Deploy")}}<div class="alert alert-danger problem">{{icon "alert"}}<span>{{.}}</span></div>{{end}}{{end}}{{end}}
+
+{{define "health"}}
+{{$over := .WentOver}}
+{{if not .Known}}
+  <div class="health-strip quiet"><span class="health-title">{{icon "activity"}}No metrics yet</span><span class="muted">Prometheus has no prod samples for this service.</span></div>
+{{else if not $over}}
+  <div class="health-strip ok">
+    <span class="health-title">{{icon "check"}}Prod is healthy</span>
+    {{range .Readings}}<span class="reading">{{.Label}} {{if .Known}}<b>{{rounded .Now}}{{.Unit}}</b>{{else}}<span class="muted">no data</span>{{end}}</span>{{end}}
+    <span class="health-when">within limits for the last 24 hours</span>
+  </div>
+{{else}}
+  {{range $over}}
+  <div class="health-alert {{if .OverNow}}now{{end}}">
+    <div>
+      <span class="health-title">{{icon "alert"}}{{.Label}} {{if .OverNow}}is over{{else}}went over{{end}} {{.Limit}}{{.Unit}}</span>
+      <p>Peaked at {{rounded .Peak}}{{.Unit}} at {{clock .PeakAt}} UTC{{if .OverFor}} and was over the limit for {{span .OverFor}}{{end}}. Now {{rounded .Now}}{{.Unit}}.{{if eq (print .Metric) "db_cpu"}} The MySQL server is shared by every service on it.{{end}}</p>
+    </div>
+    <div class="health-chart">{{chart .}}<div class="axis"><span>24 h ago</span><span>limit {{.Limit}}{{.Unit}}</span><span>now</span></div></div>
+  </div>
+  {{end}}
+  {{with .Calm}}<div class="health-rest">{{range .}}<span>{{.Label}} {{if .Known}}<b>{{rounded .Now}}{{.Unit}}</b> ok{{else}}<span class="muted">no data</span>{{end}}</span>{{end}}</div>{{end}}
+{{end}}
+{{end}}
+
+{{define "build-state"}}{{$s := print .}}{{if eq $s "built"}}<span class="badge badge-ok">Built</span>{{else if eq $s "failed"}}<span class="badge badge-danger">Failed</span>{{else}}<span class="badge"><span class="spin" aria-hidden="true"></span>Building</span>{{end}}{{end}}
+
+{{define "in-prod"}}{{if eq . "live"}}<span class="badge badge-ok">Live</span>{{else if eq . "waiting"}}<span class="badge badge-warn">Waits for you</span>{{else if eq . "was"}}<span class="badge">Was live</span>{{else}}<span class="muted">Never</span>{{end}}{{end}}
+
+{{define "service-settings"}}{{$d := .Data}}
+<details class="settings">
+  <summary><span class="chev" aria-hidden="true">{{icon "chevron"}}</span><h2>Settings</h2><span class="muted small">About, limits, resources{{if $d.CanMaintain}}, danger zone{{end}}</span></summary>
   <div class="stack">
     <div class="card">
       <div class="card-header"><div><h2>About</h2><p>What this service is and where it comes from</p></div></div>
@@ -12,6 +95,7 @@
           <dt>Owner</dt><dd><a href="/teams/{{$d.Team.Slug}}">{{$d.Team.Name}}</a></dd>
           <dt>Repository</dt><dd>{{if $d.Service.GitHubRepo}}<a class="mono" href="https://github.com/{{$d.Service.GitHubRepo}}" target="_blank" rel="noopener">{{$d.Service.GitHubRepo}}</a>{{else}}<span class="muted">Not linked</span>{{end}}</dd>
           <dt>Image</dt><dd>{{if $d.Service.ImageRepository}}<span class="mono">{{$d.Service.ImageRepository}}</span>{{else}}<span class="muted">Not set</span>{{end}}</dd>
+          <dt>Health limits</dt><dd>{{template "limit" dict "Value" $d.Service.Limits.ResponseMS "Unit" " ms" "Name" "response p95"}} · {{template "limit" dict "Value" $d.Service.Limits.CPUPercent "Unit" "%" "Name" "CPU"}} · {{template "limit" dict "Value" $d.Service.Limits.DBCPUPercent "Unit" "%" "Name" "DB CPU"}}</dd>
           <dt>Registered</dt><dd><span title="{{date $d.Service.CreatedAt}}">{{ago $d.Service.CreatedAt}}</span></dd>
         </dl>
         {{if $d.CanEdit}}
@@ -20,12 +104,18 @@
           <form class="inline-panel" method="post" action="/services/{{$d.Service.Slug}}/update" hx-post="/services/{{$d.Service.Slug}}/update" hx-target="find .form-error">
             {{template "csrf" $.Viewer.CSRFToken}}
             <div class="form-error"></div>
-            <div class="field"><label>Display name</label><input name="name" type="text" value="{{$d.Service.Name}}" required maxlength="120"></div>
-            <div class="field"><label>Description</label><textarea name="description" maxlength="2000">{{$d.Service.Description}}</textarea></div>
+            <div class="field"><label for="svc-name">Display name</label><input id="svc-name" name="name" type="text" value="{{$d.Service.Name}}" required maxlength="120"></div>
+            <div class="field"><label for="svc-description">Description</label><textarea id="svc-description" name="description" maxlength="2000">{{$d.Service.Description}}</textarea></div>
             <div class="form-row" style="margin-top:16px">
-              <div class="field"><label>GitHub repository</label><input name="github_repo" type="text" class="mono" value="{{$d.Service.GitHubRepo}}" placeholder="owner/name"></div>
-              <div class="field"><label>Image repository</label><input name="image_repository" type="text" class="mono" value="{{$d.Service.ImageRepository}}" placeholder="docker.io/team/api"></div>
+              <div class="field"><label for="svc-repo">GitHub repository</label><input id="svc-repo" name="github_repo" type="text" class="mono" value="{{$d.Service.GitHubRepo}}" placeholder="owner/name"></div>
+              <div class="field"><label for="svc-image">Image repository</label><input id="svc-image" name="image_repository" type="text" class="mono" value="{{$d.Service.ImageRepository}}" placeholder="docker.io/team/api"></div>
             </div>
+            <div class="form-row" style="margin-top:16px">
+              <div class="field"><label for="limit-response">Response p95 limit, ms</label><input id="limit-response" name="limit_response_ms" type="number" min="0" max="60000" value="{{with $d.Service.Limits.ResponseMS}}{{.}}{{end}}" placeholder="platform default"></div>
+              <div class="field"><label for="limit-cpu">CPU limit, %</label><input id="limit-cpu" name="limit_cpu_percent" type="number" min="0" max="100" value="{{with $d.Service.Limits.CPUPercent}}{{.}}{{end}}" placeholder="platform default"></div>
+              <div class="field"><label for="limit-db">DB CPU limit, %</label><input id="limit-db" name="limit_db_cpu_percent" type="number" min="0" max="400" value="{{with $d.Service.Limits.DBCPUPercent}}{{.}}{{end}}" placeholder="platform default"></div>
+            </div>
+            <p class="form-note">Leave a limit empty to use the platform default. Prod turns red when a metric reaches its limit.</p>
             <div class="form-actions"><button class="btn btn-primary">Save changes</button></div>
           </form>
         </details>
@@ -33,28 +123,9 @@
       </div>
     </div>
 
-    <div class="grid grid-2">
-      {{range $d.Envs}}
-      <a class="card service-card" href="/services/{{$d.Service.Slug}}/env/{{.Env.Slug}}">
-        <div class="row"><h2>{{.Env.Name}}</h2><span class="spacer"></span>{{template "env-badge" .Env.Slug}}</div>
-        {{if .Revision.Number}}
-          <dl class="kv" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-            <div><dt>Config</dt><dd>c{{.Revision.Number}}</dd></div>
-            <div><dt>Replicas</dt><dd>{{.Revision.Spec.Replicas}}</dd></div>
-            <div><dt>Variables</dt><dd>{{len .Revision.Env}}</dd></div>
-            <div><dt>Secrets</dt><dd>{{len .Revision.Secrets}}</dd></div>
-          </dl>
-          <div class="row small muted">{{icon "globe"}}{{if .Revision.Spec.Internal}}internal{{else if .Revision.Spec.Host}}<span class="mono">{{join .Revision.Spec.Hosts ", "}}</span>{{else}}no public host{{end}}</div>
-        {{else}}
-          <p class="muted">Not configured yet. Defaults apply until someone saves a revision.</p>
-        {{end}}
-      </a>
-      {{end}}
-    </div>
-
     {{if $d.Resources}}
     <div class="card">
-      <div class="card-header"><div><h2>Resources</h2></div><a href="/resources">Manage in Resources →</a></div>
+      <div class="card-header"><div><h2>Resources</h2></div><a href="/resources">Manage in Resources</a></div>
       <div class="table-scroll"><table class="table">
         <thead><tr><th>Kind</th><th>Name</th><th>Env</th><th>How it uses it</th></tr></thead>
         <tbody>{{range $d.Resources}}
@@ -64,7 +135,14 @@
     </div>
     {{end}}
 
-    {{if $d.CanMaintain}}
+    {{if $d.CanMaintain}}{{template "danger-zone" $}}{{end}}
+  </div>
+</details>
+{{end}}
+
+{{define "limit"}}{{if .Value}}{{.Name}} {{.Value}}{{.Unit}}{{else}}<span class="muted">{{.Name}} default</span>{{end}}{{end}}
+
+{{define "danger-zone"}}{{$d := .Data}}
     <div class="card danger-zone">
       <div class="card-header"><div><h2>Danger zone</h2><p>Maintainers of {{$d.Team.Name}} and admins only</p></div></div>
       <div class="card-body">
@@ -92,13 +170,4 @@
         </div>
       </div>
     </div>
-    {{end}}
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div><h2>Activity</h2><p>Changes to this service</p></div></div>
-    {{if $d.Activity}}<ul class="timeline">{{range $d.Activity}}{{template "activity-line" .}}{{end}}</ul>
-    {{else}}{{template "empty" dict "Icon" "history" "Title" "No activity yet" "Text" "Edits and config changes will show up here." "Href" "" "Action" ""}}{{end}}
-  </div>
-</div>
 {{end}}

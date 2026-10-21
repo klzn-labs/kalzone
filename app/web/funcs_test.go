@@ -49,3 +49,11 @@ func Test_RendererParsesEveryPage(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func Test_Took(t *testing.T) {
+	start := time.Date(2026, 10, 20, 6, 51, 52, 0, time.UTC)
+	end := start.Add(2*time.Minute + 2*time.Second + 300*time.Millisecond)
+
+	require.Equal(t, "2m2s", web.Took(&start, &end))
+	require.Equal(t, "", web.Took(nil, &end))
+}

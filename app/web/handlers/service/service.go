@@ -52,6 +52,8 @@ type data struct {
 	CanEdit     bool
 	CanMaintain bool
 	Resources   []ResourceUse
+	Status      web.ServiceStatus
+	Prod        EnvSummary
 }
 
 type ServiceHandler struct {
@@ -64,6 +66,7 @@ type ServiceHandler struct {
 	events       Events
 	queues       Queues
 	databases    Databases
+	statuses     web.Statuses
 }
 
 type Deps struct {
@@ -74,12 +77,13 @@ type Deps struct {
 	Events       Events
 	Queues       Queues
 	Databases    Databases
+	Statuses     web.Statuses
 }
 
 func NewServiceHandler(renderer *web.Renderer, views web.Views, d Deps) ServiceHandler {
 	return ServiceHandler{
 		renderer: renderer, views: views, services: d.Services, decommission: d.Decommission,
-		teams: d.Teams, configs: d.Configs, events: d.Events, queues: d.Queues, databases: d.Databases,
+		teams: d.Teams, configs: d.Configs, events: d.Events, queues: d.Queues, databases: d.Databases, statuses: d.Statuses,
 	}
 }
 
@@ -106,7 +110,21 @@ func (h ServiceHandler) build(ctx context.Context, a actor.Actor, slug string) (
 		return data{}, err
 	}
 	d := data{Service: service, Team: owner(teams, service.OwnerTeamID), Teams: teams, Envs: envs}
+	if d, err = h.withStatus(ctx, a, d); err != nil {
+		return data{}, err
+	}
 	return h.withHistory(ctx, a, d)
+}
+
+func (h ServiceHandler) withStatus(ctx context.Context, a actor.Actor, d data) (data, error) {
+	for _, env := range d.Envs {
+		if env.Env.Protected && d.Prod.Env.Slug == "" {
+			d.Prod = env
+		}
+	}
+	var err error
+	d.Status, err = h.statuses.Day(ctx, a, d.Service, d.Prod.Env.Slug)
+	return d, err
 }
 
 func (h ServiceHandler) withHistory(ctx context.Context, a actor.Actor, d data) (data, error) {
