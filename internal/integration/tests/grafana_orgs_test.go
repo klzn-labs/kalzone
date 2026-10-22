@@ -65,3 +65,14 @@ func Test_DeletingATeamDeletesItsOrg(t *testing.T) {
 
 	require.Eventually(t, func() bool { _, ok := s.Grafana.OrgID("team-other"); return !ok }, 5*time.Second, 50*time.Millisecond)
 }
+
+func Test_OnlyAdminsKeepARoleInTheMainOrg(t *testing.T) {
+	s, p := setupPlaces(t)
+	orgOf(t, s, "team-places")
+	s.Grafana.SetMember(1, "bob", "Viewer")
+
+	p.mia.MustJSON(t, http.MethodPut, "/api/v1/teams/places/members/eve", map[string]string{"role": "member"}, http.StatusOK, nil)
+
+	require.Eventually(t, func() bool { return s.Grafana.Members(1)["bob"] == "None" }, 5*time.Second, 50*time.Millisecond)
+	require.Equal(t, "Admin", s.Grafana.Members(1)["root"])
+}

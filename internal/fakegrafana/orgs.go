@@ -94,6 +94,7 @@ func (g *Grafana) createUser(w http.ResponseWriter, r *http.Request) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.users[body.Login] = len(g.users) + 1
+	g.members[1][body.Login] = "None"
 }
 
 func (g *Grafana) listMembers(w http.ResponseWriter, r *http.Request) {
@@ -164,4 +165,13 @@ func (g *Grafana) putDatasource(w http.ResponseWriter, r *http.Request) {
 		g.datasources[org] = map[string]map[string]any{}
 	}
 	g.datasources[org][uid] = body
+}
+
+func (g *Grafana) SetMember(org int, login, role string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if _, ok := g.users[login]; !ok {
+		g.users[login] = len(g.users) + 1
+	}
+	g.members[org][login] = role
 }
