@@ -15,9 +15,9 @@ type people struct {
 	root, mia, bob, eve *integration.Client
 }
 
-func setupPlaces(t *testing.T) (*integration.Suite, people) {
+func setupPlaces(t *testing.T, tweaks ...integration.Option) (*integration.Suite, people) {
 	t.Helper()
-	suite := integration.NewSuite(t)
+	suite := integration.NewSuite(t, tweaks...)
 	p := people{root: suite.SignIn(t, "root"), mia: suite.SignIn(t, "mia"), bob: suite.SignIn(t, "bob"), eve: suite.SignIn(t, "eve")}
 	p.root.MustJSON(t, http.MethodPost, "/api/v1/teams", map[string]string{"slug": "places", "name": "Places"}, http.StatusCreated, nil)
 	p.root.MustJSON(t, http.MethodPut, "/api/v1/teams/places/members/mia", map[string]string{"role": "maintainer"}, http.StatusOK, nil)

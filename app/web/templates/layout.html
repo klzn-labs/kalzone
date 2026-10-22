@@ -22,18 +22,28 @@
     <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span>Kalzone</a>
   </header>
   <aside class="sidebar">
-    <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span>Kalzone</a>
+    <a class="brand" href="/"><span class="brand-mark">{{icon "logo"}}</span>Kalzone{{if .Viewer.Actor.Guest}}<span class="demo-tag">Demo</span>{{end}}</a>
     <a class="nav-link {{if eq .Nav "overview"}}active{{end}}" href="/">{{icon "home"}}Overview</a>
     <a class="nav-link {{if eq .Nav "services"}}active{{end}}" href="/services">{{icon "box"}}Services</a>
     <a class="nav-link {{if eq .Nav "requests"}}active{{end}}" href="/requests">{{icon "shield"}}Requests<span class="nav-count" hx-get="/requests/badge" hx-trigger="load, every 30s"></span></a>
     <a class="nav-link {{if eq .Nav "resources"}}active{{end}}" href="/resources">{{icon "layers"}}Resources</a>
     <div class="nav-label">Organisation</div>
     <a class="nav-link {{if eq .Nav "teams"}}active{{end}}" href="/teams">{{icon "users"}}Teams</a>
-    <a class="nav-link {{if eq .Nav "people"}}active{{end}}" href="/people">{{icon "user"}}People</a>
+    {{if not .Viewer.Actor.Guest}}<a class="nav-link {{if eq .Nav "people"}}active{{end}}" href="/people">{{icon "user"}}People</a>{{end}}
     {{if .Viewer.Actor.Admin}}<a class="nav-link {{if eq .Nav "agents"}}active{{end}}" href="/agents">{{icon "server"}}Agents</a>{{end}}
     <a class="nav-link {{if eq .Nav "audit"}}active{{end}}" href="/audit">{{icon "activity"}}Audit log</a>
-    <a class="nav-link {{if eq .Nav "tokens"}}active{{end}}" href="/tokens">{{icon "key"}}Access tokens</a>
+    {{if not .Viewer.Actor.Guest}}<a class="nav-link {{if eq .Nav "tokens"}}active{{end}}" href="/tokens">{{icon "key"}}Access tokens</a>{{end}}
     <div class="sidebar-footer">
+      {{if .Viewer.Actor.Guest}}<div class="demo-leave">
+        <span>You're looking at sample data. Nothing you click changes it.</span>
+        <div class="demo-leave-row">
+          <form method="post" action="/logout">
+            <input type="hidden" name="_csrf" value="{{.Viewer.CSRFToken}}">
+            <button class="btn btn-sm">Leave the demo · Sign in</button>
+          </form>
+          <button type="button" class="btn btn-ghost btn-icon btn-sm theme-toggle" data-theme-toggle title="Theme: system, light or dark" aria-label="Switch theme"><span class="theme-system">{{icon "monitor"}}</span><span class="theme-light">{{icon "sun"}}</span><span class="theme-dark">{{icon "moon"}}</span></button>
+        </div>
+      </div>{{else}}
       <div class="me">
         {{template "avatar" dict "Name" .Viewer.Name "Login" .Viewer.Actor.Login "URL" .Viewer.AvatarURL "Class" ""}}
         <div class="me-text">
@@ -45,7 +55,7 @@
           <input type="hidden" name="_csrf" value="{{.Viewer.CSRFToken}}">
           <button class="btn btn-ghost btn-icon btn-sm" title="Sign out" aria-label="Sign out">{{icon "logout"}}</button>
         </form>
-      </div>
+      </div>{{end}}
     </div>
   </aside>
   <main class="main"><div class="sheet"><div class="container">{{template "content" .}}</div></div></main>

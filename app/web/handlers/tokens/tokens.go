@@ -59,6 +59,10 @@ func NewTokensHandler(renderer *web.Renderer, views web.Views, tokens Tokens, te
 }
 
 func (h TokensHandler) Show(c *gin.Context) {
+	if requestctx.ActorFrom(c).Guest {
+		web.ErrorPage(c, h.renderer, web.ErrNotInDemo)
+		return
+	}
 	h.render(c, identity.IssuedToken{})
 }
 

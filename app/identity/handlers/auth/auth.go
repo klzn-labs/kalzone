@@ -89,8 +89,12 @@ func (h AuthHandler) Logout(c *gin.Context) {
 }
 
 func (h AuthHandler) setCookie(c *gin.Context, name, value string, maxAge int) {
+	setCookie(c, h.secure, name, value, maxAge)
+}
+
+func setCookie(c *gin.Context, secure bool, name, value string, maxAge int) {
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(name, value, maxAge, "/", "", h.secure, true)
+	c.SetCookie(name, value, maxAge, "/", "", secure, true)
 }
 
 func safeNext(next string) string {

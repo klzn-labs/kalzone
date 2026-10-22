@@ -27,6 +27,7 @@
         <button class="btn btn-sm">Apply c{{$d.Revision.Number}}</button>
       </form><div class="form-error"></div>
       {{end}}
+      {{if $d.Guest}}<div class="deploy-actions">{{template "demo-note" $d.DemoNote}}</div>{{end}}
       {{if $v.CanDeploy}}
       <div class="deploy-actions">
         <form class="form-inline" method="post" action="{{$base}}/deployments" hx-post="{{$base}}/deployments" hx-target="next .form-error">
@@ -158,6 +159,7 @@
         </tbody>
       </table>
       {{else}}{{template "empty" dict "Icon" "settings" "Title" "No variables" "Text" "Add the first one below." "Href" "" "Action" ""}}{{end}}
+      {{if $d.Guest}}<div class="card-body">{{template "demo-note" "In your own team, every change saves a numbered revision you can roll back to."}}</div>{{end}}
       {{if $d.CanEdit}}
       <div class="card-body" style="border-top:1px solid var(--border)">
         <form method="post" action="{{$base}}/variables" hx-post="{{$base}}/variables" hx-target="find .form-error">

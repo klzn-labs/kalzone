@@ -67,6 +67,20 @@ func (s *Suite) SignIn(t *testing.T, login string) *Client {
 	return c
 }
 
+func (s *Suite) Guest(t *testing.T) *Client {
+	t.Helper()
+	c := s.Anonymous(t)
+	entered := c.Do(t, http.MethodPost, "/demo", nil)
+	require.Equal(t, http.StatusSeeOther, entered.Status, entered.Body)
+	require.Equal(t, "/", entered.Location)
+	var me struct {
+		CSRFToken string `json:"csrf_token"`
+	}
+	c.MustJSON(t, http.MethodGet, "/api/v1/me", nil, http.StatusOK, &me)
+	c.CSRFToken = me.CSRFToken
+	return c
+}
+
 func queryParam(t *testing.T, raw, name string) string {
 	t.Helper()
 	parsed, err := url.Parse(raw)

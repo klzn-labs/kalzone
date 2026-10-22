@@ -29,6 +29,7 @@
   </table></div>
 </div>
 {{if $d.Preview.Ships}}{{template "ships-card" dict "Ships" $d.Preview.Ships "Env" $r.Environment "Service" $r.ServiceSlug}}{{end}}
+{{if and $.Viewer.Actor.Guest $r.Pending}}{{template "demo-note" "In your own team, a maintainer approves here and Kalzone runs the deploy as the requester."}}{{end}}
 {{if $d.CanDecide}}
 <div class="grid grid-2">
   <form class="card" method="post" action="/requests/{{$r.ID}}/approve" hx-post="/requests/{{$r.ID}}/approve" hx-confirm="Approve and run it now?">{{template "csrf" $csrf}}

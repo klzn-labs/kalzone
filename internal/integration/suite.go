@@ -54,7 +54,13 @@ type Suite struct {
 	nextID      int64
 }
 
-func NewSuite(t *testing.T) *Suite {
+type Option func(*config.Config)
+
+func WithDemo(cfg *config.Config) {
+	cfg.Demo.Enabled = true
+}
+
+func NewSuite(t *testing.T, tweaks ...Option) *Suite {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	testdb.Open(t)
@@ -62,7 +68,7 @@ func NewSuite(t *testing.T) *Suite {
 	app := fxtest.New(t,
 		options.Options(),
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
-		fx.Decorate(func(config.Config) config.Config { return testConfig(t, s) }),
+		fx.Decorate(func(config.Config) config.Config { return withOptions(testConfig(t, s), tweaks) }),
 		fx.Decorate(func(registry.Resolver) registry.Resolver { return registry.WithBaseURL(s.Registry.URL) }),
 		fx.Populate(&s.Engine, &s.db, &s.Catalog, &s.Drain),
 	)
@@ -84,6 +90,13 @@ func (s *Suite) close(app *fxtest.App) {
 	testdb.Close(s.db)
 }
 
+func withOptions(cfg config.Config, tweaks []Option) config.Config {
+	for _, tweak := range tweaks {
+		tweak(&cfg)
+	}
+	return cfg
+}
+
 func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg := baseConfig(s.GitHub.URL)
 	cfg.GitHub.AppID, cfg.GitHub.AppPrivateKey, cfg.GitHub.WebhookSecret = 1, appKey(t), WebhookSecret
@@ -98,6 +111,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Databases = testDatabases(t)
 	cfg.Metrics = config.Metrics{PushgatewayURL: s.Pushgateway.URL}
 	cfg.Health = config.Health{ResponseMS: 300, CPUPercent: 70, DBCPUPercent: 70}
+	cfg.Demo = config.Demo{SessionTTL: 2 * time.Hour, PerIPHour: 5}
 	return cfg
 }
 

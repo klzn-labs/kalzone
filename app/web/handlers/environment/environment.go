@@ -63,6 +63,8 @@ type data struct {
 	CanEdit   bool
 	Deploy    DeployView
 	Grafana   GrafanaView
+	Guest     bool
+	DemoNote  string
 }
 
 type GrafanaView struct {
@@ -118,6 +120,7 @@ func (h EnvironmentHandler) build(ctx context.Context, a actor.Actor, serviceSlu
 	d.CanEdit = h.views.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: d.Service.OwnerTeamID, Environment: envSlug})
 	d.Deploy, err = h.deployView(ctx, a, d)
 	d.Grafana = GrafanaView{Enabled: h.grafana.Enabled()}
+	d.Guest, d.DemoNote = a.Guest, demoNote(d.Env)
 	return d, err
 }
 
@@ -151,6 +154,13 @@ func variables(env map[string]string) []Variable {
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
 	return result
+}
+
+func demoNote(env catalog.Environment) string {
+	if env.Protected {
+		return "In your own team, deploying to " + env.Name + " opens a change request that a maintainer approves."
+	}
+	return "In your own team, members deploy to " + env.Name + " straight away, blue-green with an automatic rollback."
 }
 
 func RegisterEnvironmentRoutes(routes httpserver.Web, h EnvironmentHandler) {

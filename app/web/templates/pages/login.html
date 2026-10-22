@@ -3,6 +3,29 @@
 <head>{{template "head" .}}</head>
 <body>
 <div class="login-page">
+  {{if .Data.Demo}}
+  <div class="login-doors">
+    <div class="login-intro">
+      <span class="brand-mark">{{icon "logo"}}</span>
+      <h1>Welcome to Kalzone</h1>
+      <p class="lead">Deploy, configure and watch your services. Your agents can do it too.</p>
+      {{with .Data.Error}}<div class="alert alert-danger">{{icon "alert"}}<span>{{.}}</span></div>{{end}}
+    </div>
+    <div class="card login-door login-door-demo">
+      <span class="eyebrow">Look around</span>
+      <h2>Explore a demo team</h2>
+      <p>Four sample services with releases, deploys, a change request waiting for approval and live-looking metrics. Nothing to install, nothing to sign.</p>
+      <form method="post" action="/demo"><button class="btn btn-primary btn-wide">Open the demo</button></form>
+    </div>
+    <div class="card login-door">
+      <span class="eyebrow">Ship your own</span>
+      <h2>Sign in</h2>
+      <p>Use your GitHub account. A team maintainer adds you to their team once you've signed in.</p>
+      <a class="btn btn-github" href="/auth/github?next={{.Data.Next}}">{{icon "github"}}Continue with GitHub</a>
+    </div>
+    <p class="fine">Until someone adds you to a team, you see the Demo team.</p>
+  </div>
+  {{else}}
   <div class="card login-card">
     <span class="brand-mark">{{icon "logo"}}</span>
     <h1>Welcome to Kalzone</h1>
@@ -11,6 +34,7 @@
     <a class="btn btn-github" href="/auth/github?next={{.Data.Next}}">{{icon "github"}}Continue with GitHub</a>
     <p class="fine">You see the services of the teams you belong to.<br>A team maintainer adds you once you have signed in.</p>
   </div>
+  {{end}}
 </div>
 </body>
 </html>{{end}}

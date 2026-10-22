@@ -11,6 +11,7 @@
       {{if $d.Building}}<span class="badge badge-warn badge-pulse"><span class="dot"></span>live</span>{{end}}
       {{if $d.CanBuild}}{{template "release-actions" dict "D" $d "CSRF" $csrf}}{{end}}
     </div>
+    {{if $.Viewer.Actor.Guest}}<div class="card-body">{{template "demo-note" "In your own team, Build runs your repository's workflow and the new release appears here, pinned by digest."}}</div>{{end}}
     {{if $d.Rows}}
     <div class="table-scroll">
       <table class="table release-table">

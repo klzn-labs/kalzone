@@ -31,6 +31,7 @@ func Options() fx.Option {
 		modules.Approvals(),
 		modules.Observe(),
 		modules.Onboarding(),
+		modules.Demo(),
 		modules.Web(),
 	)
 }

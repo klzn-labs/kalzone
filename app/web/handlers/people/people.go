@@ -41,6 +41,10 @@ func NewPeopleHandler(renderer *web.Renderer, views web.Views, users Users) Peop
 
 func (h PeopleHandler) Show(c *gin.Context) {
 	a := requestctx.ActorFrom(c)
+	if a.Guest {
+		web.ErrorPage(c, h.renderer, web.ErrNotInDemo)
+		return
+	}
 	people, err := h.people(c.Request.Context(), a)
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)

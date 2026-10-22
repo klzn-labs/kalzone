@@ -5,12 +5,12 @@
     <h1>Overview</h1>
     <p class="lead">{{template "finding" $d}}</p>
   </div>
-  {{if not $d.Newcomer}}<div class="actions"><a class="btn" href="/services/new">{{icon "plus"}}New service</a></div>{{end}}
+  {{if not (or $d.Newcomer $d.Guest)}}<div class="actions"><a class="btn" href="/services/new">{{icon "plus"}}New service</a></div>{{end}}
 </div>
 
 {{if $d.Newcomer}}
 <section class="card" aria-labelledby="newcomer-title" style="margin-bottom:16px">
-  <div class="empty"><div class="empty-icon">{{icon "users"}}</div><h3 id="newcomer-title">You're not on a team yet</h3><p>Kalzone shows the services, releases and activity of the teams you belong to. Ask a team maintainer to add you as <b class="mono">@{{$d.Login}}</b>.</p></div>
+  <div class="empty"><div class="empty-icon">{{icon "users"}}</div><h3 id="newcomer-title">You're not on a team yet</h3><p>Kalzone shows the services, releases and activity of the teams you belong to, plus the Demo team. Ask a team maintainer to add you as <b class="mono">@{{$d.Login}}</b>.</p></div>
 </section>
 {{end}}
 
