@@ -47,3 +47,10 @@ func Test_TeamScope_AdminTokenStaysWithinTokenTeams(t *testing.T) {
 	require.Equal(t, []string{"t3"}, teams)
 	require.False(t, all)
 }
+
+func Test_Sees_AGuestOnlyTheDemoTeam(t *testing.T) {
+	guest := actor.Actor{UserID: "g1", Guest: true, Teams: []string{"demo"}}
+
+	require.True(t, guest.Sees("demo"))
+	require.False(t, guest.Sees("t1"))
+}
