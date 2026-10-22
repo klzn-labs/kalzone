@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-const outOfScopeName = "kalzone:out_of_scope"
+const outOfScopeLabel = "kalzone_out_of_scope"
 
 type Scope struct {
 	Services     []string
@@ -145,7 +145,7 @@ func alternatives(values []string) string {
 }
 
 func outOfScope() *labels.Matcher {
-	return labels.MustNewMatcher(labels.MatchEqual, model.MetricNameLabel, outOfScopeName)
+	return labels.MustNewMatcher(labels.MatchEqual, outOfScopeLabel, "true")
 }
 
 func render(matchers []*labels.Matcher) string {
