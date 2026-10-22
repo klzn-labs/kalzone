@@ -26,7 +26,6 @@ type Query struct {
 	Limit    int
 	Contains string
 	Colour   string
-	Errors   bool
 }
 
 func ParseQuery(since, limit, contains, colour string) (Query, error) {

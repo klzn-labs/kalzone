@@ -10,6 +10,7 @@ import (
 	catalog "github.com/klzn-labs/kalzone/app/catalog/entities"
 	envconfig "github.com/klzn-labs/kalzone/app/envconfig/entities"
 	identity "github.com/klzn-labs/kalzone/app/identity/entities"
+	observe "github.com/klzn-labs/kalzone/app/observe/entities"
 	team "github.com/klzn-labs/kalzone/app/team/entities"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
@@ -69,10 +70,14 @@ type data struct {
 
 type GrafanaView struct {
 	Enabled bool
+	Org     int
+	UID     string
+	Env     string
 }
 
 type Grafana interface {
 	Enabled() bool
+	OrgID(name string) (int, bool)
 }
 
 type EnvironmentHandler struct {
@@ -119,9 +124,18 @@ func (h EnvironmentHandler) build(ctx context.Context, a actor.Actor, serviceSlu
 	}
 	d.CanEdit = h.views.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: d.Service.OwnerTeamID, Environment: envSlug})
 	d.Deploy, err = h.deployView(ctx, a, d)
-	d.Grafana = GrafanaView{Enabled: h.grafana.Enabled()}
+	d.Grafana = h.grafanaView(d, envSlug)
 	d.Guest, d.DemoNote = a.Guest, demoNote(d.Env)
 	return d, err
+}
+
+func (h EnvironmentHandler) grafanaView(d data, envSlug string) GrafanaView {
+	name := observe.TeamOrgName(d.Team.Slug)
+	if d.Service.Simulated {
+		name = observe.DemoOrg
+	}
+	org, known := h.grafana.OrgID(name)
+	return GrafanaView{Enabled: h.grafana.Enabled() && known, Org: org, UID: observe.DashboardUID(d.Service.Slug), Env: envSlug}
 }
 
 func (h EnvironmentHandler) frame(ctx context.Context, a actor.Actor, serviceSlug, envSlug string) (data, error) {

@@ -74,8 +74,8 @@
     {{if $d.Grafana}}<div class="actions"><a class="btn btn-sm" href="{{$d.DashboardURL}}" target="_blank" rel="noopener">{{icon "activity"}}Dashboard {{icon "external"}}</a></div>{{end}}</div>
   {{if $d.Grafana}}
   <div class="panels">
-    {{range $panel := $d.Panels}}{{template "panel" dict "UID" $d.DashboardUID "Env" "" "Panel" $panel "Class" ""}}{{end}}
-    {{template "panel" dict "UID" $d.DashboardUID "Env" "" "Panel" $d.LogsPanel "Class" "wide"}}
+    {{range $panel := $d.Panels}}{{template "panel" dict "Org" 1 "UID" $d.DashboardUID "Env" "" "Panel" $panel "Class" ""}}{{end}}
+    {{template "panel" dict "Org" 1 "UID" $d.DashboardUID "Env" "" "Panel" $d.LogsPanel "Class" "wide"}}
   </div>
   {{else}}{{template "empty" dict "Icon" "activity" "Title" "Observability isn't connected" "Text" "Set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN to embed dashboards here." "Href" "" "Action" ""}}{{end}}
 </div>

@@ -28,7 +28,7 @@ func NewGrafanaProxy(cfg config.Config) (GrafanaProxy, error) {
 
 func (p GrafanaProxy) Serve(c *gin.Context) {
 	viewer := requestctx.ViewerFrom(c)
-	if p.target == nil || !viewer.Actor.Admin {
+	if p.target == nil {
 		c.String(http.StatusNotFound, "observability is not connected")
 		return
 	}
@@ -45,13 +45,11 @@ func identify(h http.Header, viewer requestctx.Viewer) {
 			h.Del(name)
 		}
 	}
-	role := "Viewer"
-	if viewer.Actor.Admin {
-		role = "Admin"
-	}
 	h.Set("X-WEBAUTH-USER", viewer.Actor.Login)
 	h.Set("X-WEBAUTH-NAME", viewer.Name)
-	h.Set("X-WEBAUTH-ROLE", role)
+	if viewer.Actor.Admin {
+		h.Set("X-WEBAUTH-ROLE", "Admin")
+	}
 }
 
 func RegisterProxyRoutes(session httpserver.Session, p GrafanaProxy) {

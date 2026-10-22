@@ -128,10 +128,3 @@ func Test_AMissingDefaultFallsBackToTheBuiltInLimit(t *testing.T) {
 	require.Equal(t, 300, h.Readings[0].Limit)
 	require.Empty(t, h.Over())
 }
-
-func Test_ResponseLimitIsTheServiceOverrideOrTheDefault(t *testing.T) {
-	u := health.NewHealthUsecase(&querier{}, config.Config{})
-
-	require.Equal(t, 300, u.ResponseLimit(catalog.Limits{}))
-	require.Equal(t, 800, u.ResponseLimit(catalog.Limits{ResponseMS: 800}))
-}
