@@ -5,6 +5,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/users"
 	logsHandler "github.com/klzn-labs/kalzone/app/observe/handlers/logs"
 	"github.com/klzn-labs/kalzone/app/observe/handlers/proxy"
 	"github.com/klzn-labs/kalzone/app/observe/handlers/sync"
@@ -17,7 +18,9 @@ import (
 	"github.com/klzn-labs/kalzone/app/observe/usecases/health"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/metrics"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/orgs"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/telemetry"
+	"github.com/klzn-labs/kalzone/app/team/usecases/source"
 	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
 	"github.com/klzn-labs/kalzone/internal/eventbus"
 	"github.com/klzn-labs/kalzone/pkg/config"
@@ -40,6 +43,7 @@ func Observe() fx.Option {
 		),
 		observeLogs(),
 		observeTelemetry(),
+		observeOrgs(),
 		fx.Invoke(proxy.RegisterProxyRoutes, sync.OnStart, logsHandler.RegisterLogsRoutes, subscribeDashboards),
 	)
 }
@@ -77,5 +81,17 @@ func observeTelemetry() fx.Option {
 			telemetryHandler.NewTelemetryHandler,
 		),
 		fx.Invoke(telemetryHandler.RegisterTelemetryRoutes),
+	)
+}
+
+func observeOrgs() fx.Option {
+	return fx.Provide(
+		func(t teams.TeamsUsecase, m source.LocalTeamSource, u users.UsersUsecase) observeCatalog.Roster {
+			return observeCatalog.NewRoster(t, m, u)
+		},
+		func(g grafana.Client, r observeCatalog.Roster, u services.ServicesUsecase, d databases.DatabasesUsecase, t telemetry.TelemetryUsecase, cfg config.Config) orgs.OrgsUsecase {
+			return orgs.NewOrgsUsecase(g, r, observeCatalog.NewServices(u, d), t, cfg.Telemetry.InternalURL)
+		},
+		func(u orgs.OrgsUsecase) dashboards.Orgs { return u },
 	)
 }

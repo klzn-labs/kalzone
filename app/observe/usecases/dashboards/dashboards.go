@@ -14,6 +14,10 @@ type Grafana interface {
 	DeleteDashboard(ctx context.Context, org int, uid string) error
 }
 
+type Orgs interface {
+	Sync(ctx context.Context, services []entities.Service) error
+}
+
 type Catalog interface {
 	Services(ctx context.Context) ([]entities.Service, error)
 }
@@ -27,10 +31,11 @@ type DashboardsUsecase struct {
 	grafana   Grafana
 	catalog   Catalog
 	publisher Publisher
+	orgs      Orgs
 }
 
-func NewDashboardsUsecase(grafana Grafana, catalog Catalog, publisher Publisher) DashboardsUsecase {
-	return DashboardsUsecase{grafana: grafana, catalog: catalog, publisher: publisher}
+func NewDashboardsUsecase(grafana Grafana, catalog Catalog, publisher Publisher, orgs Orgs) DashboardsUsecase {
+	return DashboardsUsecase{grafana: grafana, catalog: catalog, publisher: publisher, orgs: orgs}
 }
 
 func (u DashboardsUsecase) Write(ctx context.Context, services []entities.Service) (int, error) {

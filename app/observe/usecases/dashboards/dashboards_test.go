@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/klzn-labs/kalzone/app/observe/entities"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
 	"github.com/stretchr/testify/require"
 )
@@ -25,11 +26,20 @@ func (g *grafana) DeleteDashboard(_ context.Context, _ int, uid string) error {
 	return nil
 }
 
+type orgs struct {
+	synced []entities.Service
+}
+
+func (o *orgs) Sync(_ context.Context, services []entities.Service) error {
+	o.synced = services
+	return nil
+}
+
 func Test_Delete_RemovesTheServicesDashboardWhenGrafanaIsSetUp(t *testing.T) {
 	on, off := &grafana{enabled: true}, &grafana{}
 
-	require.NoError(t, dashboards.NewDashboardsUsecase(on, &catalog{}, &publisher{}).Delete(context.Background(), "api"))
-	require.NoError(t, dashboards.NewDashboardsUsecase(off, &catalog{}, &publisher{}).Delete(context.Background(), "api"))
+	require.NoError(t, dashboards.NewDashboardsUsecase(on, &catalog{}, &publisher{}, &orgs{}).Delete(context.Background(), "api"))
+	require.NoError(t, dashboards.NewDashboardsUsecase(off, &catalog{}, &publisher{}, &orgs{}).Delete(context.Background(), "api"))
 
 	require.Equal(t, []string{"platform-api"}, on.deleted)
 	require.Empty(t, off.deleted)
