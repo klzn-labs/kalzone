@@ -21,6 +21,7 @@ import (
 	"github.com/klzn-labs/kalzone/internal/fakeoidc"
 	"github.com/klzn-labs/kalzone/internal/fakepushgateway"
 	"github.com/klzn-labs/kalzone/internal/fakeregistry"
+	"github.com/klzn-labs/kalzone/internal/faketelemetry"
 	"github.com/klzn-labs/kalzone/internal/httpserver/wait"
 	"github.com/klzn-labs/kalzone/internal/testdb"
 	"github.com/klzn-labs/kalzone/pkg/config"
@@ -37,6 +38,7 @@ const (
 	QueuedToken   = "queued-test-token"
 	BuildWorkflow = "klzn-labs/kalzone-actions/.github/workflows/build.yml"
 	RegistryToken = "dckr_pat_test"
+	TelemetryKey  = "telemetry-key"
 )
 
 type Suite struct {
@@ -46,6 +48,7 @@ type Suite struct {
 	Registry    *fakeregistry.Registry
 	Grafana     *fakegrafana.Grafana
 	Pushgateway *fakepushgateway.Pushgateway
+	Telemetry   *faketelemetry.Store
 	Engine      *gin.Engine
 	Catalog     *apispec.Catalog
 	Drain       *wait.Drain
@@ -64,7 +67,7 @@ func NewSuite(t *testing.T, tweaks ...Option) *Suite {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	testdb.Open(t)
-	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), Grafana: fakegrafana.New(), Pushgateway: fakepushgateway.New(), nextID: 1000}
+	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), Grafana: fakegrafana.New(), Pushgateway: fakepushgateway.New(), Telemetry: faketelemetry.New(), nextID: 1000}
 	app := fxtest.New(t,
 		options.Options(),
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
@@ -87,6 +90,7 @@ func (s *Suite) close(app *fxtest.App) {
 	s.Grafana.Close()
 	app.RequireStop()
 	s.Pushgateway.Close()
+	s.Telemetry.Close()
 	testdb.Close(s.db)
 }
 
@@ -110,6 +114,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", Token: "grafana-token", PrometheusUID: "prometheus", LokiUID: "loki"}
 	cfg.Databases = testDatabases(t)
 	cfg.Metrics = config.Metrics{PushgatewayURL: s.Pushgateway.URL}
+	cfg.Telemetry = config.Telemetry{Key: TelemetryKey, PrometheusURL: s.Telemetry.URL, LokiURL: s.Telemetry.URL + "/loki-root"}
 	cfg.Health = config.Health{ResponseMS: 300, CPUPercent: 70, DBCPUPercent: 70}
 	cfg.Demo = config.Demo{SessionTTL: 2 * time.Hour, PerIPHour: 5}
 	return cfg

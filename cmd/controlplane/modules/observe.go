@@ -2,18 +2,23 @@ package modules
 
 import (
 	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	logsHandler "github.com/klzn-labs/kalzone/app/observe/handlers/logs"
 	"github.com/klzn-labs/kalzone/app/observe/handlers/proxy"
 	"github.com/klzn-labs/kalzone/app/observe/handlers/sync"
+	telemetryHandler "github.com/klzn-labs/kalzone/app/observe/handlers/telemetry"
 	observeCatalog "github.com/klzn-labs/kalzone/app/observe/repositories/catalog"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/pushgateway"
+	"github.com/klzn-labs/kalzone/app/observe/repositories/upstream"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/health"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/metrics"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/telemetry"
+	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
 	"github.com/klzn-labs/kalzone/internal/eventbus"
 	"github.com/klzn-labs/kalzone/pkg/config"
 	"go.uber.org/fx"
@@ -34,6 +39,7 @@ func Observe() fx.Option {
 			func(c grafana.Client, cfg config.Config) health.HealthUsecase { return health.NewHealthUsecase(c, cfg) },
 		),
 		observeLogs(),
+		observeTelemetry(),
 		fx.Invoke(proxy.RegisterProxyRoutes, sync.OnStart, logsHandler.RegisterLogsRoutes, subscribeDashboards),
 	)
 }
@@ -54,5 +60,22 @@ func observeLogs() fx.Option {
 		func(l observeCatalog.Lookup, c grafana.Client, cfg config.Config) metrics.MetricsUsecase {
 			return metrics.NewMetricsUsecase(l, c, cfg.Grafana.PrometheusUID)
 		},
+	)
+}
+
+func observeTelemetry() fx.Option {
+	return fx.Options(
+		fx.Provide(
+			upstream.NewClient,
+			func(t teams.TeamsUsecase, e environments.EnvironmentsUsecase) observeCatalog.Directory {
+				return observeCatalog.NewDirectory(t, e)
+			},
+			func(cfg config.Config, u services.ServicesUsecase, d databases.DatabasesUsecase, dir observeCatalog.Directory, c upstream.Client) telemetry.TelemetryUsecase {
+				return telemetry.NewTelemetryUsecase(cfg.Telemetry.Key, cfg.Telemetry.AllToken, observeCatalog.NewServices(u, d), dir, c)
+			},
+			func(u telemetry.TelemetryUsecase) telemetryHandler.Telemetry { return u },
+			telemetryHandler.NewTelemetryHandler,
+		),
+		fx.Invoke(telemetryHandler.RegisterTelemetryRoutes),
 	)
 }
