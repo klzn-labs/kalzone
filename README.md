@@ -78,6 +78,10 @@ as a callback URL.
 | `PLATFORM_AGENT_TOKEN` | | shared secret agents authenticate with; agents are refused without it |
 | `PLATFORM_GRAFANA_URL` | | Grafana inside the network, e.g. `http://grafana:3000/grafana`; proxied at `/grafana` with single sign-on |
 | `PLATFORM_GRAFANA_TOKEN` | | Grafana service-account token (Editor) the platform writes dashboards with |
+| `PLATFORM_TELEMETRY_KEY` | | Signs each team's telemetry token; without it `/telemetry` answers 503 |
+| `PLATFORM_TELEMETRY_ALL_TOKEN` | | Bearer token of the `all` scope, which Grafana's main org reads every Loki tenant with |
+| `PLATFORM_TELEMETRY_PROMETHEUS_URL` | `http://prometheus:9090` | Prometheus the team telemetry filter reads |
+| `PLATFORM_TELEMETRY_LOKI_URL` | `http://loki:3100` | Loki the team telemetry filter reads, with one tenant per service and environment |
 | `PLATFORM_DEPLOY_TIMEOUT` | `30m` | deployments an agent stopped reporting on are failed after this |
 | `PLATFORM_QUEUES_TOKEN` | | shared secret the queue gateway authenticates with; the gateway API answers 503 without it |
 | `PLATFORM_QUEUES_GATEWAY_URL` | `http://queued:8080` | gateway address handed to services as `PLATFORM_QUEUE_URL` |
@@ -209,6 +213,15 @@ claude mcp add --transport http kalzone https://platform.kalz.one/mcp \
 - Both reads are MCP tools too; `listLogs` shows only for tokens with `logs`.
 - Grafana's datasource uids are `PLATFORM_GRAFANA_PROMETHEUS_UID` (`prometheus`) and
   `PLATFORM_GRAFANA_LOKI_UID` (`loki`).
+- `/telemetry/:team/prometheus/*` and `/telemetry/:team/loki/*` are the datasources of
+  a team's Grafana org. They take `Authorization: Bearer <token>`, an HMAC of the team
+  slug under `PLATFORM_TELEMETRY_KEY`. Prometheus answers only reads, and every
+  selector gets a matcher for the team's deployments (`service` on Traefik series,
+  `name` on containers, `mysql_user` and `schema` on MySQL ones); a selector without
+  a known metric name matches nothing. Loki answers only reads, with `X-Scope-OrgID`
+  set to the team's tenants (`<service>-<env>`). `PLATFORM_TELEMETRY_ALL_TOKEN` opens
+  the `all` scope, which reads every Loki tenant plus `platform` and `fake`, and no
+  Prometheus.
 
 ## Onboarding a service
 
