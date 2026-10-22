@@ -50,3 +50,16 @@ func Test_Delete_RemovesMemberships(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, memberships)
 }
+
+func Test_DemoTeamIDs_ListsOnlyDemoTeams(t *testing.T) {
+	repo := mysql.NewTeamRepository(testdb.Open(t))
+	require.NoError(t, repo.Create(ctx, entities.Team{ID: "t1", Slug: "places", Name: "Places", CreatedAt: time.Now()}))
+	require.NoError(t, repo.Create(ctx, entities.Team{ID: "t2", Slug: "demo", Name: "Demo", Demo: true, CreatedAt: time.Now()}))
+
+	ids, err := repo.DemoTeamIDs(ctx)
+	demo, _ := repo.FindBySlug(ctx, "demo")
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"t2"}, ids)
+	require.True(t, demo.Demo)
+}

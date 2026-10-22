@@ -36,8 +36,8 @@ func Test_Services_MapsAttachmentsPerService(t *testing.T) {
 	}, got)
 }
 
-func Test_Services_LeavesOutServicesBeingDeleted(t *testing.T) {
-	services := lister{{ID: "s1", Slug: "api"}, {ID: "s2", Slug: "old", Status: catalogEntities.StatusDecommissioning}}
+func Test_Services_LeavesOutServicesBeingDeletedOrSimulated(t *testing.T) {
+	services := lister{{ID: "s1", Slug: "api"}, {ID: "s2", Slug: "old", Status: catalogEntities.StatusDecommissioning}, {ID: "s3", Slug: "demo-shop", Simulated: true}}
 
 	got, err := catalog.NewServices(services, attachments{}).Services(context.Background())
 

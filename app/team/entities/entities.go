@@ -21,6 +21,7 @@ type Team struct {
 	ID        string
 	Slug      string
 	Name      string
+	Demo      bool
 	CreatedAt time.Time
 }
 

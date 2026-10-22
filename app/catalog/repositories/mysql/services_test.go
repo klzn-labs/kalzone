@@ -118,3 +118,15 @@ func Test_AServiceKeepsItsHealthLimits(t *testing.T) {
 	require.Equal(t, entities.Limits{}, fresh.Limits)
 	require.Equal(t, entities.Limits{ResponseMS: 500, DBCPUPercent: 150}, found.Limits)
 }
+
+func Test_ASimulatedServiceKeepsItsFlag(t *testing.T) {
+	repo := mysql.NewServiceRepository(testdb.Open(t))
+	demo := service("s1", "demo-shop-api", "t1")
+	demo.Simulated = true
+	require.NoError(t, repo.Create(ctx, demo))
+
+	found, err := repo.FindBySlug(ctx, "demo-shop-api")
+
+	require.NoError(t, err)
+	require.True(t, found.Simulated)
+}

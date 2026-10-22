@@ -8,7 +8,8 @@ import (
 
 type user struct {
 	ID          string `gorm:"primaryKey"`
-	GitHubID    int64  `gorm:"column:github_id"`
+	GitHubID    *int64 `gorm:"column:github_id"`
+	Kind        string
 	Login       string
 	Name        string
 	AvatarURL   string
@@ -21,15 +22,36 @@ func (user) TableName() string { return "users" }
 
 func (u user) toEntity() entities.User {
 	return entities.User{
-		ID: u.ID, GitHubID: u.GitHubID, Login: u.Login, Name: u.Name, AvatarURL: u.AvatarURL,
-		Admin: u.IsAdmin, CreatedAt: u.CreatedAt, LastLoginAt: u.LastLoginAt,
+		ID: u.ID, GitHubID: valueOf(u.GitHubID), Kind: entities.Kind(u.Kind), Login: u.Login, Name: u.Name,
+		AvatarURL: u.AvatarURL, Admin: u.IsAdmin, CreatedAt: u.CreatedAt, LastLoginAt: u.LastLoginAt,
 	}
+}
+
+func valueOf(id *int64) int64 {
+	if id == nil {
+		return 0
+	}
+	return *id
+}
+
+func pointerOf(id int64) *int64 {
+	if id == 0 {
+		return nil
+	}
+	return &id
+}
+
+func kindOf(k entities.Kind) string {
+	if k == "" {
+		return string(entities.KindPerson)
+	}
+	return string(k)
 }
 
 func fromUser(u entities.User) user {
 	return user{
-		ID: u.ID, GitHubID: u.GitHubID, Login: u.Login, Name: u.Name, AvatarURL: u.AvatarURL,
-		IsAdmin: u.Admin, CreatedAt: u.CreatedAt, LastLoginAt: u.LastLoginAt,
+		ID: u.ID, GitHubID: pointerOf(u.GitHubID), Kind: kindOf(u.Kind), Login: u.Login, Name: u.Name,
+		AvatarURL: u.AvatarURL, IsAdmin: u.Admin, CreatedAt: u.CreatedAt, LastLoginAt: u.LastLoginAt,
 	}
 }
 

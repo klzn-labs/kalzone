@@ -26,7 +26,7 @@ func NewTeamRepository(db *gorm.DB) TeamRepository {
 }
 
 func (r TeamRepository) Create(ctx context.Context, t entities.Team) error {
-	err := r.db.WithContext(ctx).Create(&team{ID: t.ID, Slug: t.Slug, Name: t.Name, CreatedAt: t.CreatedAt}).Error
+	err := r.db.WithContext(ctx).Create(&team{ID: t.ID, Slug: t.Slug, Name: t.Name, IsDemo: t.Demo, CreatedAt: t.CreatedAt}).Error
 	if isDuplicate(err) {
 		return errTeamTaken
 	}
@@ -56,6 +56,12 @@ func (r TeamRepository) List(ctx context.Context) ([]entities.Team, error) {
 
 func (r TeamRepository) FindByIDs(ctx context.Context, ids []string) ([]entities.Team, error) {
 	return r.findMany(r.db.WithContext(ctx).Where("id IN ?", ids))
+}
+
+func (r TeamRepository) DemoTeamIDs(ctx context.Context) ([]string, error) {
+	ids := []string{}
+	err := r.db.WithContext(ctx).Model(&team{}).Where("is_demo").Order("id").Pluck("id", &ids).Error
+	return ids, err
 }
 
 func (r TeamRepository) findOne(ctx context.Context, query string, arg any) (entities.Team, error) {

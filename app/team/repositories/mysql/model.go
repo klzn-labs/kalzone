@@ -10,13 +10,14 @@ type team struct {
 	ID        string `gorm:"primaryKey"`
 	Slug      string
 	Name      string
+	IsDemo    bool
 	CreatedAt time.Time
 }
 
 func (team) TableName() string { return "teams" }
 
 func (t team) toEntity() entities.Team {
-	return entities.Team{ID: t.ID, Slug: t.Slug, Name: t.Name, CreatedAt: t.CreatedAt}
+	return entities.Team{ID: t.ID, Slug: t.Slug, Name: t.Name, Demo: t.IsDemo, CreatedAt: t.CreatedAt}
 }
 
 type membership struct {

@@ -28,5 +28,5 @@ type Authenticated struct {
 }
 
 func (a Authenticated) Actor() actor.Actor {
-	return actor.Actor{UserID: a.User.ID, Login: a.User.Login, Admin: a.User.Admin, Teams: a.Teams}
+	return actor.Actor{UserID: a.User.ID, Login: a.User.Login, Admin: a.User.Admin, Guest: a.User.Guest(), Teams: a.Teams}
 }

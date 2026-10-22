@@ -21,5 +21,5 @@ func NewLookup(services ServiceFinder) Lookup {
 
 func (l Lookup) FindService(ctx context.Context, slug string) (entities.LogSource, error) {
 	s, err := l.services.Get(ctx, slug)
-	return entities.LogSource{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID}, err
+	return entities.LogSource{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID, Simulated: s.Simulated}, err
 }
