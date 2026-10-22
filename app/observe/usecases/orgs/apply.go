@@ -65,6 +65,24 @@ func (u OrgsUsecase) reconcileMember(ctx context.Context, org int, m entities.Or
 	return nil
 }
 
+func (u OrgsUsecase) syncMainOrg(ctx context.Context, roles map[string]string) error {
+	have, err := u.grafana.Members(ctx, entities.MainOrg)
+	if err != nil {
+		return err
+	}
+	errs := []error{}
+	for _, m := range have {
+		role := roles[m.Login]
+		if role == "" {
+			role = entities.RoleNone
+		}
+		if m.Login != u.grafana.AdminLogin() && m.Role != role {
+			errs = append(errs, u.grafana.SetRole(ctx, entities.MainOrg, m.UserID, role))
+		}
+	}
+	return errors.Join(errs...)
+}
+
 func (u OrgsUsecase) syncDatasources(ctx context.Context, org int, datasources []entities.Datasource) error {
 	errs := []error{}
 	for _, d := range datasources {

@@ -92,7 +92,7 @@ func (u OrgsUsecase) Sync(ctx context.Context, services []entities.Service) erro
 	}
 	ids := idsByName(existing)
 	plans := entities.OrgPlans(in)
-	errs := []error{u.ensureUsers(ctx, in.People)}
+	errs := []error{u.ensureUsers(ctx, in.People), u.syncMainOrg(ctx, entities.MainOrgRoles(in.People))}
 	for _, plan := range plans {
 		errs = append(errs, u.apply(ctx, ids, plan))
 	}
