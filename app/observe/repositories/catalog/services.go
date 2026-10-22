@@ -36,7 +36,7 @@ func (s Services) Services(ctx context.Context) ([]entities.Service, error) {
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, entities.Service{Slug: svc.Slug, Name: svc.Name, Databases: databasesOf(attached)})
+		result = append(result, entities.Service{Slug: svc.Slug, Name: svc.Name, TeamID: svc.OwnerTeamID, Databases: databasesOf(attached)})
 	}
 	return result, nil
 }
