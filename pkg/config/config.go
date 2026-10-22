@@ -68,7 +68,8 @@ type Queues struct {
 
 type Grafana struct {
 	URL           string `mapstructure:"url"`
-	Token         string `mapstructure:"token"`
+	AdminUser     string `mapstructure:"admin_user"`
+	AdminPassword string `mapstructure:"admin_password"`
 	PrometheusUID string `mapstructure:"prometheus_uid" default:"prometheus"`
 	LokiUID       string `mapstructure:"loki_uid" default:"loki"`
 }
@@ -76,6 +77,7 @@ type Grafana struct {
 type Telemetry struct {
 	Key           string `mapstructure:"key"`
 	AllToken      string `mapstructure:"all_token"`
+	InternalURL   string `mapstructure:"internal_url" default:"http://controlplane:8080"`
 	PrometheusURL string `mapstructure:"prometheus_url" default:"http://prometheus:9090"`
 	LokiURL       string `mapstructure:"loki_url" default:"http://loki:3100"`
 }
@@ -176,8 +178,8 @@ var envKeys = []string{
 	"admins", "secrets.key", "secrets.key_id", "allowed_domains",
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
-	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
-	"telemetry.key", "telemetry.all_token", "telemetry.prometheus_url", "telemetry.loki_url",
+	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.admin_user", "grafana.admin_password", "grafana.prometheus_uid", "grafana.loki_uid",
+	"telemetry.key", "telemetry.all_token", "telemetry.internal_url", "telemetry.prometheus_url", "telemetry.loki_url",
 	"queues.gateway_url", "queues.token", "approvals.webhook_url", "metrics.pushgateway_url",
 	"databases.admin_dsn", "databases.host", "databases.port",
 	"health.response_ms", "health.cpu_percent", "health.db_cpu_percent",

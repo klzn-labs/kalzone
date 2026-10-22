@@ -41,6 +41,20 @@ func (s Services) Services(ctx context.Context) ([]entities.Service, error) {
 	return result, nil
 }
 
+func (s Services) Simulated(ctx context.Context) ([]entities.Service, error) {
+	all, err := s.services.List(ctx, catalog.ServiceFilter{})
+	if err != nil {
+		return nil, err
+	}
+	result := []entities.Service{}
+	for _, svc := range all {
+		if svc.Simulated && !svc.Decommissioning() {
+			result = append(result, entities.Service{Slug: svc.Slug, Name: svc.Name, TeamID: svc.OwnerTeamID})
+		}
+	}
+	return result, nil
+}
+
 func databasesOf(attached []database.Database) []entities.Database {
 	result := make([]entities.Database, 0, len(attached))
 	for _, db := range attached {

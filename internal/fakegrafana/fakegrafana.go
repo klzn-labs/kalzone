@@ -4,14 +4,24 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync"
+)
+
+const (
+	AdminUser     = "admin"
+	AdminPassword = "grafana-pass"
 )
 
 type Grafana struct {
 	*httptest.Server
 	mu          sync.Mutex
-	folder      bool
-	dashboards  map[string]string
+	folders     map[int]bool
+	dashboards  map[int]map[string]string
+	orgs        map[string]int
+	members     map[int]map[string]string
+	users       map[string]int
+	datasources map[int]map[string]map[string]any
 	usage       map[string]usage
 	series      map[string][]float64
 	lines       []LokiLine
@@ -19,12 +29,14 @@ type Grafana struct {
 }
 
 func New() *Grafana {
-	g := &Grafana{dashboards: map[string]string{}, usage: map[string]usage{}, series: map[string][]float64{}}
+	g := &Grafana{
+		folders: map[int]bool{}, dashboards: map[int]map[string]string{1: {}}, orgs: map[string]int{"Main Org.": 1},
+		members: map[int]map[string]string{1: {AdminUser: "Admin"}}, users: map[string]int{AdminUser: 1},
+		datasources: map[int]map[string]map[string]any{}, usage: map[string]usage{}, series: map[string][]float64{},
+	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /grafana/api/folders/platform", g.getFolder)
-	mux.HandleFunc("POST /grafana/api/folders", g.createFolder)
-	mux.HandleFunc("POST /grafana/api/dashboards/db", g.dashboard)
-	mux.HandleFunc("DELETE /grafana/api/dashboards/uid/{uid}", g.deleteDashboard)
+	g.routeDashboards(mux)
+	g.routeOrgs(mux)
 	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/prometheus/api/v1/query", g.prometheus)
 	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/prometheus/api/v1/query_range", g.prometheusRange)
 	mux.HandleFunc("GET /grafana/api/datasources/proxy/uid/loki/loki/api/v1/query_range", g.loki)
@@ -33,27 +45,64 @@ func New() *Grafana {
 	return g
 }
 
+func (g *Grafana) routeDashboards(mux *http.ServeMux) {
+	mux.HandleFunc("GET /grafana/api/folders/platform", g.admin(g.getFolder))
+	mux.HandleFunc("POST /grafana/api/folders", g.admin(g.createFolder))
+	mux.HandleFunc("POST /grafana/api/dashboards/db", g.admin(g.dashboard))
+	mux.HandleFunc("DELETE /grafana/api/dashboards/uid/{uid}", g.admin(g.deleteDashboard))
+	mux.HandleFunc("GET /grafana/api/search", g.admin(g.search))
+}
+
+func (g *Grafana) admin(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, password, ok := r.BasicAuth()
+		if !ok || user != AdminUser || password != AdminPassword {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		next(w, r)
+	}
+}
+
+func orgOf(r *http.Request) int {
+	org, err := strconv.Atoi(r.Header.Get("X-Grafana-Org-Id"))
+	if err != nil {
+		return 1
+	}
+	return org
+}
+
 func (g *Grafana) Dashboards() map[string]bool {
+	return g.OrgDashboards(1)
+}
+
+func (g *Grafana) OrgDashboards(org int) map[string]bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	copied := map[string]bool{}
-	for k := range g.dashboards {
+	for k := range g.dashboards[org] {
 		copied[k] = true
 	}
 	return copied
 }
 
-func (g *Grafana) getFolder(w http.ResponseWriter, _ *http.Request) {
+func (g *Grafana) DashboardJSON(uid string) string {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	if !g.folder {
+	return g.dashboards[1][uid]
+}
+
+func (g *Grafana) getFolder(w http.ResponseWriter, r *http.Request) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if !g.folders[orgOf(r)] {
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
-func (g *Grafana) createFolder(w http.ResponseWriter, _ *http.Request) {
+func (g *Grafana) createFolder(w http.ResponseWriter, r *http.Request) {
 	g.mu.Lock()
-	g.folder = true
+	g.folders[orgOf(r)] = true
 	g.mu.Unlock()
 }
 
@@ -61,21 +110,29 @@ func (g *Grafana) dashboard(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Dashboard map[string]any `json:"dashboard"`
 	}
-	if r.Header.Get("Authorization") != "Bearer grafana-token" || json.NewDecoder(r.Body).Decode(&body) != nil {
-		w.WriteHeader(http.StatusUnauthorized)
+	if json.NewDecoder(r.Body).Decode(&body) != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	uid, _ := body.Dashboard["uid"].(string)
 	raw, _ := json.Marshal(body.Dashboard)
 	g.mu.Lock()
-	g.dashboards[uid] = string(raw)
+	g.dashboards[orgOf(r)][uid] = string(raw)
 	g.mu.Unlock()
 }
 
-func (g *Grafana) DashboardJSON(uid string) string {
+func (g *Grafana) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 	g.mu.Lock()
-	defer g.mu.Unlock()
-	return g.dashboards[uid]
+	delete(g.dashboards[orgOf(r)], r.PathValue("uid"))
+	g.mu.Unlock()
+}
+
+func (g *Grafana) search(w http.ResponseWriter, r *http.Request) {
+	found := []map[string]string{}
+	for uid := range g.OrgDashboards(orgOf(r)) {
+		found = append(found, map[string]string{"uid": uid})
+	}
+	_ = json.NewEncoder(w).Encode(found)
 }
 
 func echo(w http.ResponseWriter, r *http.Request) {
@@ -83,10 +140,4 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"path": r.URL.Path, "user": r.Header.Get("X-WEBAUTH-USER"), "role": r.Header.Get("X-WEBAUTH-ROLE"),
 	})
-}
-
-func (g *Grafana) deleteDashboard(w http.ResponseWriter, r *http.Request) {
-	g.mu.Lock()
-	delete(g.dashboards, r.PathValue("uid"))
-	g.mu.Unlock()
 }

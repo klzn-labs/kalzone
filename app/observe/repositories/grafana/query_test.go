@@ -18,12 +18,14 @@ func server(t *testing.T, body string, status int, seen *url.URL) grafana.Client
 	t.Helper()
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		*seen = *r.URL
-		require.Equal(t, "Bearer token", r.Header.Get("Authorization"))
+		user, password, _ := r.BasicAuth()
+		require.Equal(t, "admin:secret", user+":"+password)
+		require.Equal(t, "1", r.Header.Get("X-Grafana-Org-Id"))
 		w.WriteHeader(status)
 		_, _ = w.Write([]byte(body))
 	}))
 	t.Cleanup(s.Close)
-	return grafana.NewClient(config.Config{Grafana: config.Grafana{URL: s.URL + "/grafana", Token: "token"}})
+	return grafana.NewClient(config.Config{Grafana: config.Grafana{URL: s.URL + "/grafana", AdminUser: "admin", AdminPassword: "secret"}})
 }
 
 func Test_Instant_ReadsTheFirstSampleOfAVector(t *testing.T) {
@@ -86,10 +88,10 @@ func Test_DeleteDashboard_RemovesByUIDAndToleratesAMissingOne(t *testing.T) {
 	missing := server(t, `{"message":"Dashboard not found"}`, http.StatusNotFound, &seen)
 	broken := server(t, `{}`, http.StatusForbidden, &seen)
 
-	require.NoError(t, deleted.DeleteDashboard(context.Background(), "platform-api"))
+	require.NoError(t, deleted.DeleteDashboard(context.Background(), 1, "platform-api"))
 	require.Equal(t, "/grafana/api/dashboards/uid/platform-api", seen.Path)
-	require.NoError(t, missing.DeleteDashboard(context.Background(), "platform-api"))
-	require.Error(t, broken.DeleteDashboard(context.Background(), "platform-api"))
+	require.NoError(t, missing.DeleteDashboard(context.Background(), 1, "platform-api"))
+	require.Error(t, broken.DeleteDashboard(context.Background(), 1, "platform-api"))
 }
 
 func Test_Range_ReadsTheFirstSeriesOfAMatrix(t *testing.T) {
