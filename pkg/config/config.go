@@ -25,6 +25,7 @@ type Config struct {
 	Deploy         Deploy    `mapstructure:"deploy"`
 	Agent          Agent     `mapstructure:"agent"`
 	Grafana        Grafana   `mapstructure:"grafana"`
+	Telemetry      Telemetry `mapstructure:"telemetry"`
 	Registry       Registry  `mapstructure:"registry"`
 	Queues         Queues    `mapstructure:"queues"`
 	Approvals      Approvals `mapstructure:"approvals"`
@@ -70,6 +71,13 @@ type Grafana struct {
 	Token         string `mapstructure:"token"`
 	PrometheusUID string `mapstructure:"prometheus_uid" default:"prometheus"`
 	LokiUID       string `mapstructure:"loki_uid" default:"loki"`
+}
+
+type Telemetry struct {
+	Key           string `mapstructure:"key"`
+	AllToken      string `mapstructure:"all_token"`
+	PrometheusURL string `mapstructure:"prometheus_url" default:"http://prometheus:9090"`
+	LokiURL       string `mapstructure:"loki_url" default:"http://loki:3100"`
 }
 
 type Deploy struct {
@@ -169,6 +177,7 @@ var envKeys = []string{
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
 	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.token", "grafana.prometheus_uid", "grafana.loki_uid",
+	"telemetry.key", "telemetry.all_token", "telemetry.prometheus_url", "telemetry.loki_url",
 	"queues.gateway_url", "queues.token", "approvals.webhook_url", "metrics.pushgateway_url",
 	"databases.admin_dsn", "databases.host", "databases.port",
 	"health.response_ms", "health.cpu_percent", "health.db_cpu_percent",
