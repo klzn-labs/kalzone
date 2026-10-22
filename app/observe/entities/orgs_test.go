@@ -84,3 +84,9 @@ func Test_DemoDashboard_ReadsOnlyTestData(t *testing.T) {
 	require.Contains(t, body, `"scenarioId":"random_walk"`)
 	require.Contains(t, body, `"scenarioId":"logs"`)
 }
+
+func Test_MainOrgRoles_AreAdminForAdminsAndNoneForEveryoneElse(t *testing.T) {
+	roles := entities.MainOrgRoles([]entities.Person{{Login: "root", Admin: true}, {Login: "bob", OnTeam: true}, {Login: "guest.demo"}})
+
+	require.Equal(t, map[string]string{"root": "Admin", "bob": "None", "guest.demo": "None"}, roles)
+}

@@ -6,6 +6,7 @@ const (
 	DemoOrg       = "demo"
 	RoleViewer    = "Viewer"
 	RoleAdmin     = "Admin"
+	RoleNone      = "None"
 	TestDataUID   = "testdata"
 )
 
@@ -141,4 +142,15 @@ type OrgMember struct {
 	UserID int
 	Login  string
 	Role   string
+}
+
+func MainOrgRoles(people []Person) map[string]string {
+	roles := map[string]string{}
+	for _, p := range people {
+		roles[p.Login] = RoleNone
+		if p.Admin {
+			roles[p.Login] = RoleAdmin
+		}
+	}
+	return roles
 }
