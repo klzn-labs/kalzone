@@ -31,6 +31,7 @@ type Actor struct {
 	UserID   string
 	Login    string
 	Admin    bool
+	Teams    []string
 	Token    Token
 	Approval Approval
 }
@@ -44,7 +45,26 @@ func (a Actor) ViaToken() bool {
 }
 
 func (a Actor) Sees(teamID string) bool {
+	return a.TokenGrants(teamID) && a.memberSees(teamID)
+}
+
+func (a Actor) TokenGrants(teamID string) bool {
 	return !a.ViaToken() || slices.Contains(a.Token.TeamIDs, teamID)
+}
+
+func (a Actor) memberSees(teamID string) bool {
+	return a.Unscoped() || slices.Contains(a.Teams, teamID)
+}
+
+func (a Actor) Unscoped() bool {
+	return !a.SignedIn() || a.Admin
+}
+
+func (a Actor) TeamScope() ([]string, bool) {
+	if a.ViaToken() {
+		return slices.DeleteFunc(slices.Clone(a.Token.TeamIDs), func(id string) bool { return !a.memberSees(id) }), false
+	}
+	return a.Teams, a.Unscoped()
 }
 
 func (a Actor) Approved() bool {
