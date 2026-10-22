@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var approvedAna = actor.Actor{UserID: "ana", Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverID: "mia", ApproverLogin: "mia"}}
+var approvedAna = actor.Actor{UserID: "ana", Teams: []string{"t1"}, Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverID: "mia", ApproverLogin: "mia"}}
 
 func setEnv(key, value string) entities.ChangeSet {
 	return entities.ChangeSet{SetEnv: map[string]string{key: value}}

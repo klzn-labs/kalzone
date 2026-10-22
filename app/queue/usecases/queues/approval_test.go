@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var approvedAna = actor.Actor{UserID: "u-ana", Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverLogin: "mia"}}
+var approvedAna = actor.Actor{UserID: "u-ana", Teams: []string{"t-plateful", "t1", "t2"}, Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverLogin: "mia"}}
 
 func (f fixture) proposal(t *testing.T) queues.Proposal {
 	t.Helper()

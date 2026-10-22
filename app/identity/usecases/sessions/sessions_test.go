@@ -45,6 +45,12 @@ func (fakeUsers) FindByID(_ context.Context, id string) (entities.User, error) {
 	return entities.User{ID: id, Login: "ana", Admin: true}, nil
 }
 
+type fakeTeams struct{}
+
+func (fakeTeams) VisibleTeamIDs(_ context.Context, userID string) ([]string, error) {
+	return []string{"t-" + userID}, nil
+}
+
 func setup(expiresIn time.Duration) (*fakeSessions, sessions.SessionsUsecase) {
 	clock.WithTime(now)
 	store := &fakeSessions{
@@ -52,7 +58,7 @@ func setup(expiresIn time.Duration) (*fakeSessions, sessions.SessionsUsecase) {
 		extended: map[string]time.Time{},
 	}
 	cfg := config.Config{Session: config.Session{TTL: 7 * 24 * time.Hour, RenewWithin: 24 * time.Hour}}
-	return store, sessions.NewSessionsUsecase(cfg, store, fakeUsers{})
+	return store, sessions.NewSessionsUsecase(cfg, store, fakeUsers{}, fakeTeams{})
 }
 
 func Test_Authenticate_ReturnsTheActorAndCSRFToken(t *testing.T) {
@@ -63,6 +69,7 @@ func Test_Authenticate_ReturnsTheActorAndCSRFToken(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "u1", auth.Actor().UserID)
 	require.True(t, auth.Actor().Admin)
+	require.Equal(t, []string{"t-u1"}, auth.Actor().Teams)
 	require.Equal(t, "csrf", auth.CSRFToken)
 	require.Empty(t, store.extended)
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var approved = actor.Actor{UserID: "u-ana", Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverLogin: "bob"}}
+var approved = actor.Actor{UserID: "u-ana", Teams: []string{"t-plateful", "t-reviews"}, Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverLogin: "bob"}}
 
 func prodDraft() databases.Draft {
 	d := shopDraft()

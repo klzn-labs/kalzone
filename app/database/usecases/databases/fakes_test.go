@@ -20,7 +20,7 @@ import (
 
 var ctx = context.Background()
 
-var ana = actor.Actor{UserID: "u-ana", Login: "ana"}
+var ana = actor.Actor{UserID: "u-ana", Teams: []string{"t-plateful", "t-reviews"}, Login: "ana"}
 
 var errBroken = errors.New("broken")
 

@@ -59,7 +59,7 @@ var matches = store{
 	{ServiceID: "gone", Environment: "dev", Revision: 1, Kind: entities.MatchEnv, Value: "x"},
 }
 
-var placesToken = actor.Actor{UserID: "ana", Token: actor.Token{ID: "k1", TeamIDs: []string{"t1"}}}
+var placesToken = actor.Actor{UserID: "ana", Teams: []string{"t1", "t2"}, Token: actor.Token{ID: "k1", TeamIDs: []string{"t1"}}}
 
 func usecase() search.SearchUsecase {
 	return search.NewSearchUsecase(matches, directory{}, environments{})
@@ -76,7 +76,7 @@ func Test_Find_OrdersMatchesByServiceAndHidesOtherTeams(t *testing.T) {
 }
 
 func Test_Find_NarrowsByTeamAndEnvironment(t *testing.T) {
-	session := actor.Actor{UserID: "ana"}
+	session := actor.Actor{UserID: "ana", Teams: []string{"t1", "t2"}}
 
 	money, err := usecase().Find(ctx, session, search.Query{Key: "LOG_LEVEL", Team: "money"})
 	require.NoError(t, err)

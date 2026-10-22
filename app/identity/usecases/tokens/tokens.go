@@ -32,6 +32,10 @@ type TeamLookup interface {
 	SlugByID(ctx context.Context, ids []string) (map[string]string, error)
 }
 
+type TeamScope interface {
+	VisibleTeamIDs(ctx context.Context, userID string) ([]string, error)
+}
+
 type Authorizer interface {
 	Can(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) error
 }
@@ -49,12 +53,13 @@ type TokensUsecase struct {
 	store     TokenStore
 	users     UserReader
 	teams     TeamLookup
+	scope     TeamScope
 	authz     Authorizer
 	publisher Publisher
 }
 
-func NewTokensUsecase(store TokenStore, users UserReader, teams TeamLookup, authz Authorizer, publisher Publisher) TokensUsecase {
-	return TokensUsecase{store: store, users: users, teams: teams, authz: authz, publisher: publisher}
+func NewTokensUsecase(store TokenStore, users UserReader, teams TeamLookup, scope TeamScope, authz Authorizer, publisher Publisher) TokensUsecase {
+	return TokensUsecase{store: store, users: users, teams: teams, scope: scope, authz: authz, publisher: publisher}
 }
 
 func (u TokensUsecase) List(ctx context.Context, a actor.Actor) ([]entities.AccessToken, error) {

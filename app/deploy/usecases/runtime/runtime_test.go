@@ -15,7 +15,7 @@ import (
 
 var (
 	ctx      = context.Background()
-	ana      = actor.Actor{UserID: "ana", Login: "ana"}
+	ana      = actor.Actor{UserID: "ana", Teams: []string{"t1"}, Login: "ana"}
 	outsider = actor.Actor{UserID: "zed", Token: actor.Token{ID: "k1", TeamIDs: []string{"t9"}}}
 )
 

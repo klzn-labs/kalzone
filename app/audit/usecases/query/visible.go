@@ -9,13 +9,8 @@ import (
 )
 
 func (u QueryUsecase) ListFor(ctx context.Context, a actor.Actor, filter entities.Filter) ([]entities.Event, error) {
-	if !a.ViaToken() {
-		return u.List(ctx, filter)
-	}
-	if len(a.Token.TeamIDs) == 0 {
-		return []entities.Event{}, nil
-	}
-	filter.TeamIDs = a.Token.TeamIDs
+	filter.TeamIDs, filter.AllTeams = a.TeamScope()
+	filter.ViewerID = a.UserID
 	return u.List(ctx, filter)
 }
 

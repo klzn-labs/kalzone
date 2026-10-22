@@ -9,6 +9,7 @@ import (
 type MembershipReader interface {
 	Membership(ctx context.Context, teamID, userID string) (entities.Membership, bool, error)
 	MembershipsOfUser(ctx context.Context, userID string) ([]entities.Membership, error)
+	MembershipsOfTeam(ctx context.Context, teamID string) ([]entities.Membership, error)
 }
 
 type LocalTeamSource struct {
@@ -41,4 +42,24 @@ func (s LocalTeamSource) TeamIDsOf(ctx context.Context, userID string) ([]string
 		ids = append(ids, m.TeamID)
 	}
 	return ids, nil
+}
+
+func (s LocalTeamSource) UserIDsIn(ctx context.Context, teamIDs []string) ([]string, error) {
+	ids := []string{}
+	for _, teamID := range teamIDs {
+		memberships, err := s.memberships.MembershipsOfTeam(ctx, teamID)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, userIDsOf(memberships)...)
+	}
+	return ids, nil
+}
+
+func userIDsOf(memberships []entities.Membership) []string {
+	ids := make([]string, 0, len(memberships))
+	for _, m := range memberships {
+		ids = append(ids, m.UserID)
+	}
+	return ids
 }

@@ -126,7 +126,7 @@ func messageOf(err error) string {
 const serviceDeleted = "the service is being deleted"
 
 func (u RequestsUsecase) CancelForService(ctx context.Context, a actor.Actor, serviceID string) error {
-	pending, err := u.store.List(ctx, entities.Filter{Status: entities.StatusPending, ServiceID: serviceID, Limit: listLimit})
+	pending, err := u.store.List(ctx, entities.Filter{Status: entities.StatusPending, ServiceID: serviceID, AllTeams: true, Limit: listLimit})
 	if err != nil {
 		return err
 	}

@@ -51,7 +51,7 @@ func (g gated) proposal(t *testing.T) deployments.Proposal {
 	return p
 }
 
-var approvedAna = actor.Actor{UserID: "ana", Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverLogin: "mia"}}
+var approvedAna = actor.Actor{UserID: "ana", Teams: []string{"t1"}, Login: "ana", Approval: actor.Approval{RequestID: "c1", ApproverLogin: "mia"}}
 
 func Test_Deploy_NeedingApprovalSubmitsInsteadOfScheduling(t *testing.T) {
 	g := newGated()

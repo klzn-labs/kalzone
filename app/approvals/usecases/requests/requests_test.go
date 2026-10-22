@@ -162,6 +162,18 @@ func Test_Get_HidesOtherTeamsFromATokenAndAwaitingListsWhatTheViewerDecides(t *t
 	require.Empty(t, forBob)
 }
 
+func Test_List_AnOutsiderSeesNoRequests(t *testing.T) {
+	f := newFixture()
+	outsider := actor.Actor{UserID: "u-zed", Teams: []string{"t9"}}
+
+	listed, err := f.usecase().List(ctx, outsider, "")
+	_, hidden := f.usecase().Get(ctx, outsider, "c1")
+
+	require.NoError(t, err)
+	require.Empty(t, listed)
+	require.ErrorIs(t, hidden, apperror.NotFound(""))
+}
+
 func Test_List_ATokenWithoutTeamsSeesNothing(t *testing.T) {
 	f := newFixture()
 	teamless := actor.Actor{UserID: "u-bob", Token: actor.Token{ID: "k3"}}

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var reviewsToken = actor.Actor{UserID: "u-ana", Token: actor.Token{ID: "tk", TeamIDs: []string{"t-reviews"}}}
+var reviewsToken = actor.Actor{UserID: "u-ana", Teams: []string{"t-plateful", "t-reviews"}, Token: actor.Token{ID: "tk", TeamIDs: []string{"t-reviews"}}}
 
 func Test_GetFor_HidesOtherTeams(t *testing.T) {
 	f := newFixture(t)

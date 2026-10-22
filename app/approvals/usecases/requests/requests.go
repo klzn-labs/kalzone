@@ -82,19 +82,15 @@ func (u RequestsUsecase) RequestState(ctx context.Context, a actor.Actor, id str
 }
 
 func (u RequestsUsecase) List(ctx context.Context, a actor.Actor, status entities.Status) ([]entities.Request, error) {
-	if a.ViaToken() && len(a.Token.TeamIDs) == 0 {
-		return []entities.Request{}, nil
-	}
-	return u.store.List(ctx, entities.Filter{Status: status, TeamIDs: a.Token.TeamIDs, Limit: listLimit})
+	filter := entities.Filter{Status: status, Limit: listLimit}
+	filter.TeamIDs, filter.AllTeams = a.TeamScope()
+	return u.store.List(ctx, filter)
 }
 
 func (u RequestsUsecase) PageFor(ctx context.Context, a actor.Actor, status string, p page.Request) (page.Page[entities.Request], error) {
 	filter, err := filterOf(a, status, p)
 	if err != nil {
 		return page.Page[entities.Request]{}, err
-	}
-	if a.ViaToken() && len(a.Token.TeamIDs) == 0 {
-		return page.Page[entities.Request]{Items: []entities.Request{}}, nil
 	}
 	list, err := u.store.List(ctx, filter)
 	return page.Cut(list, p, requestKey), err
@@ -105,7 +101,8 @@ func filterOf(a actor.Actor, status string, p page.Request) (entities.Filter, er
 		return entities.Filter{}, errStatus
 	}
 	before, beforeID, err := p.Time()
-	filter := entities.Filter{Status: entities.Status(status), TeamIDs: a.Token.TeamIDs, Before: before, BeforeID: beforeID, Limit: p.Fetch()}
+	filter := entities.Filter{Status: entities.Status(status), Before: before, BeforeID: beforeID, Limit: p.Fetch()}
+	filter.TeamIDs, filter.AllTeams = a.TeamScope()
 	return filter, err
 }
 

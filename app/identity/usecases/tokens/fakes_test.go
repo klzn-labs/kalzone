@@ -102,6 +102,10 @@ func (t teams) IDBySlug(_ context.Context, slug string) (string, error) {
 	return id, nil
 }
 
+func (t teams) VisibleTeamIDs(_ context.Context, _ string) ([]string, error) {
+	return []string{t["places"]}, nil
+}
+
 func (t teams) SlugsByIDs(_ context.Context, ids []string) ([]string, error) {
 	result := []string{}
 	for slug, id := range t {
@@ -156,7 +160,8 @@ func newFixture() fixture {
 	clock.WithTime(now)
 	s := &store{byID: map[string]entities.AccessToken{}}
 	r := &recorder{}
-	u := tokens.NewTokensUsecase(s, users{}, teams{"places": "t1", "reviews": "t2"}, allow{}, r)
+	known := teams{"places": "t1", "reviews": "t2"}
+	u := tokens.NewTokensUsecase(s, users{}, known, known, allow{}, r)
 	return fixture{usecase: u, store: s, events: r}
 }
 

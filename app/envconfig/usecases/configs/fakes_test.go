@@ -185,4 +185,4 @@ func newFixtureAuthorizedBy(t *testing.T, authorizer configs.Authorizer) fixture
 	return f
 }
 
-var ana = actor.Actor{UserID: "ana", Login: "ana"}
+var ana = actor.Actor{UserID: "ana", Teams: []string{"t1"}, Login: "ana"}
