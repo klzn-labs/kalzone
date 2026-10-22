@@ -32,6 +32,7 @@ const (
 type Service struct {
 	Slug      string
 	Name      string
+	TeamID    string
 	Databases []Database
 }
 
