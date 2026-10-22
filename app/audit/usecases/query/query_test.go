@@ -43,43 +43,39 @@ func (c *capture) List(_ context.Context, f entities.Filter) ([]entities.Event, 
 	return nil, nil
 }
 
-func Test_ListFor_LimitsATokenToItsTeams(t *testing.T) {
+func Test_ListFor_ScopesAMemberToTheirTeamsAndOwnEvents(t *testing.T) {
 	c := &capture{}
 	usecase := query.NewQueryUsecase(c)
-	agent := actor.Actor{UserID: "u1", Token: actor.Token{ID: "tok", TeamIDs: []string{"t1"}}}
+
+	_, err := usecase.ListFor(context.Background(), actor.Actor{UserID: "u1", Teams: []string{"t1"}}, entities.Filter{Environment: "dev"})
+
+	require.NoError(t, err)
+	require.Equal(t, []string{"t1"}, c.last.TeamIDs)
+	require.Equal(t, "u1", c.last.ViewerID)
+	require.False(t, c.last.AllTeams)
+	require.Equal(t, "dev", c.last.Environment)
+}
+
+func Test_ListFor_LimitsATokenToItsTeamsTheOwnerSees(t *testing.T) {
+	c := &capture{}
+	usecase := query.NewQueryUsecase(c)
+	agent := actor.Actor{UserID: "u1", Teams: []string{"t1", "t2"}, Token: actor.Token{ID: "tok", TeamIDs: []string{"t2", "t3"}}}
 
 	_, err := usecase.ListFor(context.Background(), agent, entities.Filter{})
-	require.NoError(t, err)
-	viaToken := c.last
-	_, _ = usecase.ListFor(context.Background(), actor.Actor{UserID: "u1"}, entities.Filter{})
-
-	require.Equal(t, []string{"t1"}, viaToken.TeamIDs)
-	require.Empty(t, c.last.TeamIDs)
-}
-
-func Test_ListFor_ReturnsNothingForATokenWithoutTeams(t *testing.T) {
-	c := &capture{calls: 0}
-	usecase := query.NewQueryUsecase(c)
-	agent := actor.Actor{UserID: "u1", Token: actor.Token{ID: "tok"}}
-
-	events, err := usecase.ListFor(context.Background(), agent, entities.Filter{})
 
 	require.NoError(t, err)
-	require.Empty(t, events)
-	require.Zero(t, c.calls)
+	require.Equal(t, []string{"t2"}, c.last.TeamIDs)
+	require.False(t, c.last.AllTeams)
 }
 
-func Test_ListFor_PassesTheTokenTeamsToTheStore(t *testing.T) {
+func Test_ListFor_AnAdminSessionSeesAllTeams(t *testing.T) {
 	c := &capture{}
 	usecase := query.NewQueryUsecase(c)
-	agent := actor.Actor{UserID: "u1", Token: actor.Token{ID: "tok", TeamIDs: []string{"t1", "t2"}}}
 
-	_, err := usecase.ListFor(context.Background(), agent, entities.Filter{Environment: "dev"})
+	_, err := usecase.ListFor(context.Background(), actor.Actor{UserID: "u1", Admin: true}, entities.Filter{})
 
 	require.NoError(t, err)
-	require.Equal(t, []string{"t1", "t2"}, c.last.TeamIDs)
-	require.Equal(t, "dev", c.last.Environment)
-	require.Equal(t, 1, c.calls)
+	require.True(t, c.last.AllTeams)
 }
 
 type events []entities.Event

@@ -2,6 +2,8 @@ package teams_test
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/klzn-labs/kalzone/app/authz"
@@ -40,7 +42,15 @@ func (s *store) FindBySlug(_ context.Context, slug string) (entities.Team, error
 	return t, nil
 }
 
-func (s *store) List(context.Context) ([]entities.Team, error)                { return nil, nil }
+func (s *store) List(context.Context) ([]entities.Team, error) {
+	list := []entities.Team{}
+	for _, t := range s.bySlug {
+		list = append(list, t)
+	}
+	slices.SortFunc(list, func(a, b entities.Team) int { return strings.Compare(a.Slug, b.Slug) })
+	return list, nil
+}
+
 func (s *store) FindByIDs(context.Context, []string) ([]entities.Team, error) { return nil, nil }
 
 type services int64

@@ -21,6 +21,7 @@ func Test_Authenticate_ReturnsTheOwnerAndToken(t *testing.T) {
 	require.Equal(t, "u-ana", a.UserID)
 	require.Equal(t, issued.Token.ID, a.Token.ID)
 	require.True(t, a.ViaToken())
+	require.Equal(t, []string{"t1"}, a.Teams)
 }
 
 func Test_Authenticate_ReportsInvalidExpiredAndRevoked(t *testing.T) {

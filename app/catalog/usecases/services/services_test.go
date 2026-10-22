@@ -14,7 +14,7 @@ import (
 )
 
 var ctx = context.Background()
-var ana = actor.Actor{UserID: "ana", Login: "ana"}
+var ana = actor.Actor{UserID: "ana", Teams: []string{"t1", "t2"}, Login: "ana"}
 
 type store struct{ bySlug map[string]entities.Service }
 

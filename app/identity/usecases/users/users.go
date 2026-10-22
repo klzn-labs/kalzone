@@ -20,18 +20,23 @@ type Authorizer interface {
 	Can(ctx context.Context, a actor.Actor, action authz.Action, r authz.Resource) error
 }
 
+type CoMembers interface {
+	UserIDsIn(ctx context.Context, teamIDs []string) ([]string, error)
+}
+
 type Publisher interface {
 	Publish(ctx context.Context, event events.Event)
 }
 
 type UsersUsecase struct {
 	users     UserStore
+	members   CoMembers
 	authz     Authorizer
 	publisher Publisher
 }
 
-func NewUsersUsecase(users UserStore, authz Authorizer, publisher Publisher) UsersUsecase {
-	return UsersUsecase{users: users, authz: authz, publisher: publisher}
+func NewUsersUsecase(users UserStore, members CoMembers, authz Authorizer, publisher Publisher) UsersUsecase {
+	return UsersUsecase{users: users, members: members, authz: authz, publisher: publisher}
 }
 
 func (u UsersUsecase) List(ctx context.Context) ([]entities.User, error) {

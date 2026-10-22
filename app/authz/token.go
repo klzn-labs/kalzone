@@ -43,7 +43,7 @@ func (p Policy) tokenGate(ctx context.Context, a actor.Actor, action Action, r R
 
 func teamsGranted(a actor.Actor, teamIDs ...string) error {
 	for _, teamID := range teamIDs {
-		if teamID != "" && !a.Sees(teamID) {
+		if teamID != "" && !a.TokenGrants(teamID) {
 			return apperror.TeamNotGranted(teamID)
 		}
 	}

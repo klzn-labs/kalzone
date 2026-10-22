@@ -17,7 +17,7 @@ const buildWorkflow = "klzn-labs/kalzone-actions/.github/workflows/build.yml"
 
 var (
 	ctx      = context.Background()
-	ana      = actor.Actor{UserID: "ana", Login: "ana"}
+	ana      = actor.Actor{UserID: "ana", Teams: []string{"t1"}, Login: "ana"}
 	outsider = actor.Actor{UserID: "zed", Token: actor.Token{ID: "k1", TeamIDs: []string{"t9"}}}
 	hello    = entities.Service{ID: "s1", Slug: "hello", OwnerTeamID: "t1", Repository: "o/hello", ImageRepository: "docker.io/o/hello"}
 )

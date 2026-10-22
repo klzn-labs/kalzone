@@ -198,5 +198,5 @@ func newFixture(t *testing.T, deny bool) fixture {
 	return f
 }
 
-var ana = actor.Actor{UserID: "ana", Login: "ana"}
+var ana = actor.Actor{UserID: "ana", Teams: []string{"t1"}, Login: "ana"}
 var errBoom = errors.New("422 workflow not found")

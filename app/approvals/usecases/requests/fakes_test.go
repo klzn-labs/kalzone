@@ -2,6 +2,7 @@ package requests_test
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/klzn-labs/kalzone/app/approvals/entities"
@@ -17,8 +18,8 @@ import (
 var (
 	ctx = context.Background()
 	now = time.Date(2026, 10, 12, 9, 0, 0, 0, time.UTC)
-	mia = actor.Actor{UserID: "u-mia", Login: "mia"}
-	bob = actor.Actor{UserID: "u-bob", Login: "bob"}
+	mia = actor.Actor{UserID: "u-mia", Login: "mia", Teams: []string{"t1", "t2"}}
+	bob = actor.Actor{UserID: "u-bob", Login: "bob", Teams: []string{"t1", "t2"}}
 )
 
 type store struct {
@@ -37,11 +38,16 @@ func (s *store) Get(_ context.Context, id string) (entities.Request, error) {
 func (s *store) List(_ context.Context, f entities.Filter) ([]entities.Request, error) {
 	found := []entities.Request{}
 	for _, r := range s.byID {
-		if (f.Status == "" || r.Status == f.Status) && (f.ServiceID == "" || r.ServiceID == f.ServiceID) {
+		if s.matches(f, r) {
 			found = append(found, r)
 		}
 	}
 	return found, nil
+}
+
+func (s *store) matches(f entities.Filter, r entities.Request) bool {
+	inTeams := f.AllTeams || slices.Contains(f.TeamIDs, r.TeamID)
+	return inTeams && (f.Status == "" || r.Status == f.Status) && (f.ServiceID == "" || r.ServiceID == f.ServiceID)
 }
 
 func (s *store) Overdue(_ context.Context, at time.Time) ([]entities.Request, error) {
@@ -98,7 +104,7 @@ type tokens struct {
 
 func (t *tokens) ActorOf(_ context.Context, tokenID string) (actor.Actor, error) {
 	t.asked = append(t.asked, tokenID)
-	return actor.Actor{UserID: "u-bob", Login: "bob", Token: actor.Token{ID: tokenID, Name: "claude-local"}}, t.err
+	return actor.Actor{UserID: "u-bob", Login: "bob", Teams: bob.Teams, Token: actor.Token{ID: tokenID, Name: "claude-local"}}, t.err
 }
 
 type executor struct {

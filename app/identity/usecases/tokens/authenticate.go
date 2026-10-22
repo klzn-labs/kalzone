@@ -23,11 +23,20 @@ func (u TokensUsecase) Authenticate(ctx context.Context, raw, ip string) (entiti
 	if err := t.Check(now); err != nil {
 		return entities.TokenAuthenticated{}, err
 	}
+	authenticated, err := u.owned(ctx, t)
+	if err != nil {
+		return entities.TokenAuthenticated{}, err
+	}
+	return authenticated, u.touchIfDue(ctx, t, now, ip)
+}
+
+func (u TokensUsecase) owned(ctx context.Context, t entities.AccessToken) (entities.TokenAuthenticated, error) {
 	user, err := u.users.FindByID(ctx, t.OwnerID)
 	if err != nil {
 		return entities.TokenAuthenticated{}, entities.ErrTokenInvalid
 	}
-	return entities.TokenAuthenticated{User: user, Token: t}, u.touchIfDue(ctx, t, now, ip)
+	teams, err := u.scope.VisibleTeamIDs(ctx, user.ID)
+	return entities.TokenAuthenticated{User: user, Teams: teams, Token: t}, err
 }
 
 func (u TokensUsecase) touchIfDue(ctx context.Context, t entities.AccessToken, now time.Time, ip string) error {
@@ -45,9 +54,6 @@ func (u TokensUsecase) ActorOf(ctx context.Context, tokenID string) (actor.Actor
 	if err := t.Check(clock.Now().UTC()); err != nil {
 		return actor.Actor{}, err
 	}
-	user, err := u.users.FindByID(ctx, t.OwnerID)
-	if err != nil {
-		return actor.Actor{}, err
-	}
-	return entities.TokenAuthenticated{User: user, Token: t}.Actor(), nil
+	authenticated, err := u.owned(ctx, t)
+	return authenticated.Actor(), err
 }

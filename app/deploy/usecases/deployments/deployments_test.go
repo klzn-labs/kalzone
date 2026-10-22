@@ -17,7 +17,7 @@ import (
 )
 
 var ctx = context.Background()
-var ana = actor.Actor{UserID: "ana", Login: "ana"}
+var ana = actor.Actor{UserID: "ana", Teams: []string{"t1"}, Login: "ana"}
 
 type releases map[string]entities.ReleaseRef
 

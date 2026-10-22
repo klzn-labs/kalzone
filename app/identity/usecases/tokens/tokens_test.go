@@ -162,7 +162,7 @@ func (unnamedTeams) SlugsByIDs(context.Context, []string) ([]string, error) {
 
 func Test_Create_StoresNothingWhenTheTeamsCannotBeNamed(t *testing.T) {
 	f := newFixture()
-	broken := tokens.NewTokensUsecase(f.store, users{}, unnamedTeams{teams{"places": "t1"}}, allow{}, f.events)
+	broken := tokens.NewTokensUsecase(f.store, users{}, unnamedTeams{teams{"places": "t1"}}, teams{"places": "t1"}, allow{}, f.events)
 
 	issued, err := broken.Create(ctx, ana, draftOf("read"))
 
