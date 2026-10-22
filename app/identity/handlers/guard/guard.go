@@ -25,7 +25,12 @@ type Authenticator interface {
 	Authenticate(ctx context.Context, token string) (entities.Authenticated, error)
 }
 
-var errInvalidCSRF = apperror.New(apperror.CodeInvalidCSRFToken, "missing or invalid CSRF token, reload the page")
+var (
+	errInvalidCSRF  = apperror.New(apperror.CodeInvalidCSRFToken, "missing or invalid CSRF token, reload the page")
+	errReadOnlyDemo = apperror.Forbidden("the demo is read-only").WithHint("sign in to change your own team's services")
+)
+
+const logoutPath = "/logout"
 
 func NewGuards(sessions Authenticator, tokens TokenAuthenticator) httpserver.Guards {
 	return httpserver.Guards{API: apiGuard(sessions, tokens), Web: webGuard(sessions), Session: sessionGuard(sessions), Token: tokenGuard(tokens)}
@@ -41,7 +46,7 @@ func apiGuard(sessions Authenticator, tokens TokenAuthenticator) gin.HandlerFunc
 			httperror.Abort(c, withSignInHint(err))
 			return
 		}
-		abortOn(c, checkCSRF(c))
+		abortOn(c, errors.Join(refuseGuestWrites(c), checkCSRF(c)))
 	}
 }
 
@@ -63,7 +68,7 @@ func webGuard(sessions Authenticator) gin.HandlerFunc {
 			redirectToLogin(c)
 			return
 		}
-		abortOn(c, checkCSRF(c))
+		abortOn(c, errors.Join(refuseGuestWrites(c), checkCSRF(c)))
 	}
 }
 
@@ -96,6 +101,13 @@ func authenticate(c *gin.Context, auth Authenticator) error {
 		AvatarURL: authenticated.User.AvatarURL, CSRFToken: authenticated.CSRFToken,
 	})
 	return nil
+}
+
+func refuseGuestWrites(c *gin.Context) error {
+	if !requestctx.ViewerFrom(c).Actor.Guest || isSafe(c.Request.Method) || c.Request.URL.Path == logoutPath {
+		return nil
+	}
+	return errReadOnlyDemo
 }
 
 func checkCSRF(c *gin.Context) error {

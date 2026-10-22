@@ -80,6 +80,7 @@ type data struct {
 	Services     int
 	Teams        int
 	IsAdmin      bool
+	Guest        bool
 	Newcomer     bool
 	Login        string
 }
@@ -104,13 +105,22 @@ func (h OverviewHandler) Show(c *gin.Context) {
 }
 
 func (h OverviewHandler) build(ctx context.Context, a actor.Actor) (data, error) {
-	d := data{IsAdmin: a.Admin, Newcomer: !a.Admin && len(a.Teams) == 0, Login: a.Login}
-	for _, step := range []func(context.Context, actor.Actor, *data) error{h.addRequests, h.addActivity, h.addLanes, h.addDeploys, h.addPlatform} {
+	d := data{IsAdmin: a.Admin, Guest: a.Guest, Login: a.Login}
+	for _, step := range []func(context.Context, actor.Actor, *data) error{h.addNewcomer, h.addRequests, h.addActivity, h.addLanes, h.addDeploys, h.addPlatform} {
 		if err := step(ctx, a, &d); err != nil {
 			return data{}, err
 		}
 	}
 	return d, nil
+}
+
+func (h OverviewHandler) addNewcomer(ctx context.Context, a actor.Actor, d *data) error {
+	if a.Admin || a.Guest {
+		return nil
+	}
+	mine, err := h.views.MyTeams(ctx, a.UserID)
+	d.Newcomer = len(mine) == 0
+	return err
 }
 
 func (h OverviewHandler) addRequests(ctx context.Context, a actor.Actor, d *data) error {

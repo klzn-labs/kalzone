@@ -17,6 +17,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/team/usecases/source"
 	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
 	"github.com/klzn-labs/kalzone/internal/eventbus"
+	"github.com/klzn-labs/kalzone/internal/sweeper"
 	"go.uber.org/fx"
 )
 
@@ -26,11 +27,11 @@ func Identity() fx.Option {
 			mysql.NewUserRepository, mysql.NewSessionRepository, mysql.NewTokenRepository, github.NewClient,
 			signin.NewSignInUsecase, sessions.NewSessionsUsecase, users.NewUsersUsecase, tokens.NewTokensUsecase,
 			identityTeams.NewLookup, auth.NewAuthHandler, usersHandler.NewUsersHandler, guard.NewGuards,
-			tokensHandler.NewTokensHandler,
+			tokensHandler.NewTokensHandler, auth.NewDemoHandler,
 		),
 		identityInjections(),
 		tokenInjections(),
-		fx.Invoke(auth.RegisterAuthRoutes, me.RegisterMeRoutes, usersHandler.RegisterUsersRoutes, tokensHandler.RegisterTokensRoutes),
+		fx.Invoke(auth.RegisterAuthRoutes, auth.RegisterDemoRoutes, startSessionSweeper, me.RegisterMeRoutes, usersHandler.RegisterUsersRoutes, tokensHandler.RegisterTokensRoutes),
 	)
 }
 
@@ -65,6 +66,11 @@ func identityInjections() fx.Option {
 		func(u signin.SignInUsecase) auth.SignIner { return u },
 		func(u sessions.SessionsUsecase) auth.SignOuter { return u },
 		func(u sessions.SessionsUsecase) guard.Authenticator { return u },
+		func(u sessions.SessionsUsecase) auth.DemoEnterer { return u },
 		func(u users.UsersUsecase) usersHandler.Users { return u },
 	)
+}
+
+func startSessionSweeper(lc fx.Lifecycle, u sessions.SessionsUsecase) {
+	sweeper.Start(lc, "sessions", u)
 }

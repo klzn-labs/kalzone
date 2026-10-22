@@ -10,7 +10,10 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
-var ErrAdminsOnly = apperror.NotFound("page not found")
+var (
+	ErrAdminsOnly = apperror.NotFound("page not found")
+	ErrNotInDemo  = apperror.NotFound("this page isn't part of the demo")
+)
 
 func IsHTMX(c *gin.Context) bool {
 	return c.GetHeader("HX-Request") == "true"

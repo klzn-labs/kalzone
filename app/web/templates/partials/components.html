@@ -27,3 +27,5 @@
   <iframe class="theme-light" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=light"></iframe>
   <iframe class="theme-dark" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId=1&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=dark"></iframe>
 </div>{{end}}
+
+{{define "demo-note"}}<div class="demo-note">{{icon "lock"}}<span>{{.}}</span><a href="/login">Sign in to try it</a></div>{{end}}
