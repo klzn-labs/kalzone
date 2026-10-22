@@ -65,7 +65,7 @@ func Test_TheAgentsSnapshotIsTheServicesRuntimeStatus(t *testing.T) {
 	)
 	var view runtimeView
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/runtime/places-api/dev", nil, http.StatusOK, &view)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/runtime/places-api/dev", nil, http.StatusOK, &view)
 
 	require.Equal(t, "places-api-dev-blue", view.Container)
 	require.Equal(t, "healthy", view.Health)
@@ -84,8 +84,8 @@ func Test_ARuntimeStatusGoesStaleWhenTheAgentStopsReporting(t *testing.T) {
 	clock.Clock = nil
 	var view runtimeView
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/runtime/places-api/dev", nil, http.StatusOK, &view)
-	missing := p.eve.Do(t, http.MethodGet, "/api/v1/runtime/places-api/prod", nil)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/runtime/places-api/dev", nil, http.StatusOK, &view)
+	missing := p.bob.Do(t, http.MethodGet, "/api/v1/runtime/places-api/prod", nil)
 
 	require.True(t, view.Stale)
 	require.Nil(t, view.Usage)
@@ -101,7 +101,7 @@ func Test_AFailedDeployShowsItsClassEvidenceAndHint(t *testing.T) {
 	var view failureView
 
 	finish := s.Agent(t, http.MethodPost, agentapi.FinishPath(w.DeploymentID), agentapi.Finish{Succeeded: false, Message: "deployctl: exit status 10", Failure: failure})
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil, http.StatusOK, &view)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil, http.StatusOK, &view)
 
 	require.Equal(t, http.StatusNoContent, finish.Status, finish.Body)
 	require.Equal(t, "failed", view.Status)
@@ -179,7 +179,7 @@ func Test_TheRealAgentSendsTheFailedCandidatesEvidence(t *testing.T) {
 	var view failureView
 
 	require.True(t, realAgent(s, runtime).WorkOnce(context.Background()))
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil, http.StatusOK, &view)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil, http.StatusOK, &view)
 
 	require.Equal(t, "crashed", view.Failure.Class)
 	require.Equal(t, "places-api-dev-green", view.Failure.Container)
@@ -195,7 +195,7 @@ func Test_TheRealAgentReportsTheLiveContainer(t *testing.T) {
 	var view runtimeView
 
 	reported := a.StatusOnce(context.Background())
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/runtime/places-api/dev", nil, http.StatusOK, &view)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/runtime/places-api/dev", nil, http.StatusOK, &view)
 
 	require.Equal(t, 1, reported)
 	require.Equal(t, "places-api-dev-blue", view.Container)

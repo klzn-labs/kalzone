@@ -9,7 +9,7 @@
     <p class="lead">Your services, teams and environments in one place.</p>
     {{with .Data.Error}}<div class="alert alert-danger">{{icon "alert"}}<span>{{.}}</span></div>{{end}}
     <a class="btn btn-github" href="/auth/github?next={{.Data.Next}}">{{icon "github"}}Continue with GitHub</a>
-    <p class="fine">Anyone with a GitHub account can sign in and look around.<br>A team maintainer has to add you before you can change things.</p>
+    <p class="fine">You see the services of the teams you belong to.<br>A team maintainer adds you once you have signed in.</p>
   </div>
 </div>
 </body>

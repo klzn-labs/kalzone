@@ -39,6 +39,7 @@ var (
 	errInvalidRole    = apperror.Invalid("role must be member or maintainer")
 	errLastMaintainer = apperror.New(apperror.CodeLastMaintainer, "a team needs at least one maintainer, promote someone else first")
 	errNotAMember     = apperror.NotFound("this user is not a member of the team")
+	errTeamNotVisible = apperror.NotFound("team not found").WithHint("list teams with GET /api/v1/teams")
 )
 
 type MembersUsecase struct {
@@ -53,10 +54,13 @@ func NewMembersUsecase(store MembershipStore, teams TeamFinder, users UserDirect
 	return MembersUsecase{store: store, teams: teams, users: users, authz: authz, publisher: publisher}
 }
 
-func (u MembersUsecase) List(ctx context.Context, teamSlug string) ([]entities.Member, error) {
+func (u MembersUsecase) List(ctx context.Context, a actor.Actor, teamSlug string) ([]entities.Member, error) {
 	team, err := u.teams.FindBySlug(ctx, teamSlug)
 	if err != nil {
 		return nil, err
+	}
+	if !a.Sees(team.ID) {
+		return nil, errTeamNotVisible
 	}
 	memberships, err := u.store.MembershipsOfTeam(ctx, team.ID)
 	if err != nil {

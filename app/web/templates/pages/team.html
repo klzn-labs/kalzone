@@ -55,7 +55,7 @@
     <form class="card-body" style="border-top:1px solid var(--border)" method="post" action="/teams/{{$slug}}/members" hx-post="/teams/{{$slug}}/members" hx-target="find .form-error">
       {{template "csrf" $csrf}}
       <div class="form-error"></div>
-      <div class="field"><label for="member-login">GitHub login</label><input id="member-login" name="login" type="text" class="mono" placeholder="Search people by login or name" list="member-logins" autocomplete="off" required><span class="hint">Type to search everyone who has signed in. Pick a current member to change their role.</span></div>
+      <div class="field"><label for="member-login">GitHub login</label><input id="member-login" name="login" type="text" class="mono" placeholder="Search people by login or name" list="member-logins" autocomplete="off" required><span class="hint">Type their handle, shown on their account once they sign in. Suggestions are people you share a team with.</span></div>
       <datalist id="member-logins">{{range $d.People}}<option value="{{.Login}}">{{if .Name}}{{.Name}}{{end}}</option>{{end}}</datalist>
       <div class="form-inline" style="margin-top:12px">
         <div class="field"><label for="member-role">Role</label><select id="member-role" name="role"><option value="member">Member — edits dev</option><option value="maintainer">Maintainer — edits prod, manages team</option></select></div>

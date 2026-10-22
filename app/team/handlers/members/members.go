@@ -16,7 +16,7 @@ import (
 )
 
 type Members interface {
-	List(ctx context.Context, teamSlug string) ([]entities.Member, error)
+	List(ctx context.Context, a actor.Actor, teamSlug string) ([]entities.Member, error)
 	Put(ctx context.Context, a actor.Actor, teamSlug, login string, role entities.Role) (entities.Member, error)
 	Remove(ctx context.Context, a actor.Actor, teamSlug, login string) error
 }
@@ -56,7 +56,9 @@ type listParams struct {
 }
 
 func (h MembersHandler) List(c *gin.Context) {
-	load := func() ([]entities.Member, error) { return h.members.List(c.Request.Context(), c.Param("team")) }
+	load := func() ([]entities.Member, error) {
+		return h.members.List(c.Request.Context(), requestctx.ActorFrom(c), c.Param("team"))
+	}
 	apispec.RespondWindow(c, load, memberKey, toDTO)
 }
 

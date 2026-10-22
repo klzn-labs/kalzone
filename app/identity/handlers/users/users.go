@@ -16,8 +16,8 @@ import (
 )
 
 type Users interface {
-	List(ctx context.Context) ([]entities.User, error)
-	FindByLogin(ctx context.Context, login string) (entities.User, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]entities.User, error)
+	GetFor(ctx context.Context, a actor.Actor, login string) (entities.User, error)
 	SetAdmin(ctx context.Context, a actor.Actor, login string, admin bool) (entities.User, error)
 }
 
@@ -51,7 +51,7 @@ type adminDTO struct {
 }
 
 func (h UsersHandler) List(c *gin.Context) {
-	apispec.RespondWindow(c, func() ([]entities.User, error) { return h.users.List(c.Request.Context()) }, userKey, toDTO)
+	apispec.RespondWindow(c, func() ([]entities.User, error) { return h.users.ListFor(c.Request.Context(), requestctx.ActorFrom(c)) }, userKey, toDTO)
 }
 
 func userKey(u entities.User) string {
@@ -59,7 +59,7 @@ func userKey(u entities.User) string {
 }
 
 func (h UsersHandler) Get(c *gin.Context) {
-	user, err := h.users.FindByLogin(c.Request.Context(), c.Param("login"))
+	user, err := h.users.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("login"))
 	apispec.Respond(c, http.StatusOK, toDTO(user), err)
 }
 
@@ -74,7 +74,7 @@ func (h UsersHandler) SetAdmin(c *gin.Context) {
 
 func RegisterUsersRoutes(api httpserver.API, h UsersHandler) {
 	api.Handle(
-		apispec.Operation{ID: "listUsers", Method: http.MethodGet, Path: "/users", Summary: "List everyone who signed in, by login",
+		apispec.Operation{ID: "listUsers", Method: http.MethodGet, Path: "/users", Summary: "List people who share a team with you, by login",
 			Scope: scope.Read, Params: apispec.ListParams{}, Status: http.StatusOK, Response: apispec.Page[userDTO]{}, Handler: h.List},
 		apispec.Operation{ID: "getUser", Method: http.MethodGet, Path: "/users/:login", Summary: "Show one person",
 			Scope: scope.Read, Params: userParams{}, Status: http.StatusOK, Response: userDTO{}, Handler: h.Get},

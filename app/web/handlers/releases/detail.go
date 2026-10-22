@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	release "github.com/klzn-labs/kalzone/app/release/entities"
 	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 	"github.com/klzn-labs/kalzone/pkg/apperror"
 )
 
@@ -30,7 +32,7 @@ type detail struct {
 }
 
 func (h ReleasesHandler) Detail(c *gin.Context) {
-	d, err := h.detail(c.Request.Context(), c.Param("service"), c.Param("number"))
+	d, err := h.detail(c.Request.Context(), requestctx.ActorFrom(c), c.Param("service"), c.Param("number"))
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)
 		return
@@ -39,8 +41,8 @@ func (h ReleasesHandler) Detail(c *gin.Context) {
 	h.renderer.Render(c, http.StatusOK, "release", web.Page{Title: title, Nav: "services", Data: d})
 }
 
-func (h ReleasesHandler) detail(ctx context.Context, slug, number string) (detail, error) {
-	frame, err := h.frame(ctx, slug)
+func (h ReleasesHandler) detail(ctx context.Context, a actor.Actor, slug, number string) (detail, error) {
+	frame, err := h.frame(ctx, a, slug)
 	if err != nil {
 		return detail{}, err
 	}

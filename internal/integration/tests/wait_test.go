@@ -51,7 +51,7 @@ func Test_AWaitAnswersOnceTheAgentFinishesTheDeployment(t *testing.T) {
 		} `json:"events_summary"`
 	}
 
-	resp := p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"?wait=20s", nil, http.StatusOK, &waited)
+	resp := p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"?wait=20s", nil, http.StatusOK, &waited)
 
 	require.Equal(t, http.StatusNoContent, <-finished)
 	require.Equal(t, "succeeded", waited.Status)
@@ -66,7 +66,7 @@ func Test_AWaitThatEndsFirstAnswersAcceptedWithRetryAfter(t *testing.T) {
 	var still deploymentView
 	var building release
 
-	resp := p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"?wait=1s", nil, http.StatusAccepted, &still)
+	resp := p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"?wait=1s", nil, http.StatusAccepted, &still)
 	requested := p.bob.MustJSON(t, http.MethodPost, "/api/v1/releases?wait=1s", map[string]string{"service": "places-api", "ref": "main"}, http.StatusAccepted, &building)
 
 	require.Equal(t, "pending", still.Status)
@@ -81,7 +81,7 @@ func Test_AWaitReturnsAtOnceWhenTheServerDrains(t *testing.T) {
 	s.Drain.Close()
 	started := time.Now()
 
-	resp := p.eve.Do(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"?wait=60s", nil)
+	resp := p.bob.Do(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"?wait=60s", nil)
 
 	require.Equal(t, http.StatusAccepted, resp.Status, resp.Body)
 	require.Less(t, time.Since(started), 5*time.Second)

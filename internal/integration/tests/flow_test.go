@@ -56,7 +56,7 @@ func Test_RevisionsAreNumberedAndHistoryKeepsOldValues(t *testing.T) {
 		} `json:"items"`
 	}
 
-	p.eve.MustJSON(t, http.MethodGet, path, nil, http.StatusOK, &history)
+	p.bob.MustJSON(t, http.MethodGet, path, nil, http.StatusOK, &history)
 
 	require.Len(t, history.Revisions, 2)
 	require.Equal(t, 2, history.Revisions[0].Number)
@@ -119,7 +119,7 @@ func Test_TheAuditLogRecordsWhoDidWhat(t *testing.T) {
 		} `json:"items"`
 	}
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/audit?team=places", nil, http.StatusOK, &audit)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/audit?team=places", nil, http.StatusOK, &audit)
 
 	actions := []string{}
 	for _, e := range audit.Events {

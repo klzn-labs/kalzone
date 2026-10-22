@@ -33,7 +33,7 @@ func Test_ABuildIsSharedWithServicesOfTheSameImage(t *testing.T) {
 	p.bob.MustJSON(t, http.MethodPost, "/api/v1/releases", map[string]string{"service": "places-api", "ref": "main"}, http.StatusAccepted, &rel)
 
 	built := callback(t, s, rel.ID, "built", repo, map[string]string{"digest": digest, "commit_sha": commit, "tag": "r1-0123456", "run_url": runURL})
-	shared := releasesOf(t, p.eve, "places-worker")
+	shared := releasesOf(t, p.bob, "places-worker")
 	page := p.bob.Do(t, http.MethodGet, "/services/places-worker/releases", nil)
 
 	require.Equal(t, http.StatusOK, built.Status, built.Body)

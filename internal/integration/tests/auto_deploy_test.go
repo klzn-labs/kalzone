@@ -37,8 +37,8 @@ func Test_APushBuildDeploysItsServicesThatOptInToDev(t *testing.T) {
 	autoDeploying(t, p, "places-worker")
 
 	webhook(t, s, "push", push("refs/heads/main"), signed(push("refs/heads/main")))
-	finishBuild(t, s, releasesOf(t, p.eve, "places-api")[0].ID)
-	api, worker := devDeployments(t, p.eve, "places-api"), devDeployments(t, p.eve, "places-worker")
+	finishBuild(t, s, releasesOf(t, p.bob, "places-api")[0].ID)
+	api, worker := devDeployments(t, p.bob, "places-api"), devDeployments(t, p.bob, "places-worker")
 
 	require.Len(t, api, 1)
 	require.Equal(t, "push", api[0].Trigger)
@@ -59,10 +59,10 @@ func Test_AutoDeployLeavesManualBuildsAndOptedOutServicesAlone(t *testing.T) {
 
 	finishBuild(t, s, manual.ID)
 	webhook(t, s, "push", push("refs/heads/main"), signed(push("refs/heads/main")))
-	finishBuild(t, s, releasesOf(t, p.eve, "places-api")[0].ID)
+	finishBuild(t, s, releasesOf(t, p.bob, "places-api")[0].ID)
 
-	require.Len(t, devDeployments(t, p.eve, "places-api"), 1)
-	require.Empty(t, devDeployments(t, p.eve, "places-worker"))
+	require.Len(t, devDeployments(t, p.bob, "places-api"), 1)
+	require.Empty(t, devDeployments(t, p.bob, "places-worker"))
 }
 
 func Test_AutoDeployNeedsARepositoryAndIsSetFromTheReleasesPage(t *testing.T) {
@@ -75,7 +75,7 @@ func Test_AutoDeployNeedsARepositoryAndIsSetFromTheReleasesPage(t *testing.T) {
 	var service struct {
 		AutoDeployDev bool `json:"auto_deploy_dev"`
 	}
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/services/places-api", nil, http.StatusOK, &service)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/services/places-api", nil, http.StatusOK, &service)
 
 	require.Equal(t, http.StatusBadRequest, refused.Status, refused.Body)
 	require.Equal(t, http.StatusNoContent, saved.Status, saved.Body)

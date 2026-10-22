@@ -18,7 +18,7 @@ import (
 )
 
 type Services interface {
-	Get(ctx context.Context, slug string) (catalog.Service, error)
+	GetFor(ctx context.Context, a actor.Actor, slug string) (catalog.Service, error)
 }
 
 type Configs interface {
@@ -103,7 +103,7 @@ func (h EnvironmentHandler) Show(c *gin.Context) {
 }
 
 func (h EnvironmentHandler) build(ctx context.Context, a actor.Actor, serviceSlug, envSlug string) (data, error) {
-	d, err := h.frame(ctx, serviceSlug, envSlug)
+	d, err := h.frame(ctx, a, serviceSlug, envSlug)
 	if err != nil {
 		return data{}, err
 	}
@@ -119,12 +119,12 @@ func (h EnvironmentHandler) build(ctx context.Context, a actor.Actor, serviceSlu
 	}
 	d.CanEdit = h.views.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: d.Service.OwnerTeamID, Environment: envSlug})
 	d.Deploy, err = h.deployView(ctx, a, d)
-	d.Grafana = GrafanaView{Enabled: h.grafana.Enabled(), UID: "platform-" + d.Service.Slug, Env: envSlug}
+	d.Grafana = GrafanaView{Enabled: h.grafana.Enabled() && a.Admin, UID: "platform-" + d.Service.Slug, Env: envSlug}
 	return d, err
 }
 
-func (h EnvironmentHandler) frame(ctx context.Context, serviceSlug, envSlug string) (data, error) {
-	service, err := h.services.Get(ctx, serviceSlug)
+func (h EnvironmentHandler) frame(ctx context.Context, a actor.Actor, serviceSlug, envSlug string) (data, error) {
+	service, err := h.services.GetFor(ctx, a, serviceSlug)
 	if err != nil {
 		return data{}, err
 	}

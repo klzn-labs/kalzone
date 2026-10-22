@@ -11,6 +11,7 @@ import (
 	observe "github.com/klzn-labs/kalzone/app/observe/entities"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
@@ -62,6 +63,10 @@ func NewPlatformHandler(renderer *web.Renderer, platform Platform, grafana Grafa
 }
 
 func (h PlatformHandler) Show(c *gin.Context) {
+	if !requestctx.ActorFrom(c).Admin {
+		web.ErrorPage(c, h.renderer, web.ErrAdminsOnly)
+		return
+	}
 	component, err := h.platform.Component(c.Request.Context(), c.Param("name"))
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)

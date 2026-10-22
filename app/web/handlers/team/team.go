@@ -16,12 +16,12 @@ import (
 )
 
 type Teams interface {
-	Get(ctx context.Context, slug string) (entities.Team, error)
+	GetFor(ctx context.Context, a actor.Actor, slug string) (entities.Team, error)
 	Delete(ctx context.Context, a actor.Actor, slug string) error
 }
 
 type Members interface {
-	List(ctx context.Context, teamSlug string) ([]entities.Member, error)
+	List(ctx context.Context, a actor.Actor, teamSlug string) ([]entities.Member, error)
 	Put(ctx context.Context, a actor.Actor, teamSlug, login string, role entities.Role) (entities.Member, error)
 	Remove(ctx context.Context, a actor.Actor, teamSlug, login string) error
 }
@@ -31,7 +31,7 @@ type Services interface {
 }
 
 type Users interface {
-	List(ctx context.Context) ([]identity.User, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]identity.User, error)
 }
 
 type data struct {
@@ -66,11 +66,11 @@ func (h TeamHandler) Show(c *gin.Context) {
 }
 
 func (h TeamHandler) build(ctx context.Context, a actor.Actor, slug string) (data, error) {
-	t, err := h.teams.Get(ctx, slug)
+	t, err := h.teams.GetFor(ctx, a, slug)
 	if err != nil {
 		return data{}, err
 	}
-	members, err := h.members.List(ctx, slug)
+	members, err := h.members.List(ctx, a, slug)
 	if err != nil {
 		return data{}, err
 	}
@@ -83,15 +83,15 @@ func (h TeamHandler) build(ctx context.Context, a actor.Actor, slug string) (dat
 		return data{}, err
 	}
 	canManage := h.views.Can(ctx, a, authz.ManageMembers, authz.Resource{TeamID: t.ID})
-	people, err := h.people(ctx, canManage)
+	people, err := h.people(ctx, a, canManage)
 	return data{Team: t, Members: members, Services: cards, People: people, CanManage: canManage, IsAdmin: a.Admin}, err
 }
 
-func (h TeamHandler) people(ctx context.Context, canManage bool) ([]identity.User, error) {
+func (h TeamHandler) people(ctx context.Context, a actor.Actor, canManage bool) ([]identity.User, error) {
 	if !canManage {
 		return nil, nil
 	}
-	return h.users.List(ctx)
+	return h.users.ListFor(ctx, a)
 }
 
 func (h TeamHandler) PutMember(c *gin.Context) {

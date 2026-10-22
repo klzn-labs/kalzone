@@ -134,18 +134,17 @@ func Test_DatabaseDeleteRefusesAWrongTypedName(t *testing.T) {
 
 func Test_DatabasePageHidesControlsFromViewersWhoCannotEdit(t *testing.T) {
 	_, p, _ := setupDatabases(t)
-	require.Equal(t, http.StatusCreated, createDatabase(t, p.bob, "dev").Status)
-	attachShop(t, p.bob)
+	require.Equal(t, http.StatusCreated, createDatabase(t, p.mia, "prod").Status)
+	prodPage := "/resources/databases/prod/" + testDatabase
 
-	page := p.eve.Do(t, http.MethodGet, databasePage, nil)
-	member := p.bob.Do(t, http.MethodGet, databasePage, nil)
+	page := p.bob.Do(t, http.MethodGet, prodPage, nil)
+	maintainer := p.mia.Do(t, http.MethodGet, prodPage, nil)
+	outsider := p.eve.Do(t, http.MethodGet, prodPage, nil)
 
 	require.Equal(t, http.StatusOK, page.Status, page.Body)
-	require.Contains(t, page.Body, "places-api")
 	require.NotContains(t, page.Body, "/attach")
-	require.NotContains(t, page.Body, "/detach/")
 	require.NotContains(t, page.Body, "/delete")
 	require.NotContains(t, page.Body, "Delete this database")
-	require.Contains(t, member.Body, "/detach/places-api")
-	require.Contains(t, member.Body, "Delete this database")
+	require.Contains(t, maintainer.Body, "Delete this database")
+	require.Equal(t, http.StatusNotFound, outsider.Status)
 }

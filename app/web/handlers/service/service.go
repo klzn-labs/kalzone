@@ -17,7 +17,7 @@ import (
 )
 
 type Services interface {
-	Get(ctx context.Context, slug string) (catalog.Service, error)
+	GetFor(ctx context.Context, a actor.Actor, slug string) (catalog.Service, error)
 	Update(ctx context.Context, a actor.Actor, slug string, c catalog.ServiceChanges) (catalog.Service, error)
 	Transfer(ctx context.Context, a actor.Actor, slug, teamSlug string) (catalog.Service, error)
 }
@@ -27,7 +27,7 @@ type Decommissioner interface {
 }
 
 type Teams interface {
-	List(ctx context.Context) ([]team.Team, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]team.Team, error)
 }
 
 type Configs interface {
@@ -35,7 +35,7 @@ type Configs interface {
 }
 
 type Events interface {
-	List(ctx context.Context, filter audit.Filter) ([]audit.Event, error)
+	ListFor(ctx context.Context, a actor.Actor, filter audit.Filter) ([]audit.Event, error)
 }
 
 type EnvSummary struct {
@@ -97,11 +97,11 @@ func (h ServiceHandler) Show(c *gin.Context) {
 }
 
 func (h ServiceHandler) build(ctx context.Context, a actor.Actor, slug string) (data, error) {
-	service, err := h.services.Get(ctx, slug)
+	service, err := h.services.GetFor(ctx, a, slug)
 	if err != nil {
 		return data{}, err
 	}
-	teams, err := h.teams.List(ctx)
+	teams, err := h.teams.ListFor(ctx, a)
 	if err != nil {
 		return data{}, err
 	}
@@ -128,7 +128,7 @@ func (h ServiceHandler) withStatus(ctx context.Context, a actor.Actor, d data) (
 }
 
 func (h ServiceHandler) withHistory(ctx context.Context, a actor.Actor, d data) (data, error) {
-	events, err := h.events.List(ctx, audit.Filter{TargetID: d.Service.ID, Limit: 15})
+	events, err := h.events.ListFor(ctx, a, audit.Filter{TargetID: d.Service.ID, Limit: 15})
 	if err != nil {
 		return data{}, err
 	}

@@ -48,7 +48,7 @@ func settledChangelog(t *testing.T, p people, id string) changelogBody {
 	t.Helper()
 	var got releaseWithChangelog
 	require.Eventually(t, func() bool {
-		p.eve.MustJSON(t, http.MethodGet, "/api/v1/releases/"+id, nil, http.StatusOK, &got)
+		p.bob.MustJSON(t, http.MethodGet, "/api/v1/releases/"+id, nil, http.StatusOK, &got)
 		return got.Changelog != nil && got.Changelog.State != "pending"
 	}, 5*time.Second, 50*time.Millisecond)
 	return *got.Changelog

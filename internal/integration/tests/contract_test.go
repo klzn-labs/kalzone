@@ -87,9 +87,9 @@ func Test_ListsPageWithACursor(t *testing.T) {
 	var first, second page[release]
 	var badLimit apiError
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/releases?service=places-api&limit=2", nil, http.StatusOK, &first)
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/releases?service=places-api&limit=2&cursor="+first.NextCursor, nil, http.StatusOK, &second)
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/releases?service=places-api&limit=500", nil, http.StatusBadRequest, &badLimit)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/releases?service=places-api&limit=2", nil, http.StatusOK, &first)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/releases?service=places-api&limit=2&cursor="+first.NextCursor, nil, http.StatusOK, &second)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/releases?service=places-api&limit=500", nil, http.StatusBadRequest, &badLimit)
 
 	require.Equal(t, []int{3, 2}, []int{first.Items[0].Number, first.Items[1].Number})
 	require.Len(t, second.Items, 1)
@@ -130,7 +130,7 @@ func Test_ADeploymentSummarisesItsLog(t *testing.T) {
 	report(t, s, w.DeploymentID, 30)
 	var detail deploymentDetail
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil, http.StatusOK, &detail)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID, nil, http.StatusOK, &detail)
 
 	require.Equal(t, 60, detail.Summary.Total)
 	require.Equal(t, 30, detail.Summary.ProgressLines)
@@ -146,9 +146,9 @@ func Test_ARunningDeploymentsLogCanBeFollowed(t *testing.T) {
 	report(t, s, w.DeploymentID, 2)
 	var tail, followed page[logLine]
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"/events?tail=2", nil, http.StatusOK, &tail)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"/events?tail=2", nil, http.StatusOK, &tail)
 	finish := s.Agent(t, http.MethodPost, agentapi.FinishPath(w.DeploymentID), agentapi.Finish{Succeeded: true, Message: "live"})
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"/events?cursor="+tail.NextCursor, nil, http.StatusOK, &followed)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments/"+d.ID+"/events?cursor="+tail.NextCursor, nil, http.StatusOK, &followed)
 
 	require.Equal(t, []logLine{{"5f70bf18a002 Downloading [==>  ]"}, {"step 2"}}, tail.Items)
 	require.NotEmpty(t, tail.NextCursor)

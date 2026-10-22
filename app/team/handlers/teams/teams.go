@@ -16,8 +16,8 @@ import (
 )
 
 type Teams interface {
-	List(ctx context.Context) ([]entities.Team, error)
-	Get(ctx context.Context, slug string) (entities.Team, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]entities.Team, error)
+	GetFor(ctx context.Context, a actor.Actor, slug string) (entities.Team, error)
 	Create(ctx context.Context, a actor.Actor, slug, name string) (entities.Team, error)
 	Delete(ctx context.Context, a actor.Actor, slug string) error
 }
@@ -51,7 +51,7 @@ type teamParams struct {
 }
 
 func (h TeamsHandler) List(c *gin.Context) {
-	apispec.RespondWindow(c, func() ([]entities.Team, error) { return h.teams.List(c.Request.Context()) }, teamKey, ToDTO)
+	apispec.RespondWindow(c, func() ([]entities.Team, error) { return h.teams.ListFor(c.Request.Context(), requestctx.ActorFrom(c)) }, teamKey, ToDTO)
 }
 
 func teamKey(t entities.Team) string {
@@ -59,7 +59,7 @@ func teamKey(t entities.Team) string {
 }
 
 func (h TeamsHandler) Get(c *gin.Context) {
-	team, err := h.teams.Get(c.Request.Context(), c.Param("team"))
+	team, err := h.teams.GetFor(c.Request.Context(), requestctx.ActorFrom(c), c.Param("team"))
 	apispec.Respond(c, http.StatusOK, ToDTO(team), err)
 }
 

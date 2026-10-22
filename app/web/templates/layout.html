@@ -30,7 +30,7 @@
     <div class="nav-label">Organisation</div>
     <a class="nav-link {{if eq .Nav "teams"}}active{{end}}" href="/teams">{{icon "users"}}Teams</a>
     <a class="nav-link {{if eq .Nav "people"}}active{{end}}" href="/people">{{icon "user"}}People</a>
-    <a class="nav-link {{if eq .Nav "agents"}}active{{end}}" href="/agents">{{icon "server"}}Agents</a>
+    {{if .Viewer.Actor.Admin}}<a class="nav-link {{if eq .Nav "agents"}}active{{end}}" href="/agents">{{icon "server"}}Agents</a>{{end}}
     <a class="nav-link {{if eq .Nav "audit"}}active{{end}}" href="/audit">{{icon "activity"}}Audit log</a>
     <a class="nav-link {{if eq .Nav "tokens"}}active{{end}}" href="/tokens">{{icon "key"}}Access tokens</a>
     <div class="sidebar-footer">

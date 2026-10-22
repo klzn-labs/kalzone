@@ -32,8 +32,8 @@ func Test_TheControlPlaneShowsReadOnlyInTheCatalog(t *testing.T) {
 	s, p := setupPlaces(t)
 	reportControlPlane(t, s)
 
-	catalog := p.eve.Do(t, http.MethodGet, "/services", nil)
-	page := p.eve.Do(t, http.MethodGet, "/platform/controlplane", nil)
+	catalog := p.root.Do(t, http.MethodGet, "/services", nil)
+	page := p.root.Do(t, http.MethodGet, "/platform/controlplane", nil)
 
 	require.Equal(t, http.StatusOK, catalog.Status)
 	require.Contains(t, catalog.Body, `href="/platform/controlplane"`)
@@ -45,11 +45,26 @@ func Test_TheControlPlaneShowsReadOnlyInTheCatalog(t *testing.T) {
 	require.NotContains(t, page.Body, `action="/platform`)
 }
 
+func Test_ThePlatformIsHiddenFromPeopleWhoAreNotAdmins(t *testing.T) {
+	s, p := setupPlaces(t)
+	reportControlPlane(t, s)
+
+	catalog := p.bob.Do(t, http.MethodGet, "/services", nil)
+	page := p.bob.Do(t, http.MethodGet, "/platform/controlplane", nil)
+	agents := p.bob.Do(t, http.MethodGet, "/agents", nil)
+
+	require.Equal(t, http.StatusOK, catalog.Status)
+	require.NotContains(t, catalog.Body, `href="/platform/controlplane"`)
+	require.NotContains(t, catalog.Body, `href="/agents"`)
+	require.Equal(t, http.StatusNotFound, page.Status)
+	require.Equal(t, http.StatusNotFound, agents.Status)
+}
+
 func Test_TheCatalogWorksBeforeTheControlPlaneIsReported(t *testing.T) {
 	_, p := setupPlaces(t)
 
-	catalog := p.eve.Do(t, http.MethodGet, "/services", nil)
-	page := p.eve.Do(t, http.MethodGet, "/platform/controlplane", nil)
+	catalog := p.root.Do(t, http.MethodGet, "/services", nil)
+	page := p.root.Do(t, http.MethodGet, "/platform/controlplane", nil)
 
 	require.Equal(t, http.StatusOK, catalog.Status)
 	require.NotContains(t, catalog.Body, `href="/platform/controlplane"`)
@@ -69,7 +84,7 @@ func Test_TheControlPlaneHasItsOwnDashboardEmbeddedOnItsPage(t *testing.T) {
 	reportControlPlane(t, s)
 
 	require.Eventually(t, func() bool { return s.Grafana.Dashboards()["kalzone-controlplane"] }, 5*time.Second, 50*time.Millisecond)
-	page := p.eve.Do(t, http.MethodGet, "/platform/controlplane", nil)
+	page := p.root.Do(t, http.MethodGet, "/platform/controlplane", nil)
 
 	require.Contains(t, s.Grafana.DashboardJSON("kalzone-controlplane"), "platform_http_request_duration_seconds_count")
 	require.Contains(t, page.Body, "/grafana/d-solo/kalzone-controlplane?orgId=1&panelId=14")

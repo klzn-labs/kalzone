@@ -3,6 +3,7 @@ package people
 import (
 	"context"
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
 	identity "github.com/klzn-labs/kalzone/app/identity/entities"
@@ -13,7 +14,7 @@ import (
 )
 
 type Users interface {
-	List(ctx context.Context) ([]identity.User, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]identity.User, error)
 	SetAdmin(ctx context.Context, a actor.Actor, login string, admin bool) (identity.User, error)
 }
 
@@ -40,7 +41,7 @@ func NewPeopleHandler(renderer *web.Renderer, views web.Views, users Users) Peop
 
 func (h PeopleHandler) Show(c *gin.Context) {
 	a := requestctx.ActorFrom(c)
-	people, err := h.people(c.Request.Context())
+	people, err := h.people(c.Request.Context(), a)
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)
 		return
@@ -49,8 +50,8 @@ func (h PeopleHandler) Show(c *gin.Context) {
 	h.renderer.Render(c, http.StatusOK, "people", web.Page{Title: "People", Nav: "people", Data: d})
 }
 
-func (h PeopleHandler) people(ctx context.Context) ([]Person, error) {
-	users, err := h.users.List(ctx)
+func (h PeopleHandler) people(ctx context.Context, a actor.Actor) ([]Person, error) {
+	users, err := h.users.ListFor(ctx, a)
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +61,13 @@ func (h PeopleHandler) people(ctx context.Context) ([]Person, error) {
 		if err != nil {
 			return nil, err
 		}
-		people = append(people, Person{User: u, Teams: teams})
+		people = append(people, Person{User: u, Teams: visible(a, teams)})
 	}
 	return people, nil
+}
+
+func visible(a actor.Actor, teams []web.MyTeam) []web.MyTeam {
+	return slices.DeleteFunc(teams, func(t web.MyTeam) bool { return !a.Sees(t.Team.ID) })
 }
 
 func (h PeopleHandler) SetAdmin(c *gin.Context) {
