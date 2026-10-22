@@ -9,9 +9,9 @@ import (
 
 type Grafana interface {
 	Enabled() bool
-	EnsureFolder(ctx context.Context) error
-	UpsertDashboard(ctx context.Context, dashboard map[string]any) error
-	DeleteDashboard(ctx context.Context, uid string) error
+	EnsureFolder(ctx context.Context, org int) error
+	UpsertDashboard(ctx context.Context, org int, dashboard map[string]any) error
+	DeleteDashboard(ctx context.Context, org int, uid string) error
 }
 
 type Catalog interface {
@@ -37,11 +37,11 @@ func (u DashboardsUsecase) Write(ctx context.Context, services []entities.Servic
 	if !u.grafana.Enabled() || len(services) == 0 {
 		return 0, nil
 	}
-	if err := u.grafana.EnsureFolder(ctx); err != nil {
+	if err := u.grafana.EnsureFolder(ctx, entities.MainOrg); err != nil {
 		return 0, err
 	}
 	for i, s := range services {
-		if err := u.grafana.UpsertDashboard(ctx, entities.Dashboard(s)); err != nil {
+		if err := u.grafana.UpsertDashboard(ctx, entities.MainOrg, entities.Dashboard(s)); err != nil {
 			return i, fmt.Errorf("dashboard for %s: %w", s.Slug, err)
 		}
 	}
@@ -52,11 +52,11 @@ func (u DashboardsUsecase) WritePlatform(ctx context.Context) error {
 	if !u.grafana.Enabled() {
 		return nil
 	}
-	if err := u.grafana.EnsureFolder(ctx); err != nil {
+	if err := u.grafana.EnsureFolder(ctx, entities.MainOrg); err != nil {
 		return err
 	}
 	for _, name := range entities.PlatformComponents {
-		if err := u.grafana.UpsertDashboard(ctx, entities.PlatformDashboard(name)); err != nil {
+		if err := u.grafana.UpsertDashboard(ctx, entities.MainOrg, entities.PlatformDashboard(name)); err != nil {
 			return fmt.Errorf("dashboard for %s: %w", name, err)
 		}
 	}
@@ -67,7 +67,7 @@ func (u DashboardsUsecase) Delete(ctx context.Context, serviceSlug string) error
 	if !u.grafana.Enabled() {
 		return nil
 	}
-	return u.grafana.DeleteDashboard(ctx, entities.DashboardUID(serviceSlug))
+	return u.grafana.DeleteDashboard(ctx, entities.MainOrg, entities.DashboardUID(serviceSlug))
 }
 
 func (u DashboardsUsecase) SyncsOn(action string) bool {

@@ -17,7 +17,7 @@ import (
 
 var (
 	errNotConfigured = apperror.New(apperror.CodeNotConfigured, "Grafana is not configured on this platform").
-				WithHint("set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN")
+				WithHint("set PLATFORM_GRAFANA_URL, PLATFORM_GRAFANA_ADMIN_USER and PLATFORM_GRAFANA_ADMIN_PASSWORD")
 	errUpstream = apperror.New(apperror.CodeUpstream, "Grafana did not answer the query").WithHint("try again in a minute")
 )
 
@@ -126,11 +126,10 @@ func (c Client) query(ctx context.Context, path string, params url.Values, out a
 	if !c.Enabled() {
 		return errNotConfigured
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.url+path+"?"+params.Encode(), nil)
+	req, err := c.request(ctx, entities.MainOrg, http.MethodGet, path+"?"+params.Encode(), nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", "Bearer "+c.token)
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return errUpstream.WithDetails(map[string]any{"cause": err.Error()})

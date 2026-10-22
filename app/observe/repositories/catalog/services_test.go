@@ -45,3 +45,12 @@ func Test_Services_LeavesOutServicesBeingDeletedOrSimulated(t *testing.T) {
 	require.Len(t, got, 1)
 	require.Equal(t, "api", got[0].Slug)
 }
+
+func Test_Simulated_ListsOnlyTheDemosLiveServices(t *testing.T) {
+	services := lister{{ID: "s1", Slug: "api"}, {ID: "s2", Slug: "demo-shop", Name: "Shop", OwnerTeamID: "d1", Simulated: true}}
+
+	got, err := catalog.NewServices(services, attachments{}).Simulated(context.Background())
+
+	require.NoError(t, err)
+	require.Equal(t, []entities.Service{{Slug: "demo-shop", Name: "Shop", TeamID: "d1"}}, got)
+}

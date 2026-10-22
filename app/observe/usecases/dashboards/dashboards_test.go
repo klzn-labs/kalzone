@@ -14,13 +14,13 @@ type grafana struct {
 	written []string
 }
 
-func (g *grafana) Enabled() bool                      { return g.enabled }
-func (g *grafana) EnsureFolder(context.Context) error { return nil }
-func (g *grafana) UpsertDashboard(_ context.Context, d map[string]any) error {
+func (g *grafana) Enabled() bool                           { return g.enabled }
+func (g *grafana) EnsureFolder(context.Context, int) error { return nil }
+func (g *grafana) UpsertDashboard(_ context.Context, _ int, d map[string]any) error {
 	g.written = append(g.written, d["uid"].(string))
 	return nil
 }
-func (g *grafana) DeleteDashboard(_ context.Context, uid string) error {
+func (g *grafana) DeleteDashboard(_ context.Context, _ int, uid string) error {
 	g.deleted = append(g.deleted, uid)
 	return nil
 }
