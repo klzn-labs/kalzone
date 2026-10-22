@@ -119,9 +119,7 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 	require.NotContains(t, memberPage.Body, "/grafana/")
 	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":"Admin"}`, admin.Body)
 	require.True(t, s.Grafana.Dashboards()["platform-places-api"])
-	require.Contains(t, page.Body, "/grafana/d-solo/platform-places-api?orgId=1&panelId=1&var-env=dev")
-	require.NotContains(t, page.Body, "panelId=18")
-	require.NotContains(t, page.Body, "panelId=19")
+	require.Contains(t, page.Body, "/services/places-api/env/dev/observability")
 }
 
 func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {

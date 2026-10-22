@@ -17,6 +17,8 @@ import (
 	"github.com/klzn-labs/kalzone/app/identity/usecases/users"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/health"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/metrics"
 	queueCatalog "github.com/klzn-labs/kalzone/app/queue/repositories/catalog"
 	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
 	"github.com/klzn-labs/kalzone/app/release/usecases/changelogs"
@@ -30,6 +32,7 @@ import (
 	databasesPage "github.com/klzn-labs/kalzone/app/web/handlers/databases"
 	environmentPage "github.com/klzn-labs/kalzone/app/web/handlers/environment"
 	"github.com/klzn-labs/kalzone/app/web/handlers/login"
+	observabilityPage "github.com/klzn-labs/kalzone/app/web/handlers/observability"
 	overviewPage "github.com/klzn-labs/kalzone/app/web/handlers/overview"
 	peoplePage "github.com/klzn-labs/kalzone/app/web/handlers/people"
 	platformPage "github.com/klzn-labs/kalzone/app/web/handlers/platform"
@@ -53,7 +56,7 @@ func Web() fx.Option {
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
 			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, platformPage.NewPlatformHandler, queuesPage.NewQueuesHandler, databasesPage.NewDatabasesHandler, resourcesPage.NewResourcesHandler,
-			tokensPage.NewTokensHandler, requestsPage.NewRequestsHandler,
+			tokensPage.NewTokensHandler, requestsPage.NewRequestsHandler, observabilityPage.NewObservabilityHandler,
 		),
 		viewInjections(),
 		pageInjections(),
@@ -84,7 +87,7 @@ func viewInjections() fx.Option {
 }
 
 func pageInjections() fx.Option {
-	return fx.Options(overviewInjections(), catalogPageInjections(), teamPageInjections(), auditPageInjections(), tokenPageInjections())
+	return fx.Options(overviewInjections(), fx.Provide(observabilityDeps), catalogPageInjections(), teamPageInjections(), auditPageInjections(), tokenPageInjections())
 }
 
 func overviewInjections() fx.Option {
@@ -93,6 +96,10 @@ func overviewInjections() fx.Option {
 
 func overviewDeps(s services.ServicesUsecase, t teams.TeamsUsecase, q query.QueryUsecase, r requests.RequestsUsecase, d deployments.DeploymentsUsecase, a agents.AgentsUsecase) overviewPage.Deps {
 	return overviewPage.Deps{Services: s, Teams: t, Events: q, Requests: r, Deployments: d, Agents: a}
+}
+
+func observabilityDeps(s services.ServicesUsecase, c configs.ConfigUsecase, m metrics.MetricsUsecase, l logs.LogsUsecase, h health.HealthUsecase, d deployments.DeploymentsUsecase, g grafana.Client) observabilityPage.Deps {
+	return observabilityPage.Deps{Services: s, Configs: c, Metrics: m, Logs: l, Limits: h, Deployments: d, Grafana: g}
 }
 
 func catalogPageInjections() fx.Option {
@@ -148,7 +155,7 @@ func pageRoutes() fx.Option {
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
 		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, platformPage.RegisterPlatformRoutes, queuesPage.RegisterQueuesRoutes, databasesPage.RegisterDatabasesRoutes, resourcesPage.RegisterResourcesRoutes,
-		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes,
+		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes, observabilityPage.RegisterObservabilityRoutes,
 	)
 }
 

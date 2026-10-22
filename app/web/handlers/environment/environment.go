@@ -67,8 +67,6 @@ type data struct {
 
 type GrafanaView struct {
 	Enabled bool
-	UID     string
-	Env     string
 }
 
 type Grafana interface {
@@ -119,7 +117,7 @@ func (h EnvironmentHandler) build(ctx context.Context, a actor.Actor, serviceSlu
 	}
 	d.CanEdit = h.views.Can(ctx, a, authz.EditConfig, authz.Resource{TeamID: d.Service.OwnerTeamID, Environment: envSlug})
 	d.Deploy, err = h.deployView(ctx, a, d)
-	d.Grafana = GrafanaView{Enabled: h.grafana.Enabled() && a.Admin, UID: "platform-" + d.Service.Slug, Env: envSlug}
+	d.Grafana = GrafanaView{Enabled: h.grafana.Enabled()}
 	return d, err
 }
 
