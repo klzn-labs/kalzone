@@ -12,7 +12,7 @@ type TeamFinder interface {
 }
 
 type MemberTeams interface {
-	TeamIDsOf(ctx context.Context, userID string) ([]string, error)
+	VisibleTeamIDs(ctx context.Context, userID string) ([]string, error)
 	UserIDsIn(ctx context.Context, teamIDs []string) ([]string, error)
 }
 
@@ -30,7 +30,7 @@ func (l Lookup) UserIDsIn(ctx context.Context, teamIDs []string) ([]string, erro
 }
 
 func (l Lookup) VisibleTeamIDs(ctx context.Context, userID string) ([]string, error) {
-	return l.members.TeamIDsOf(ctx, userID)
+	return l.members.VisibleTeamIDs(ctx, userID)
 }
 
 func (l Lookup) IDBySlug(ctx context.Context, slug string) (string, error) {

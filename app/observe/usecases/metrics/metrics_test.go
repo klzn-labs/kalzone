@@ -25,10 +25,10 @@ var (
 type services struct{}
 
 func (services) FindService(_ context.Context, slug string) (entities.LogSource, error) {
-	if slug != "places-api" {
+	if slug != "places-api" && slug != "demo-shop-api" {
 		return entities.LogSource{}, apperror.NotFound("service not found")
 	}
-	return entities.LogSource{ID: "s1", Slug: slug, OwnerTeamID: "t1"}, nil
+	return entities.LogSource{ID: "s1", Slug: slug, OwnerTeamID: "t1", Simulated: strings.HasPrefix(slug, "demo-")}, nil
 }
 
 type querier struct {
@@ -70,4 +70,16 @@ func Test_Read_HidesServicesOfOtherTeams(t *testing.T) {
 
 	require.ErrorIs(t, err, apperror.NotFound(""))
 	require.Empty(t, q.queries)
+}
+
+func Test_Read_DrawsSyntheticSeriesForASimulatedService(t *testing.T) {
+	clock.WithTime(now)
+	q := &querier{}
+
+	m, err := metrics.NewMetricsUsecase(services{}, q, "prometheus").Read(ctx, ana, "demo-shop-api", "prod", entities.WindowNamed("1h"))
+
+	require.NoError(t, err)
+	require.Empty(t, q.queries)
+	require.Len(t, m.Series[entities.SignalLatency], 60)
+	require.Len(t, m.Series[entities.SignalMemory], 60)
 }

@@ -38,10 +38,12 @@ func Test_Request_RefusesBadInputAndOutsiders(t *testing.T) {
 	_, badRef := f.usecase.Request(ctx, ana, "api", "main; rm -rf /")
 	_, noRepo := f.usecase.Request(ctx, ana, "bare", "main")
 	_, forbidden := denied.usecase.Request(ctx, ana, "api", "main")
+	_, simulated := f.usecase.Request(ctx, ana, "demo-shop", "main")
 
 	require.ErrorIs(t, badRef, apperror.Invalid(""))
 	require.ErrorIs(t, noRepo, apperror.Invalid(""))
 	require.ErrorIs(t, forbidden, apperror.Forbidden(""))
+	require.ErrorIs(t, simulated, apperror.Conflict(""))
 	require.Empty(t, f.builder.requests)
 }
 

@@ -10,15 +10,34 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/klzn-labs/kalzone/pkg/demo"
 	"github.com/stretchr/testify/require"
 )
 
 var now = time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC)
 
 type fakeSessions struct {
+	created  []entities.Session
 	byHash   map[string]entities.Session
 	extended map[string]time.Time
 	deleted  []string
+}
+
+func (f *fakeSessions) Create(_ context.Context, s entities.Session) error {
+	f.created = append(f.created, s)
+	f.byHash[s.TokenHash] = s
+	return nil
+}
+
+func (f *fakeSessions) DeleteExpired(_ context.Context, at time.Time) (int, error) {
+	swept := 0
+	for hash, s := range f.byHash {
+		if !at.Before(s.ExpiresAt) {
+			delete(f.byHash, hash)
+			swept++
+		}
+	}
+	return swept, nil
 }
 
 func (f *fakeSessions) Find(_ context.Context, hash string) (entities.Session, error) {
@@ -42,6 +61,9 @@ func (f *fakeSessions) Delete(_ context.Context, hash string) error {
 type fakeUsers struct{}
 
 func (fakeUsers) FindByID(_ context.Context, id string) (entities.User, error) {
+	if id == demo.GuestID {
+		return entities.User{ID: id, Kind: entities.KindGuest, Login: demo.GuestLogin}, nil
+	}
 	return entities.User{ID: id, Login: "ana", Admin: true}, nil
 }
 
@@ -57,7 +79,10 @@ func setup(expiresIn time.Duration) (*fakeSessions, sessions.SessionsUsecase) {
 		byHash:   map[string]entities.Session{entities.HashToken("tok"): {TokenHash: entities.HashToken("tok"), CSRFToken: "csrf", UserID: "u1", ExpiresAt: now.Add(expiresIn)}},
 		extended: map[string]time.Time{},
 	}
-	cfg := config.Config{Session: config.Session{TTL: 7 * 24 * time.Hour, RenewWithin: 24 * time.Hour}}
+	cfg := config.Config{
+		Session: config.Session{TTL: 7 * 24 * time.Hour, RenewWithin: 24 * time.Hour},
+		Demo:    config.Demo{Enabled: true, SessionTTL: 2 * time.Hour},
+	}
 	return store, sessions.NewSessionsUsecase(cfg, store, fakeUsers{}, fakeTeams{})
 }
 
@@ -104,4 +129,41 @@ func Test_SignOut_DeletesTheSessionByHash(t *testing.T) {
 	require.NoError(t, usecase.SignOut(context.Background(), "tok"))
 
 	require.Equal(t, []string{entities.HashToken("tok")}, store.deleted)
+}
+
+func Test_EnterDemo_OpensAShortGuestSessionThatNeverRenews(t *testing.T) {
+	store, usecase := setup(72 * time.Hour)
+
+	issued, err := usecase.EnterDemo(context.Background())
+	require.NoError(t, err)
+	clock.WithTime(now.Add(90 * time.Minute))
+	auth, authErr := usecase.Authenticate(context.Background(), issued.Token)
+	clock.WithTime(now.Add(2 * time.Hour))
+	_, expired := usecase.Authenticate(context.Background(), issued.Token)
+
+	require.Equal(t, now.Add(2*time.Hour), issued.ExpiresAt)
+	require.Equal(t, demo.GuestID, store.created[0].UserID)
+	require.NoError(t, authErr)
+	require.True(t, auth.Actor().Guest)
+	require.Empty(t, store.extended)
+	require.ErrorIs(t, expired, apperror.New(apperror.CodeUnauthenticated, ""))
+}
+
+func Test_EnterDemo_IsRefusedWhileTheDemoIsOff(t *testing.T) {
+	cfg := config.Config{Session: config.Session{TTL: time.Hour, RenewWithin: time.Minute}}
+	usecase := sessions.NewSessionsUsecase(cfg, &fakeSessions{byHash: map[string]entities.Session{}}, fakeUsers{}, fakeTeams{})
+
+	_, err := usecase.EnterDemo(context.Background())
+
+	require.ErrorIs(t, err, apperror.NotFound(""))
+}
+
+func Test_Sweep_RemovesExpiredSessions(t *testing.T) {
+	store, usecase := setup(-time.Minute)
+
+	swept, err := usecase.Sweep(context.Background())
+
+	require.NoError(t, err)
+	require.Equal(t, 1, swept)
+	require.Empty(t, store.byHash)
 }

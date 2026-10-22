@@ -16,6 +16,7 @@ import (
 
 var (
 	errDecommissioning = apperror.Conflict("this service is being deleted").WithHint("its builds are frozen until the teardown finishes")
+	errSimulated       = apperror.Conflict("demo services are simulated and never build").WithHint("build a service of your own team")
 	errCannotBuild     = apperror.Invalid("set the service's GitHub repository and image repository before building")
 	errDispatchFails   = apperror.New(apperror.CodeUpstream, "GitHub did not start the build")
 )
@@ -37,9 +38,19 @@ func (u ReleasesUsecase) Request(ctx context.Context, a actor.Actor, serviceSlug
 	return u.build(ctx, a, service, ref, entities.TriggerManual)
 }
 
+func buildable(service entities.ServiceRef) error {
+	switch {
+	case service.Simulated:
+		return errSimulated
+	case service.Decommissioning:
+		return errDecommissioning
+	}
+	return nil
+}
+
 func (u ReleasesUsecase) build(ctx context.Context, a actor.Actor, service entities.ServiceRef, ref string, trigger entities.Trigger) (entities.Release, error) {
-	if service.Decommissioning {
-		return entities.Release{}, errDecommissioning
+	if err := buildable(service); err != nil {
+		return entities.Release{}, err
 	}
 	if service.GitHubRepo == "" || service.ImageRepository == "" {
 		return entities.Release{}, errCannotBuild

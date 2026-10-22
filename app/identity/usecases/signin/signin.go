@@ -87,18 +87,9 @@ func (u SignInUsecase) upsert(ctx context.Context, g entities.GitHubUser) (entit
 }
 
 func (u SignInUsecase) issue(ctx context.Context, userID string) (entities.IssuedSession, error) {
-	token, tokenErr := entities.NewToken()
-	csrf, csrfErr := entities.NewToken()
-	if err := errors.Join(tokenErr, csrfErr); err != nil {
+	session, issued, err := entities.OpenSession(userID, clock.Now().UTC(), u.ttl)
+	if err != nil {
 		return entities.IssuedSession{}, err
 	}
-	now := clock.Now().UTC()
-	session := entities.Session{
-		TokenHash: entities.HashToken(token), CSRFToken: csrf, UserID: userID,
-		CreatedAt: now, ExpiresAt: now.Add(u.ttl),
-	}
-	if err := u.sessions.Create(ctx, session); err != nil {
-		return entities.IssuedSession{}, err
-	}
-	return entities.IssuedSession{Token: token, CSRFToken: csrf, ExpiresAt: session.ExpiresAt}, nil
+	return issued, u.sessions.Create(ctx, session)
 }

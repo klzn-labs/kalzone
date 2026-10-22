@@ -20,6 +20,8 @@ var (
 	errOtherService    = apperror.Invalid("that release belongs to another service")
 	errDecommissioning = apperror.Conflict("this service is being deleted").
 				WithHint("its deployments are frozen until the teardown finishes")
+	errSimulated = apperror.Conflict("demo services are simulated and never deploy").
+			WithHint("deploy a service of your own team")
 )
 
 type plan struct {
@@ -49,6 +51,9 @@ func (u DeploymentsUsecase) authorizeAny(ctx context.Context, a actor.Actor, ser
 	service, err := u.services.FindService(ctx, serviceSlug)
 	if err != nil {
 		return plan{}, err
+	}
+	if service.Simulated {
+		return plan{}, errSimulated
 	}
 	if err := u.environments.EnvironmentExists(ctx, environment); err != nil {
 		return plan{}, err
@@ -80,6 +85,9 @@ func (u DeploymentsUsecase) proceed(ctx context.Context, p plan, o Proposal) (en
 }
 
 func (u DeploymentsUsecase) schedule(ctx context.Context, p plan) (entities.Deployment, error) {
+	if p.service.Simulated {
+		return entities.Deployment{}, errSimulated
+	}
 	if err := u.clearWay(ctx, p.service.ID, p.env); err != nil {
 		return entities.Deployment{}, err
 	}

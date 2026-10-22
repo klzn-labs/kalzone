@@ -23,6 +23,9 @@ var (
 type services struct{}
 
 func (services) FindService(_ context.Context, slug string) (entities.LogSource, error) {
+	if slug == "demo-shop" {
+		return entities.LogSource{ID: "s2", Slug: slug, OwnerTeamID: "t1", Simulated: true}, nil
+	}
 	if slug != "api" {
 		return entities.LogSource{}, apperror.NotFound("service not found")
 	}
@@ -136,4 +139,18 @@ func Test_ParseQuery_RefusesWrongValues(t *testing.T) {
 		_, err := logs.ParseQuery(q[0], q[1], q[2], q[3])
 		require.ErrorIs(t, err, apperror.Invalid(""), name)
 	}
+}
+
+func Test_Read_InventsLinesForASimulatedServiceWithoutAskingLoki(t *testing.T) {
+	l, u := setup(&policy{})
+	t.Cleanup(func() { clock.Clock = nil })
+
+	guest := actor.Actor{UserID: "g1", Guest: true, Teams: []string{"t1"}}
+	lines, err := u.Read(ctx, guest, "demo-shop", "dev", logs.Query{Since: time.Hour, Limit: 20})
+	errorsOnly, _ := u.Read(ctx, guest, "demo-shop", "dev", logs.Query{Since: time.Hour, Limit: 20, Errors: true})
+
+	require.NoError(t, err)
+	require.Len(t, lines, 20)
+	require.Empty(t, errorsOnly)
+	require.Empty(t, l.query)
 }

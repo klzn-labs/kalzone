@@ -41,7 +41,18 @@ func (u MetricsUsecase) Read(ctx context.Context, a actor.Actor, serviceSlug, en
 	if !a.Sees(service.OwnerTeamID) {
 		return entities.Metrics{}, errNotVisible
 	}
+	if service.Simulated {
+		return simulated(service.Slug+"-"+environment, w), nil
+	}
 	return u.query(ctx, service.Slug, environment, w), nil
+}
+
+func simulated(workload string, w entities.Window) entities.Metrics {
+	m := entities.Metrics{Window: w, End: clock.Now(), Series: map[entities.Signal][]entities.Sample{}}
+	for _, s := range entities.Signals {
+		m.Series[s] = entities.SyntheticSeries(s, workload, w, m.End)
+	}
+	return m
 }
 
 func (u MetricsUsecase) query(ctx context.Context, slug, environment string, w entities.Window) entities.Metrics {

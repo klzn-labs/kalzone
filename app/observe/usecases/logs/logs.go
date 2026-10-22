@@ -3,6 +3,7 @@ package logs
 import (
 	"context"
 	"regexp"
+	"slices"
 	"strconv"
 	"time"
 
@@ -42,11 +43,23 @@ func (u LogsUsecase) Read(ctx context.Context, a actor.Actor, serviceSlug, envir
 	if err != nil {
 		return nil, err
 	}
+	end := clock.Now()
+	if service.Simulated && a.Sees(service.OwnerTeamID) {
+		return simulatedLines(service.Slug+"-"+environment, end, q), nil
+	}
 	if err := u.authz.Can(ctx, a, authz.ReadLogs, authz.Resource{TeamID: service.OwnerTeamID, Environment: environment}); err != nil {
 		return nil, err
 	}
-	end := clock.Now()
 	return u.loki.LogLines(ctx, u.uid, logQL(service.Slug, environment, q), end.Add(-q.Since), end, q.Limit)
+}
+
+func simulatedLines(workload string, end time.Time, q Query) []entities.LogLine {
+	lines := entities.SyntheticLines(workload, end, q.Limit)
+	if !q.Errors {
+		return lines
+	}
+	pattern := regexp.MustCompile(errorLines)
+	return slices.DeleteFunc(lines, func(l entities.LogLine) bool { return !pattern.MatchString(l.Line) })
 }
 
 func logQL(serviceSlug, environment string, q Query) string {

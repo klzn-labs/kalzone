@@ -121,6 +121,10 @@ var retired = entities.ServiceRef{
 	BuildWorkflow: "platform-build.yml", AutoBuild: true, Decommissioning: true,
 }
 
+var demo = entities.ServiceRef{
+	ID: "s6", Slug: "demo-shop", OwnerTeamID: "t1", ImageRepository: "demo.invalid/shop", BuildWorkflow: "platform-build.yml", Simulated: true,
+}
+
 type services struct{}
 
 func (services) FindService(_ context.Context, slug string) (entities.ServiceRef, error) {
@@ -139,7 +143,7 @@ func (services) ServicesForRepository(_ context.Context, repo string) ([]entitie
 }
 
 func byKey(match func(entities.ServiceRef) bool) (entities.ServiceRef, error) {
-	for _, s := range []entities.ServiceRef{api, web, worker, bare, retired} {
+	for _, s := range []entities.ServiceRef{api, web, worker, bare, retired, demo} {
 		if match(s) {
 			return s, nil
 		}

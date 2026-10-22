@@ -166,6 +166,19 @@ func Test_Desired_IsTheLatestSuccessPerEnvironment(t *testing.T) {
 	require.Equal(t, entities.Desired{Name: "api-dev", Service: "api", Environment: "dev", ImageRef: "img@sha256:1", DeploymentID: "d2"}, desired[0])
 }
 
+func Test_Desired_LeavesOutSimulatedServices(t *testing.T) {
+	store, _, usecase := setup(false)
+	pending(store, "d1", "dev", entities.StatusSucceeded)
+	_, err := store.Create(ctx, entities.Deployment{ID: "d2", ServiceID: "s4", Environment: "prod", Status: entities.StatusSucceeded, CreatedAt: time.Now()})
+	require.NoError(t, err)
+
+	desired, err := usecase.Desired(ctx)
+
+	require.NoError(t, err)
+	require.Len(t, desired, 1)
+	require.Equal(t, "api", desired[0].Service)
+}
+
 func Test_Drift_CreatesOneReconcileDeployment(t *testing.T) {
 	store, p, usecase := setup(false)
 	pending(store, "d1", "dev", entities.StatusSucceeded)

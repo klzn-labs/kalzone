@@ -51,8 +51,8 @@ func (u ReleasesUsecase) registrable(ctx context.Context, a actor.Actor, service
 	if err := u.authz.Can(ctx, a, authz.CreateRelease, authz.Resource{TeamID: service.OwnerTeamID}); err != nil {
 		return entities.ServiceRef{}, err
 	}
-	if service.Decommissioning {
-		return entities.ServiceRef{}, errDecommissioning
+	if err := buildable(service); err != nil {
+		return entities.ServiceRef{}, err
 	}
 	if service.ImageRepository == "" {
 		return entities.ServiceRef{}, errNoImage

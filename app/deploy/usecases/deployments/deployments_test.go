@@ -132,6 +132,17 @@ func Test_Deploy_Refusals(t *testing.T) {
 	}
 }
 
+func Test_ApplyConfig_RefusesASimulatedService(t *testing.T) {
+	store, usecase := setup("")
+
+	_, err := usecase.ApplyConfig(ctx, ana, "demo-shop", "dev")
+	active, _ := store.Active(ctx, "s4", "dev")
+
+	require.ErrorIs(t, err, apperror.Conflict(""))
+	require.Contains(t, err.Error(), "simulated")
+	require.Empty(t, active)
+}
+
 func Test_Deploy_SupersedesPendingButNotRunning(t *testing.T) {
 	store, usecase := setup("")
 	first, _ := usecase.Deploy(ctx, ana, deployments.Request{Service: "api", Environment: "dev", ReleaseID: "r1"})
