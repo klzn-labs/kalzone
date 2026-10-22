@@ -24,6 +24,8 @@ type Filter struct {
 	ActorID     string
 	TokenID     string
 	TeamIDs     []string
+	AllTeams    bool
+	ViewerID    string
 	Environment string
 	Before      *time.Time
 	BeforeID    string

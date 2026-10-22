@@ -43,15 +43,25 @@ func Test_Requests_RoundTrip(t *testing.T) {
 	require.ErrorIs(t, missing, apperror.NotFound(""))
 }
 
+func Test_Requests_ListWithoutTeamsFindsNothing(t *testing.T) {
+	repo := mysql.NewRequestRepository(testdb.Open(t))
+	require.NoError(t, repo.Create(ctx, request("c1", "t1", "deploy")))
+
+	none, err := repo.List(ctx, entities.Filter{Limit: 10})
+
+	require.NoError(t, err)
+	require.Empty(t, none)
+}
+
 func Test_Requests_ListFiltersByStatusAndTeams(t *testing.T) {
 	repo := mysql.NewRequestRepository(testdb.Open(t))
 	require.NoError(t, repo.Create(ctx, request("c1", "t1", "deploy")))
 	require.NoError(t, repo.Create(ctx, request("c2", "t2", "deploy")))
 	require.NoError(t, repo.Transition(ctx, request("c2", "t2", "deploy").Close(entities.StatusRejected, mia, "no", created), entities.StatusPending))
 
-	pending, _ := repo.List(ctx, entities.Filter{Status: entities.StatusPending, Limit: 10})
+	pending, _ := repo.List(ctx, entities.Filter{AllTeams: true, Status: entities.StatusPending, Limit: 10})
 	t2, _ := repo.List(ctx, entities.Filter{TeamIDs: []string{"t2"}, Limit: 10})
-	all, _ := repo.List(ctx, entities.Filter{Limit: 10})
+	all, _ := repo.List(ctx, entities.Filter{AllTeams: true, Limit: 10})
 
 	require.Len(t, pending, 1)
 	require.Equal(t, "c1", pending[0].ID)
@@ -120,9 +130,9 @@ func Test_Requests_ListContinuesAfterACreationTimeAndID(t *testing.T) {
 		require.NoError(t, repo.Create(ctx, request(id, "t1", "deploy")))
 	}
 
-	first, err := repo.List(ctx, entities.Filter{Limit: 2})
+	first, err := repo.List(ctx, entities.Filter{AllTeams: true, Limit: 2})
 	require.NoError(t, err)
-	rest, err := repo.List(ctx, entities.Filter{Before: &first[1].CreatedAt, BeforeID: first[1].ID, Limit: 2})
+	rest, err := repo.List(ctx, entities.Filter{AllTeams: true, Before: &first[1].CreatedAt, BeforeID: first[1].ID, Limit: 2})
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"c3", "c2"}, []string{first[0].ID, first[1].ID})
@@ -144,13 +154,13 @@ func Test_Requests_PagesAcrossRequestsStoredInTheSameMillisecond(t *testing.T) {
 		require.NoError(t, repo.Create(ctx, createdAt(id, base.Add(offset))))
 	}
 
-	first, err := repo.List(ctx, entities.Filter{Limit: 2})
+	first, err := repo.List(ctx, entities.Filter{AllTeams: true, Limit: 2})
 	require.NoError(t, err)
 	next, err := page.Parse("2", page.Encode(page.TimeKey(first[1].CreatedAt, first[1].ID)))
 	require.NoError(t, err)
 	before, beforeID, err := next.Time()
 	require.NoError(t, err)
-	rest, err := repo.List(ctx, entities.Filter{Before: before, BeforeID: beforeID, Limit: 3})
+	rest, err := repo.List(ctx, entities.Filter{AllTeams: true, Before: before, BeforeID: beforeID, Limit: 3})
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"c3", "c2"}, []string{first[0].ID, first[1].ID})
@@ -164,7 +174,7 @@ func Test_Requests_ListBeforeAnInstantWithoutAnID(t *testing.T) {
 	require.NoError(t, repo.Create(ctx, createdAt("c3", created.Add(time.Second))))
 	instant := created.Add(time.Second)
 
-	older, err := repo.List(ctx, entities.Filter{Before: &instant, Limit: 10})
+	older, err := repo.List(ctx, entities.Filter{AllTeams: true, Before: &instant, Limit: 10})
 
 	require.NoError(t, err)
 	require.Len(t, older, 1)
@@ -196,7 +206,7 @@ func Test_Requests_ListFiltersByService(t *testing.T) {
 	require.NoError(t, repo.Create(ctx, api))
 	require.NoError(t, repo.Create(ctx, web))
 
-	found, err := repo.List(ctx, entities.Filter{Status: entities.StatusPending, ServiceID: "s2", Limit: 10})
+	found, err := repo.List(ctx, entities.Filter{AllTeams: true, Status: entities.StatusPending, ServiceID: "s2", Limit: 10})
 
 	require.NoError(t, err)
 	require.Len(t, found, 1)
