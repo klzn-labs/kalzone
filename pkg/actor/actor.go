@@ -31,6 +31,7 @@ type Actor struct {
 	UserID   string
 	Login    string
 	Admin    bool
+	Guest    bool
 	Teams    []string
 	Token    Token
 	Approval Approval
