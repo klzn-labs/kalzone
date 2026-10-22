@@ -52,7 +52,7 @@ func databasesOf(attached []database.Database) []entities.Database {
 func live(all []catalog.Service) []catalog.Service {
 	result := make([]catalog.Service, 0, len(all))
 	for _, svc := range all {
-		if !svc.Decommissioning() {
+		if !svc.Decommissioning() && !svc.Simulated {
 			result = append(result, svc)
 		}
 	}

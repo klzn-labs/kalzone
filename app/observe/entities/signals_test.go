@@ -27,3 +27,30 @@ func Test_SignalQuery_ReadsTheServicesOwnContainersInOneEnvironment(t *testing.T
 	require.Contains(t, entities.SignalQuery(entities.SignalErrors, "places-api", "dev", time.Minute), `code=~"5.."`)
 	require.Contains(t, entities.SignalQuery(entities.SignalLatency, "places-api", "dev", time.Minute), "* 1000")
 }
+
+func Test_SyntheticSeries_IsDeterministicAndFillsTheWindow(t *testing.T) {
+	end := time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC)
+	w := entities.WindowNamed("6h")
+
+	first := entities.SyntheticSeries(entities.SignalRequests, "demo-shop-api-prod", w, end)
+	again := entities.SyntheticSeries(entities.SignalRequests, "demo-shop-api-prod", w, end)
+	other := entities.SyntheticSeries(entities.SignalRequests, "demo-mailer-prod", w, end)
+
+	require.Len(t, first, 72)
+	require.Equal(t, first, again)
+	require.NotEqual(t, first, other)
+	require.Equal(t, end, first[len(first)-1].At)
+	for _, s := range first {
+		require.GreaterOrEqual(t, s.Value, 0.0)
+	}
+}
+
+func Test_SyntheticLines_EndAtTheGivenTimeAndRespectTheLimit(t *testing.T) {
+	end := time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC)
+
+	lines := entities.SyntheticLines("demo-shop-api-dev", end, 10)
+
+	require.Len(t, lines, 10)
+	require.True(t, lines[9].At.Before(end))
+	require.Contains(t, lines[0].Line, "GET /api/products")
+}

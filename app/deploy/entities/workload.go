@@ -12,6 +12,7 @@ type ServiceRef struct {
 	OwnerTeamID     string
 	AutoDeployDev   bool
 	Decommissioning bool
+	Simulated       bool
 }
 
 type ReleaseRef struct {

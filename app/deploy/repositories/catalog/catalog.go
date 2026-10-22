@@ -36,7 +36,7 @@ func (l Lookup) FindServiceByID(ctx context.Context, id string) (entities.Servic
 }
 
 func serviceRef(s catalog.Service) entities.ServiceRef {
-	return entities.ServiceRef{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID, AutoDeployDev: s.AutoDeployDev, Decommissioning: s.Decommissioning()}
+	return entities.ServiceRef{ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID, AutoDeployDev: s.AutoDeployDev, Decommissioning: s.Decommissioning(), Simulated: s.Simulated}
 }
 
 func (l Lookup) EnvironmentExists(ctx context.Context, slug string) error {

@@ -22,6 +22,7 @@ type Service struct {
 	BuildWorkflow   string
 	Status          Status
 	Limits          Limits
+	Simulated       bool
 	CreatedAt       time.Time
 	DeletedAt       *time.Time
 }

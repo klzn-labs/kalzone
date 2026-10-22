@@ -77,4 +77,5 @@ type ServiceRef struct {
 	BuildWorkflow   string
 	AutoBuild       bool
 	Decommissioning bool
+	Simulated       bool
 }

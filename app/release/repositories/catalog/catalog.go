@@ -47,6 +47,6 @@ func toRef(s catalog.Service) entities.ServiceRef {
 	return entities.ServiceRef{
 		ID: s.ID, Slug: s.Slug, OwnerTeamID: s.OwnerTeamID, GitHubRepo: s.GitHubRepo,
 		ImageRepository: s.ImageRepository, BuildWorkflow: s.BuildWorkflow, AutoBuild: s.AutoBuild,
-		Decommissioning: s.Decommissioning(),
+		Decommissioning: s.Decommissioning(), Simulated: s.Simulated,
 	}
 }

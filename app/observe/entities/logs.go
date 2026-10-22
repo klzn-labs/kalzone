@@ -12,4 +12,5 @@ type LogSource struct {
 	ID          string
 	Slug        string
 	OwnerTeamID string
+	Simulated   bool
 }
