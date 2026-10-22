@@ -212,3 +212,12 @@ func Test_Sync_DoesNothingWithoutGrafanaOrTelemetry(t *testing.T) {
 	require.Len(t, off.orgs, 1)
 	require.Len(t, noTokens.orgs, 1)
 }
+
+func Test_Sync_LetsOnlyAdminsReadTheMainOrg(t *testing.T) {
+	g := newGrafana()
+	g.members[1]["bob"], g.members[1]["root"], g.members[1]["stranger"] = "Viewer", "Viewer", "Editor"
+
+	require.NoError(t, setup(g, places()).Sync(ctx, placesAPI))
+
+	require.Equal(t, map[string]string{"admin": "Admin", "bob": "None", "root": "Admin", "stranger": "None"}, g.members[1])
+}
