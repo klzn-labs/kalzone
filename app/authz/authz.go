@@ -64,6 +64,7 @@ type ProtectionReader interface {
 var (
 	errUnauthenticated = apperror.New(apperror.CodeUnauthenticated, "sign in first")
 	errForbidden       = apperror.Forbidden("you are not allowed to do this")
+	errReadOnlyDemo    = apperror.Forbidden("the demo is read-only").WithHint("sign in to change your own team's services")
 )
 
 type Publisher interface {
@@ -87,6 +88,9 @@ func (p Policy) Can(ctx context.Context, a actor.Actor, action Action, r Resourc
 func (p Policy) Gate(ctx context.Context, a actor.Actor, action Action, r Resource) (Gate, error) {
 	if !a.SignedIn() {
 		return "", errUnauthenticated
+	}
+	if a.Guest {
+		return "", errReadOnlyDemo
 	}
 	if err := p.ownerCan(ctx, a, action, r); err != nil {
 		return "", err

@@ -10,6 +10,7 @@ type MembershipReader interface {
 	Membership(ctx context.Context, teamID, userID string) (entities.Membership, bool, error)
 	MembershipsOfUser(ctx context.Context, userID string) ([]entities.Membership, error)
 	MembershipsOfTeam(ctx context.Context, teamID string) ([]entities.Membership, error)
+	DemoTeamIDs(ctx context.Context) ([]string, error)
 }
 
 type LocalTeamSource struct {
@@ -42,6 +43,14 @@ func (s LocalTeamSource) TeamIDsOf(ctx context.Context, userID string) ([]string
 		ids = append(ids, m.TeamID)
 	}
 	return ids, nil
+}
+
+func (s LocalTeamSource) VisibleTeamIDs(ctx context.Context, userID string) ([]string, error) {
+	mine, err := s.TeamIDsOf(ctx, userID)
+	if err != nil || len(mine) > 0 {
+		return mine, err
+	}
+	return s.memberships.DemoTeamIDs(ctx)
 }
 
 func (s LocalTeamSource) UserIDsIn(ctx context.Context, teamIDs []string) ([]string, error) {

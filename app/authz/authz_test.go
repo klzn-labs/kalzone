@@ -86,6 +86,16 @@ func checkRule(r rule, name string, person actor.Actor) func(t *testing.T) {
 	}
 }
 
+func Test_Policy_AGuestChangesNothingEvenItsTokens(t *testing.T) {
+	guest := actor.Actor{UserID: "g1", Login: "guest.demo", Guest: true, Teams: []string{"places"}}
+
+	deploy := policy.Can(context.Background(), guest, authz.Deploy, authz.Resource{TeamID: "places", Environment: "dev"})
+	tokens := policy.Can(context.Background(), guest, authz.ManageTokens, authz.Resource{})
+
+	require.ErrorIs(t, deploy, apperror.Forbidden(""))
+	require.ErrorIs(t, tokens, apperror.Forbidden(""))
+}
+
 func Test_Policy_RolesInAnotherTeamDoNotCount(t *testing.T) {
 	err := policy.Can(context.Background(), people["maintainer"], authz.EditService, authz.Resource{TeamID: "reviews"})
 

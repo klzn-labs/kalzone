@@ -19,7 +19,7 @@ func (u AgentsUsecase) Desired(ctx context.Context) ([]entities.Desired, error) 
 			continue
 		}
 		service, err := u.services.FindServiceByID(ctx, d.ServiceID)
-		if err != nil {
+		if err != nil || service.Simulated {
 			continue
 		}
 		desired = append(desired, entities.Desired{
