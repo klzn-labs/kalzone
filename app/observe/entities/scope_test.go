@@ -46,15 +46,15 @@ func Test_ScopeQuery_LetsTheSharedDatabaseContainerThrough(t *testing.T) {
 }
 
 func Test_ScopeQuery_EmptiesSelectorsWithoutAKnownMetricName(t *testing.T) {
-	require.Equal(t, `{__name__="kalzone:out_of_scope",service=~".+"}`, scoped(t, `{service=~".+"}`, teamA))
-	require.Equal(t, `{__name__="kalzone:out_of_scope",__name__=~"traefik.*"}`, scoped(t, `{__name__=~"traefik.*"}`, teamA))
-	require.Equal(t, `up{__name__="kalzone:out_of_scope"}`, scoped(t, `up`, teamA))
+	require.Equal(t, `{kalzone_out_of_scope="true",service=~".+"}`, scoped(t, `{service=~".+"}`, teamA))
+	require.Equal(t, `{__name__=~"traefik.*",kalzone_out_of_scope="true"}`, scoped(t, `{__name__=~"traefik.*"}`, teamA))
+	require.Equal(t, `up{kalzone_out_of_scope="true"}`, scoped(t, `up`, teamA))
 }
 
 func Test_ScopeQuery_EmptiesEverythingForATeamWithNoServices(t *testing.T) {
 	query := scoped(t, `traefik_service_requests_total`, entities.Scope{Environments: []string{"dev"}})
 
-	require.Equal(t, `traefik_service_requests_total{__name__="kalzone:out_of_scope"}`, query)
+	require.Equal(t, `traefik_service_requests_total{kalzone_out_of_scope="true"}`, query)
 }
 
 func Test_ScopeQuery_RejectsWhatIsNotPromQL(t *testing.T) {

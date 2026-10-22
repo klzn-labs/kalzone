@@ -63,5 +63,5 @@ func Test_ATeamWithoutServicesReadsNothing(t *testing.T) {
 	s.Raw(t, http.MethodGet, "/telemetry/other/prometheus/api/v1/query?query=container_memory_working_set_bytes", nil, telemetryAuth("other"))
 
 	query := s.Telemetry.Received()[0].Form.Get("query")
-	require.True(t, strings.Contains(query, `__name__="kalzone:out_of_scope"`), query)
+	require.True(t, strings.Contains(query, `kalzone_out_of_scope="true"`), query)
 }
