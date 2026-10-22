@@ -18,7 +18,7 @@ import (
 )
 
 type Services interface {
-	Get(ctx context.Context, slug string) (catalog.Service, error)
+	GetFor(ctx context.Context, a actor.Actor, slug string) (catalog.Service, error)
 	Update(ctx context.Context, a actor.Actor, slug string, c catalog.ServiceChanges) (catalog.Service, error)
 }
 
@@ -93,7 +93,7 @@ func (h ReleasesHandler) Show(c *gin.Context) {
 }
 
 func (h ReleasesHandler) build(ctx context.Context, a actor.Actor, slug string) (data, error) {
-	d, err := h.frame(ctx, slug)
+	d, err := h.frame(ctx, a, slug)
 	if err != nil {
 		return data{}, err
 	}
@@ -112,8 +112,8 @@ func (h ReleasesHandler) build(ctx context.Context, a actor.Actor, slug string) 
 	return d, nil
 }
 
-func (h ReleasesHandler) frame(ctx context.Context, slug string) (data, error) {
-	service, err := h.services.Get(ctx, slug)
+func (h ReleasesHandler) frame(ctx context.Context, a actor.Actor, slug string) (data, error) {
+	service, err := h.services.GetFor(ctx, a, slug)
 	if err != nil {
 		return data{}, err
 	}

@@ -23,6 +23,7 @@ type Services interface {
 
 type Teams interface {
 	List(ctx context.Context) ([]team.Team, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]team.Team, error)
 }
 
 type Platform interface {
@@ -81,7 +82,7 @@ func (h ServicesHandler) list(ctx context.Context, a actor.Actor) (listData, err
 	if err != nil {
 		return listData{}, err
 	}
-	teams, err := h.teams.List(ctx)
+	teams, err := h.teams.ListFor(ctx, a)
 	d.Sections, d.Total = sections(teams, statuses), len(statuses)
 	d.Broken, d.Deploying = counts(statuses)
 	return d, err
@@ -97,7 +98,7 @@ func (h ServicesHandler) catalog(ctx context.Context, a actor.Actor) (listData, 
 		return listData{}, nil, err
 	}
 	prod, _ := web.ProdEnvironment(envs)
-	platform, err := h.controlPlane(ctx)
+	platform, err := h.controlPlane(ctx, a)
 	return listData{Prod: prod, Platform: platform}, visible(a, all), err
 }
 
@@ -158,7 +159,10 @@ func counts(statuses []web.ServiceStatus) (int, int) {
 	return broken, deploying
 }
 
-func (h ServicesHandler) controlPlane(ctx context.Context) (*deploy.PlatformComponent, error) {
+func (h ServicesHandler) controlPlane(ctx context.Context, a actor.Actor) (*deploy.PlatformComponent, error) {
+	if !a.Admin {
+		return nil, nil
+	}
 	c, err := h.platform.Component(ctx, deploy.PlatformControlPlane)
 	if apperror.CodeOf(err) == apperror.CodeNotFound {
 		return nil, nil

@@ -47,7 +47,7 @@ func Test_ConfigSearchNarrowsAndRefusesTeamsTheTokenLacks(t *testing.T) {
 	var money page[matchView]
 	var refused, badKey apiError
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/config/search?key=LOG_LEVEL&team=money&env=dev", nil, http.StatusOK, &money)
+	p.root.MustJSON(t, http.MethodGet, "/api/v1/config/search?key=LOG_LEVEL&team=money&env=dev", nil, http.StatusOK, &money)
 	reader.MustJSON(t, http.MethodGet, "/api/v1/config/search?key=LOG_LEVEL&team=money", nil, http.StatusForbidden, &refused)
 	reader.MustJSON(t, http.MethodGet, "/api/v1/config/search?key=log.level", nil, http.StatusBadRequest, &badKey)
 

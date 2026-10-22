@@ -65,7 +65,7 @@ func Test_ABuildGoesFromRequestToBuilt(t *testing.T) {
 	require.Equal(t, http.StatusOK, started.Status, started.Body)
 	require.Equal(t, http.StatusOK, built.Status, built.Body)
 	var stored release
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/releases/"+rel.ID, nil, http.StatusOK, &stored)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/releases/"+rel.ID, nil, http.StatusOK, &stored)
 	require.Equal(t, "built", stored.Status)
 	require.Equal(t, "docker.io/adrianozdp/places-api@"+digest, stored.Reference)
 	require.Equal(t, runURL, stored.RunURL)

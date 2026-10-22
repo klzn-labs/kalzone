@@ -81,7 +81,7 @@ type published struct{ events []events.Event }
 
 func (p *published) Publish(_ context.Context, e events.Event) { p.events = append(p.events, e) }
 
-var maintainer = actor.Actor{UserID: "mia", Login: "mia"}
+var maintainer = actor.Actor{UserID: "mia", Login: "mia", Teams: []string{"t1"}}
 var admin = actor.Actor{UserID: "root", Login: "root", Admin: true}
 
 func setup(roles map[string]entities.Role, err error) (*store, *published, members.MembersUsecase) {
@@ -151,11 +151,19 @@ func Test_Remove_SomeoneWhoIsNotAMemberIsNotFound(t *testing.T) {
 func Test_List_ResolvesUsers(t *testing.T) {
 	_, _, usecase := setup(map[string]entities.Role{"mia": entities.RoleMaintainer}, nil)
 
-	list, err := usecase.List(ctx, "places")
+	list, err := usecase.List(ctx, maintainer, "places")
 
 	require.NoError(t, err)
 	require.Equal(t, "mia", list[0].User.Login)
 	require.Equal(t, entities.RoleMaintainer, list[0].Role)
+}
+
+func Test_List_HidesATeamFromAnOutsider(t *testing.T) {
+	_, _, usecase := setup(map[string]entities.Role{"mia": entities.RoleMaintainer}, nil)
+
+	_, err := usecase.List(ctx, actor.Actor{UserID: "zed", Login: "zed"}, "places")
+
+	require.ErrorIs(t, err, apperror.NotFound(""))
 }
 
 func Test_AnAdminsTokenCannotRemoveTheLastMaintainer(t *testing.T) {

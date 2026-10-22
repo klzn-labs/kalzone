@@ -5,8 +5,14 @@
     <h1>Overview</h1>
     <p class="lead">{{template "finding" $d}}</p>
   </div>
-  <div class="actions"><a class="btn" href="/services/new">{{icon "plus"}}New service</a></div>
+  {{if not $d.Newcomer}}<div class="actions"><a class="btn" href="/services/new">{{icon "plus"}}New service</a></div>{{end}}
 </div>
+
+{{if $d.Newcomer}}
+<section class="card" aria-labelledby="newcomer-title" style="margin-bottom:16px">
+  <div class="empty"><div class="empty-icon">{{icon "users"}}</div><h3 id="newcomer-title">You're not on a team yet</h3><p>Kalzone shows the services, releases and activity of the teams you belong to. Ask a team maintainer to add you as <b class="mono">@{{$d.Login}}</b>.</p></div>
+</section>
+{{end}}
 
 <div class="overview">
   <section class="card span-7" aria-labelledby="waiting-title">
@@ -57,10 +63,10 @@
   {{end}}
 
   <section class="card {{if $d.To.Slug}}span-4{{else}}span-12{{end}}" aria-labelledby="platform-title">
-    <div class="card-header"><h2 id="platform-title">Platform</h2><a class="small" href="/agents">Agents</a></div>
+    <div class="card-header"><h2 id="platform-title">Platform</h2>{{if $d.IsAdmin}}<a class="small" href="/agents">Agents</a>{{end}}</div>
     <dl class="facts">
-      {{range $d.Agents}}<div><dt>Agent</dt><dd><span class="row"><span class="dot {{if .Healthy}}dot-ok{{else}}dot-bad{{end}}"></span>{{.Agent.Name}}</span><small>{{if .Healthy}}seen {{ago .Agent.LastSeenAt}}{{else}}silent since {{ago .Agent.LastSeenAt}}{{end}}</small></dd></div>
-      {{else}}<div><dt>Agent</dt><dd class="muted">None has reported yet</dd></div>{{end}}
+      {{if $d.IsAdmin}}{{range $d.Agents}}<div><dt>Agent</dt><dd><span class="row"><span class="dot {{if .Healthy}}dot-ok{{else}}dot-bad{{end}}"></span>{{.Agent.Name}}</span><small>{{if .Healthy}}seen {{ago .Agent.LastSeenAt}}{{else}}silent since {{ago .Agent.LastSeenAt}}{{end}}</small></dd></div>
+      {{else}}<div><dt>Agent</dt><dd class="muted">None has reported yet</dd></div>{{end}}{{end}}
       <div><dt>Environments</dt><dd>{{range $i, $e := $d.Environments}}{{if $i}}, {{end}}{{$e.Name}}{{end}}{{if $d.To.Slug}}<small>{{$d.To.Name}} needs approval</small>{{end}}</dd></div>
       <div><dt>Services</dt><dd>{{$d.Services}}</dd></div>
       <div><dt>Teams</dt><dd>{{$d.Teams}}</dd></div>

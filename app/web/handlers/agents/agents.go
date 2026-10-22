@@ -9,6 +9,7 @@ import (
 	deploy "github.com/klzn-labs/kalzone/app/deploy/entities"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
@@ -33,6 +34,10 @@ func NewAgentsHandler(renderer *web.Renderer, agents Agents) AgentsHandler {
 }
 
 func (h AgentsHandler) Show(c *gin.Context) {
+	if !requestctx.ActorFrom(c).Admin {
+		web.ErrorPage(c, h.renderer, web.ErrAdminsOnly)
+		return
+	}
 	list, err := h.agents.Agents(c.Request.Context())
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)

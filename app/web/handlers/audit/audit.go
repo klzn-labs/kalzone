@@ -11,12 +11,14 @@ import (
 	team "github.com/klzn-labs/kalzone/app/team/entities"
 	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
+	"github.com/klzn-labs/kalzone/internal/requestctx"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
 const pageSize = 30
 
 type Events interface {
-	List(ctx context.Context, filter entities.Filter) ([]entities.Event, error)
+	ListFor(ctx context.Context, a actor.Actor, filter entities.Filter) ([]entities.Event, error)
 }
 
 type FilterResolver interface {
@@ -24,11 +26,11 @@ type FilterResolver interface {
 }
 
 type Teams interface {
-	List(ctx context.Context) ([]team.Team, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]team.Team, error)
 }
 
 type Services interface {
-	List(ctx context.Context, filter catalog.ServiceFilter) ([]catalog.Service, error)
+	ListFor(ctx context.Context, a actor.Actor, teamSlug string) ([]catalog.Service, error)
 }
 
 type data struct {
@@ -54,7 +56,7 @@ func NewAuditHandler(renderer *web.Renderer, views web.Views, events Events, res
 }
 
 func (h AuditHandler) Show(c *gin.Context) {
-	d, err := h.build(c.Request.Context(), queryFrom(c))
+	d, err := h.build(c.Request.Context(), requestctx.ActorFrom(c), queryFrom(c))
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)
 		return
@@ -62,8 +64,8 @@ func (h AuditHandler) Show(c *gin.Context) {
 	h.renderer.Render(c, http.StatusOK, "audit", web.Page{Title: "Audit log", Nav: "audit", Data: d})
 }
 
-func (h AuditHandler) build(ctx context.Context, q entities.Query) (data, error) {
-	d, err := h.options(ctx)
+func (h AuditHandler) build(ctx context.Context, a actor.Actor, q entities.Query) (data, error) {
+	d, err := h.options(ctx, a)
 	if err != nil {
 		return data{}, err
 	}
@@ -72,7 +74,7 @@ func (h AuditHandler) build(ctx context.Context, q entities.Query) (data, error)
 	if err != nil {
 		return d, nil
 	}
-	events, err := h.events.List(ctx, filter)
+	events, err := h.events.ListFor(ctx, a, filter)
 	d.Activity = web.ActivityFrom(events)
 	if len(events) == pageSize {
 		d.Older = events[len(events)-1].At.Format(time.RFC3339Nano)
@@ -80,12 +82,12 @@ func (h AuditHandler) build(ctx context.Context, q entities.Query) (data, error)
 	return d, err
 }
 
-func (h AuditHandler) options(ctx context.Context) (data, error) {
-	teams, err := h.teams.List(ctx)
+func (h AuditHandler) options(ctx context.Context, a actor.Actor) (data, error) {
+	teams, err := h.teams.ListFor(ctx, a)
 	if err != nil {
 		return data{}, err
 	}
-	services, err := h.services.List(ctx, catalog.ServiceFilter{})
+	services, err := h.services.ListFor(ctx, a, "")
 	if err != nil {
 		return data{}, err
 	}

@@ -80,7 +80,7 @@ func Test_OnboardingPassesWhenTheRepositoryIsReady(t *testing.T) {
 	readyRepository(t, s, p)
 	var report onboardingReport
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/services/places-api/onboarding", nil, http.StatusOK, &report)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/services/places-api/onboarding", nil, http.StatusOK, &report)
 
 	require.True(t, report.Ready, report.statuses())
 	require.Len(t, report.Checks, 5)
@@ -92,7 +92,7 @@ func Test_OnboardingSaysWhatIsMissing(t *testing.T) {
 	s.GitHub.Uninstall(repo)
 	var report onboardingReport
 
-	p.eve.MustJSON(t, http.MethodGet, "/api/v1/services/places-api/onboarding", nil, http.StatusOK, &report)
+	p.bob.MustJSON(t, http.MethodGet, "/api/v1/services/places-api/onboarding", nil, http.StatusOK, &report)
 
 	require.False(t, report.Ready)
 	require.Equal(t, map[string]string{"github_app": "failed", "workflow": "skipped", "dockerfile": "skipped", "registry": "failed", "config": "ok"}, report.statuses())
@@ -119,7 +119,7 @@ func Test_AnOnboardingPullRequestAddsTheWorkflow(t *testing.T) {
 	require.Len(t, s.GitHub.Pulls(repo), 1)
 	require.True(t, written)
 	require.Contains(t, workflow, "uses: "+integration.BuildWorkflow+"@main")
-	require.Equal(t, http.StatusForbidden, refused.Status, refused.Body)
+	require.Equal(t, http.StatusNotFound, refused.Status, refused.Body)
 }
 
 func Test_AServiceWithTheWorkflowGetsNoOnboardingPullRequest(t *testing.T) {

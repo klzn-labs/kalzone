@@ -27,11 +27,11 @@ func NewGrafanaProxy(cfg config.Config) (GrafanaProxy, error) {
 }
 
 func (p GrafanaProxy) Serve(c *gin.Context) {
-	if p.target == nil {
+	viewer := requestctx.ViewerFrom(c)
+	if p.target == nil || !viewer.Actor.Admin {
 		c.String(http.StatusNotFound, "observability is not connected")
 		return
 	}
-	viewer := requestctx.ViewerFrom(c)
 	proxy := &httputil.ReverseProxy{Rewrite: func(r *httputil.ProxyRequest) {
 		r.Out.URL.Scheme, r.Out.URL.Host, r.Out.Host = p.target.Scheme, p.target.Host, p.target.Host
 		identify(r.Out.Header, viewer)

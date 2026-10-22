@@ -23,7 +23,7 @@ type DatabaseSection interface {
 }
 
 type QueueSection interface {
-	Rows(ctx context.Context, environment string) ([]queues.Row, error)
+	Rows(ctx context.Context, a actor.Actor, environment string) ([]queues.Row, error)
 }
 
 type Section struct {
@@ -65,7 +65,7 @@ func (h ResourcesHandler) List(c *gin.Context) {
 func (h ResourcesHandler) sections(ctx context.Context, a actor.Actor, environment, kind string) ([]Section, error) {
 	sections := []Section{}
 	if kind == "" || kind == queueKind {
-		section, err := h.queueSection(ctx, environment)
+		section, err := h.queueSection(ctx, a, environment)
 		if err != nil {
 			return nil, err
 		}
@@ -89,8 +89,8 @@ func (h ResourcesHandler) databaseSection(ctx context.Context, a actor.Actor, en
 	return Section{Kind: databaseKind, Title: "Databases", Noun: "database", NewHref: "/resources/new/database", Count: len(rows), Databases: rows}, nil
 }
 
-func (h ResourcesHandler) queueSection(ctx context.Context, environment string) (Section, error) {
-	rows, err := h.queues.Rows(ctx, environment)
+func (h ResourcesHandler) queueSection(ctx context.Context, a actor.Actor, environment string) (Section, error) {
+	rows, err := h.queues.Rows(ctx, a, environment)
 	if err != nil {
 		return Section{}, err
 	}

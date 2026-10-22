@@ -14,12 +14,12 @@ import (
 )
 
 type Teams interface {
-	List(ctx context.Context) ([]team.Team, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]team.Team, error)
 	Create(ctx context.Context, a actor.Actor, slug, name string) (team.Team, error)
 }
 
 type Members interface {
-	List(ctx context.Context, teamSlug string) ([]team.Member, error)
+	List(ctx context.Context, a actor.Actor, teamSlug string) ([]team.Member, error)
 }
 
 type Services interface {
@@ -60,7 +60,7 @@ func (h TeamsHandler) List(c *gin.Context) {
 }
 
 func (h TeamsHandler) cards(ctx context.Context, a actor.Actor) ([]TeamCard, error) {
-	teams, err := h.teams.List(ctx)
+	teams, err := h.teams.ListFor(ctx, a)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (h TeamsHandler) cards(ctx context.Context, a actor.Actor) ([]TeamCard, err
 	}
 	cards := make([]TeamCard, 0, len(teams))
 	for _, t := range teams {
-		members, err := h.members.List(ctx, t.Slug)
+		members, err := h.members.List(ctx, a, t.Slug)
 		if err != nil {
 			return nil, err
 		}

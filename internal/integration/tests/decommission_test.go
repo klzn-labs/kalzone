@@ -86,8 +86,8 @@ func Test_TheLastSuccessfulRemovalFinishesTheDeletion(t *testing.T) {
 	startDeleting(t, p.mia, "places-api")
 
 	runToSuccess(t, s)
-	gone := p.eve.Do(t, http.MethodGet, "/api/v1/services/places-api", nil)
-	queues := p.eve.Do(t, http.MethodGet, "/api/v1/queues", nil)
+	gone := p.bob.Do(t, http.MethodGet, "/api/v1/services/places-api", nil)
+	queues := p.bob.Do(t, http.MethodGet, "/api/v1/queues", nil)
 	desired := s.Agent(t, http.MethodGet, agentapi.DesiredPath, nil)
 	reused := p.bob.Do(t, http.MethodPost, "/api/v1/services", map[string]string{"slug": "places-api", "name": "Places API again", "owner_team": "places"})
 

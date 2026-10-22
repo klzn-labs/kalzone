@@ -34,7 +34,7 @@ var pages = map[string]string{
 	"/teams/places":                 "@bob",
 	"/audit":                        "changed the config of",
 	"/audit?team=places":            "created service",
-	"/people":                       "@eve",
+	"/people":                       "@bob",
 }
 
 func Test_EveryPageRenders(t *testing.T) {
@@ -110,11 +110,13 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 	spoofed := s.Raw(t, http.MethodGet, "/grafana/api/user", nil, map[string]string{"X-WEBAUTH-USER": "root"})
 	member := p.bob.Do(t, http.MethodGet, "/grafana/api/user", nil)
 	admin := p.root.Do(t, http.MethodGet, "/grafana/api/user", nil)
-	page := p.bob.Do(t, http.MethodGet, "/services/places-api/env/dev", nil)
+	page := p.root.Do(t, http.MethodGet, "/services/places-api/env/dev", nil)
+	memberPage := p.bob.Do(t, http.MethodGet, "/services/places-api/env/dev", nil)
 
 	require.Equal(t, http.StatusSeeOther, anonymous.Status)
 	require.Contains(t, spoofed.Body, "Continue with GitHub")
-	require.JSONEq(t, `{"path":"/grafana/api/user","user":"bob","role":"Viewer"}`, member.Body)
+	require.Equal(t, http.StatusNotFound, member.Status)
+	require.NotContains(t, memberPage.Body, "/grafana/")
 	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":"Admin"}`, admin.Body)
 	require.True(t, s.Grafana.Dashboards()["platform-places-api"])
 	require.Contains(t, page.Body, "/grafana/d-solo/platform-places-api?orgId=1&panelId=1&var-env=dev")
@@ -127,7 +129,7 @@ func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {
 	createReviews(t, p)
 	p.root.MustJSON(t, http.MethodPost, "/api/v1/services", reviewsService(), http.StatusCreated, nil)
 
-	body := p.mia.Do(t, http.MethodGet, "/services", nil).Body
+	body := p.root.Do(t, http.MethodGet, "/services", nil).Body
 	order := []int{
 		strings.Index(body, `data-team="places"`), strings.Index(body, `href="/services/places-api"`),
 		strings.Index(body, `data-team="reviews"`), strings.Index(body, `href="/services/reviews-api"`),
@@ -137,13 +139,16 @@ func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {
 	require.IsIncreasing(t, order)
 }
 
-func Test_TeamPageSuggestsSignedInPeopleToAdd(t *testing.T) {
+func Test_TeamPageSuggestsOnlyPeopleWhoShareATeam(t *testing.T) {
 	_, p := setupPlaces(t)
 
 	page := p.mia.Do(t, http.MethodGet, "/teams/places", nil)
+	everyone := p.root.Do(t, http.MethodGet, "/teams/places", nil)
 
 	require.Contains(t, page.Body, `list="member-logins"`)
-	require.Contains(t, page.Body, `<option value="eve">`)
+	require.Contains(t, page.Body, `<option value="bob">`)
+	require.NotContains(t, page.Body, `<option value="eve">`)
+	require.Contains(t, everyone.Body, `<option value="eve">`)
 }
 
 func Test_EveryPageCanSwitchTheme(t *testing.T) {

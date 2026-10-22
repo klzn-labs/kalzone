@@ -29,11 +29,11 @@ type Services interface {
 }
 
 type Teams interface {
-	List(ctx context.Context) ([]team.Team, error)
+	ListFor(ctx context.Context, a actor.Actor) ([]team.Team, error)
 }
 
 type Events interface {
-	List(ctx context.Context, filter audit.Filter) ([]audit.Event, error)
+	ListFor(ctx context.Context, a actor.Actor, filter audit.Filter) ([]audit.Event, error)
 }
 
 type Requests interface {
@@ -79,6 +79,9 @@ type data struct {
 	Environments []catalog.Environment
 	Services     int
 	Teams        int
+	IsAdmin      bool
+	Newcomer     bool
+	Login        string
 }
 
 type OverviewHandler struct {
@@ -101,7 +104,7 @@ func (h OverviewHandler) Show(c *gin.Context) {
 }
 
 func (h OverviewHandler) build(ctx context.Context, a actor.Actor) (data, error) {
-	d := data{}
+	d := data{IsAdmin: a.Admin, Newcomer: !a.Admin && len(a.Teams) == 0, Login: a.Login}
 	for _, step := range []func(context.Context, actor.Actor, *data) error{h.addRequests, h.addActivity, h.addLanes, h.addDeploys, h.addPlatform} {
 		if err := step(ctx, a, &d); err != nil {
 			return data{}, err
@@ -134,8 +137,8 @@ func firstOf[T any](items []T, n int) []T {
 	return items[:min(n, len(items))]
 }
 
-func (h OverviewHandler) addActivity(ctx context.Context, _ actor.Actor, d *data) error {
-	events, err := h.deps.Events.List(ctx, audit.Filter{Limit: activityShown})
+func (h OverviewHandler) addActivity(ctx context.Context, a actor.Actor, d *data) error {
+	events, err := h.deps.Events.ListFor(ctx, a, audit.Filter{Limit: activityShown})
 	d.Activity = web.ActivityFrom(events)
 	return err
 }
@@ -218,16 +221,23 @@ func (h OverviewHandler) addDeploys(ctx context.Context, a actor.Actor, d *data)
 	return err
 }
 
-func (h OverviewHandler) addPlatform(ctx context.Context, _ actor.Actor, d *data) error {
-	agents, err := h.deps.Agents.Agents(ctx)
-	if err != nil {
+func (h OverviewHandler) addPlatform(ctx context.Context, a actor.Actor, d *data) error {
+	if err := h.addAgents(ctx, a, d); err != nil {
 		return err
 	}
+	teams, err := h.deps.Teams.ListFor(ctx, a)
+	d.Teams = len(teams)
+	return err
+}
+
+func (h OverviewHandler) addAgents(ctx context.Context, a actor.Actor, d *data) error {
+	if !a.Admin {
+		return nil
+	}
+	agents, err := h.deps.Agents.Agents(ctx)
 	for _, ag := range agents {
 		d.Agents = append(d.Agents, AgentState{Agent: ag, Healthy: clock.Now().Sub(ag.LastSeenAt) < healthyWithin})
 	}
-	teams, err := h.deps.Teams.List(ctx)
-	d.Teams = len(teams)
 	return err
 }
 

@@ -79,10 +79,10 @@ func requireSucceededWithoutSecrets(t *testing.T, p people, deploymentID string)
 	var history struct {
 		Deployments []deploymentView `json:"items"`
 	}
-	list := p.eve.MustJSON(t, http.MethodGet, "/api/v1/deployments?service=places-api&env=dev", nil, http.StatusOK, &history)
+	list := p.bob.MustJSON(t, http.MethodGet, "/api/v1/deployments?service=places-api&env=dev", nil, http.StatusOK, &history)
 	require.Equal(t, "succeeded", history.Deployments[0].Status)
 	require.NotContains(t, list.Body, secretValue)
-	detail := p.eve.Do(t, http.MethodGet, "/api/v1/deployments/"+deploymentID, nil)
+	detail := p.bob.Do(t, http.MethodGet, "/api/v1/deployments/"+deploymentID, nil)
 	require.Contains(t, detail.Body, `"message":"pulling"`)
 }
 
@@ -143,7 +143,7 @@ func Test_TheEnvironmentPageDeploysPromotesAndRollsBack(t *testing.T) {
 	live := p.bob.Do(t, http.MethodGet, dev, nil)
 	prodPage := p.mia.Do(t, http.MethodGet, "/services/places-api/env/prod", nil)
 	promoted := p.mia.Form(t, "/services/places-api/env/prod/promotions", url.Values{"_csrf": {p.mia.CSRFToken}, "from": {"dev"}})
-	agentsPage := p.eve.Do(t, http.MethodGet, "/agents", nil)
+	agentsPage := p.root.Do(t, http.MethodGet, "/agents", nil)
 
 	require.Equal(t, http.StatusNoContent, queued.Status, queued.Body)
 	require.Contains(t, running.Body, "Waiting for an agent")

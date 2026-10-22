@@ -103,7 +103,7 @@ func Test_TheGatewaySeesDesiredQueuesAndReportsStats(t *testing.T) {
 	desired := s.Queued(t, http.MethodGet, "/queued/v1/desired", nil)
 	reported := s.Queued(t, http.MethodPost, "/queued/v1/stats", map[string]any{"stats": []map[string]any{{"queue_id": q.ID, "depth": 7}}})
 	anonymous := s.Raw(t, http.MethodGet, "/queued/v1/desired", nil, nil)
-	stats := devQueueStats(t, p.eve)
+	stats := devQueueStats(t, p.bob)
 
 	require.Equal(t, http.StatusOK, empty.Status, empty.Body)
 	require.Contains(t, empty.Body, `"queues":[]`)
