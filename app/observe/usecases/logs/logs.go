@@ -3,7 +3,6 @@ package logs
 import (
 	"context"
 	"regexp"
-	"slices"
 	"strconv"
 	"time"
 
@@ -12,8 +11,6 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/actor"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 )
-
-const errorLines = `(?i)(error|panic|fatal|exception|\s5\d\d\s)`
 
 type Services interface {
 	FindService(ctx context.Context, slug string) (entities.LogSource, error)
@@ -54,12 +51,7 @@ func (u LogsUsecase) Read(ctx context.Context, a actor.Actor, serviceSlug, envir
 }
 
 func simulatedLines(workload string, end time.Time, q Query) []entities.LogLine {
-	lines := entities.SyntheticLines(workload, end, q.Limit)
-	if !q.Errors {
-		return lines
-	}
-	pattern := regexp.MustCompile(errorLines)
-	return slices.DeleteFunc(lines, func(l entities.LogLine) bool { return !pattern.MatchString(l.Line) })
+	return entities.SyntheticLines(workload, end, q.Limit)
 }
 
 func logQL(serviceSlug, environment string, q Query) string {
@@ -68,7 +60,7 @@ func logQL(serviceSlug, environment string, q Query) string {
 		colour = q.Colour
 	}
 	selector := "{container=~" + strconv.Quote(regexp.QuoteMeta(serviceSlug+"-"+environment)+"-"+colour) + "}"
-	return selector + contains(q.Contains) + errorsOnly(q.Errors)
+	return selector + contains(q.Contains)
 }
 
 func contains(text string) string {
@@ -76,11 +68,4 @@ func contains(text string) string {
 		return ""
 	}
 	return " |= " + strconv.Quote(text)
-}
-
-func errorsOnly(errors bool) string {
-	if !errors {
-		return ""
-	}
-	return " |~ " + strconv.Quote(errorLines)
 }

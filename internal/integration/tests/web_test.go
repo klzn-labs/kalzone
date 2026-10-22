@@ -110,16 +110,11 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 	spoofed := s.Raw(t, http.MethodGet, "/grafana/api/user", nil, map[string]string{"X-WEBAUTH-USER": "root"})
 	member := p.bob.Do(t, http.MethodGet, "/grafana/api/user", nil)
 	admin := p.root.Do(t, http.MethodGet, "/grafana/api/user", nil)
-	page := p.root.Do(t, http.MethodGet, "/services/places-api/env/dev", nil)
-	memberPage := p.bob.Do(t, http.MethodGet, "/services/places-api/env/dev", nil)
 
 	require.Equal(t, http.StatusSeeOther, anonymous.Status)
 	require.Contains(t, spoofed.Body, "Continue with GitHub")
-	require.Equal(t, http.StatusNotFound, member.Status)
-	require.NotContains(t, memberPage.Body, "/grafana/")
+	require.JSONEq(t, `{"path":"/grafana/api/user","user":"bob","role":""}`, member.Body)
 	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":"Admin"}`, admin.Body)
-	require.True(t, s.Grafana.Dashboards()["platform-places-api"])
-	require.Contains(t, page.Body, "/services/places-api/env/dev/observability")
 }
 
 func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {

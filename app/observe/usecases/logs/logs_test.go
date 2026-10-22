@@ -95,16 +95,6 @@ func Test_Read_FiltersByColourAndQuotedText(t *testing.T) {
 	require.Equal(t, now.Add(-2*time.Hour), l.start)
 }
 
-func Test_Read_KeepsOnlyErrorLinesWhenAsked(t *testing.T) {
-	l, u := setup(&policy{})
-	t.Cleanup(func() { clock.Clock = nil })
-
-	_, err := u.Read(ctx, ana, "api", "dev", logs.Query{Since: time.Hour, Limit: 50, Errors: true})
-
-	require.NoError(t, err)
-	require.Equal(t, `loki {container=~"api-dev-(blue|green)"} |~ "(?i)(error|panic|fatal|exception|\\s5\\d\\d\\s)"`, l.query)
-}
-
 func Test_Read_EscapesTheEnvironmentInTheSelector(t *testing.T) {
 	l, u := setup(&policy{})
 	t.Cleanup(func() { clock.Clock = nil })
@@ -147,10 +137,8 @@ func Test_Read_InventsLinesForASimulatedServiceWithoutAskingLoki(t *testing.T) {
 
 	guest := actor.Actor{UserID: "g1", Guest: true, Teams: []string{"t1"}}
 	lines, err := u.Read(ctx, guest, "demo-shop", "dev", logs.Query{Since: time.Hour, Limit: 20})
-	errorsOnly, _ := u.Read(ctx, guest, "demo-shop", "dev", logs.Query{Since: time.Hour, Limit: 20, Errors: true})
 
 	require.NoError(t, err)
 	require.Len(t, lines, 20)
-	require.Empty(t, errorsOnly)
 	require.Empty(t, l.query)
 }

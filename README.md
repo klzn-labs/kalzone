@@ -22,9 +22,9 @@ API on the same usecases. Design documents live in `docs/superpowers/specs`.
   environment; promote dev to prod, apply new config, roll back to any earlier
   success. An agent on the host claims deployments, rolls them out with deployctl
   and reports drift, which the platform turns into a reconcile deployment
-- Observability: Grafana behind the platform's sign-in at `/grafana`, a dashboard
-  per service written through Grafana's API, and its panels embedded in each
-  environment tab (metrics from Prometheus, logs from Loki)
+- Observability: Grafana behind the platform's sign-in at `/grafana`, one Grafana org
+  per team holding its members, its services' dashboards and datasources that read
+  only its own metrics and logs, and those panels embedded in each environment tab
 - Releases: immutable, digest-pinned images. The platform triggers builds in GitHub
   Actions through a GitHub App, builds report back with a GitHub OIDC token, and
   third-party images are registered by tag
@@ -77,9 +77,11 @@ as a callback URL.
 | `PLATFORM_BUILD_TIMEOUT` | `60m` | builds still running after this are marked failed |
 | `PLATFORM_AGENT_TOKEN` | | shared secret agents authenticate with; agents are refused without it |
 | `PLATFORM_GRAFANA_URL` | | Grafana inside the network, e.g. `http://grafana:3000/grafana`; proxied at `/grafana` with single sign-on |
-| `PLATFORM_GRAFANA_TOKEN` | | Grafana service-account token (Editor) the platform writes dashboards with |
+| `PLATFORM_GRAFANA_ADMIN_USER` | | Grafana server admin the platform manages orgs, people, datasources and dashboards as |
+| `PLATFORM_GRAFANA_ADMIN_PASSWORD` | | Its password |
 | `PLATFORM_TELEMETRY_KEY` | | Signs each team's telemetry token; without it `/telemetry` answers 503 |
 | `PLATFORM_TELEMETRY_ALL_TOKEN` | | Bearer token of the `all` scope, which Grafana's main org reads every Loki tenant with |
+| `PLATFORM_TELEMETRY_INTERNAL_URL` | `http://controlplane:8080` | Where Grafana reaches the control plane's `/telemetry` |
 | `PLATFORM_TELEMETRY_PROMETHEUS_URL` | `http://prometheus:9090` | Prometheus the team telemetry filter reads |
 | `PLATFORM_TELEMETRY_LOKI_URL` | `http://loki:3100` | Loki the team telemetry filter reads, with one tenant per service and environment |
 | `PLATFORM_DEPLOY_TIMEOUT` | `30m` | deployments an agent stopped reporting on are failed after this |
@@ -222,6 +224,14 @@ claude mcp add --transport http kalzone https://platform.kalz.one/mcp \
   set to the team's tenants (`<service>-<env>`). `PLATFORM_TELEMETRY_ALL_TOKEN` opens
   the `all` scope, which reads every Loki tenant plus `platform` and `fake`, and no
   Prometheus.
+- Every team has a Grafana org `team-<slug>`. Its members are Viewers and platform
+  admins are Admins in every org; it holds the team's service dashboards and
+  `prometheus`/`loki` datasources pointing at the team's `/telemetry`. The demo team's
+  services live in one `demo` org on Grafana's TestData, open to the guest and to people
+  on no team. The main org keeps every dashboard for admins. The dashboards worker
+  writes all of it at start, every 5 minutes, and on team, membership and admin
+  changes, and it deletes `team-*` orgs whose team is gone. A proxied non-admin sends
+  no role, so Grafana's `None` default keeps them out of the main org.
 
 ## Onboarding a service
 

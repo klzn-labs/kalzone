@@ -1,9 +1,11 @@
 package tests
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/klzn-labs/kalzone/internal/integration"
 	"github.com/klzn-labs/kalzone/pkg/agentapi"
@@ -56,16 +58,26 @@ func Test_TheDemoTeachesWhatWouldHappenInYourOwnTeam(t *testing.T) {
 
 	prod := guest.Do(t, http.MethodGet, "/services/demo-shop-api/env/prod", nil)
 	releases := guest.Do(t, http.MethodGet, "/services/demo-shop-api/releases", nil)
-	card := guest.Do(t, http.MethodGet, "/services/demo-shop-api/env/prod/observability", nil)
 
 	require.Equal(t, http.StatusOK, prod.Status)
 	require.Contains(t, prod.Body, "opens a change request that a maintainer approves")
 	require.NotContains(t, prod.Body, `action="/services/demo-shop-api/env/prod/deployments"`)
 	require.Contains(t, releases.Body, "In your own team, Build runs")
 	require.Contains(t, releases.Body, "r18")
-	require.Equal(t, http.StatusOK, card.Status)
-	require.Contains(t, card.Body, "p95 latency")
-	require.NotContains(t, card.Body, "No data in this window")
+}
+
+func Test_TheDemoEmbedsGrafanasDemoOrgOfTestData(t *testing.T) {
+	s, _ := setupDemo(t)
+	guest := s.Guest(t)
+	org := orgOf(t, s, "demo")
+	require.Eventually(t, func() bool { return s.Grafana.OrgDashboards(org)["platform-demo-shop-api"] }, 5*time.Second, 50*time.Millisecond)
+
+	prod := guest.Do(t, http.MethodGet, "/services/demo-shop-api/env/prod", nil)
+
+	require.Contains(t, prod.Body, fmt.Sprintf("/grafana/d-solo/platform-demo-shop-api?orgId=%d&panelId=1", org))
+	require.Equal(t, "Viewer", s.Grafana.Members(org)["guest.demo"])
+	require.Equal(t, "grafana-testdata-datasource", s.Grafana.Datasource(org, "testdata")["type"])
+	require.Nil(t, s.Grafana.Datasource(org, "prometheus"))
 }
 
 func Test_AGuestCanChangeNothing(t *testing.T) {
