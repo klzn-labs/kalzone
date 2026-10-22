@@ -12,6 +12,8 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
+const errorLines = `(?i)(error|panic|fatal|exception|\s5\d\d\s)`
+
 type Services interface {
 	FindService(ctx context.Context, slug string) (entities.LogSource, error)
 }
@@ -53,8 +55,19 @@ func logQL(serviceSlug, environment string, q Query) string {
 		colour = q.Colour
 	}
 	selector := "{container=~" + strconv.Quote(regexp.QuoteMeta(serviceSlug+"-"+environment)+"-"+colour) + "}"
-	if q.Contains == "" {
-		return selector
+	return selector + contains(q.Contains) + errorsOnly(q.Errors)
+}
+
+func contains(text string) string {
+	if text == "" {
+		return ""
 	}
-	return selector + " |= " + strconv.Quote(q.Contains)
+	return " |= " + strconv.Quote(text)
+}
+
+func errorsOnly(errors bool) string {
+	if !errors {
+		return ""
+	}
+	return " |~ " + strconv.Quote(errorLines)
 }
