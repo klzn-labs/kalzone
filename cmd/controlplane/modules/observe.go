@@ -13,6 +13,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/observe/usecases/dashboards"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/health"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
+	"github.com/klzn-labs/kalzone/app/observe/usecases/metrics"
 	"github.com/klzn-labs/kalzone/internal/eventbus"
 	"github.com/klzn-labs/kalzone/pkg/config"
 	"go.uber.org/fx"
@@ -50,5 +51,8 @@ func observeLogs() fx.Option {
 			return logs.NewLogsUsecase(l, p, c, cfg.Grafana.LokiUID)
 		},
 		func(u logs.LogsUsecase) logsHandler.Logs { return u },
+		func(l observeCatalog.Lookup, c grafana.Client, cfg config.Config) metrics.MetricsUsecase {
+			return metrics.NewMetricsUsecase(l, c, cfg.Grafana.PrometheusUID)
+		},
 	)
 }

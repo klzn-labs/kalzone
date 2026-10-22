@@ -94,7 +94,9 @@
 <div class="split">
   <div class="stack">
     {{template "deploy-panel" dict "Data" $d "CSRF" $csrf}}
-    {{template "observability" $d.Grafana}}
+    {{if $d.Grafana.Enabled}}<div class="card" id="observability" hx-get="/services/{{$d.Service.Slug}}/env/{{$d.Env.Slug}}/observability" hx-trigger="load" hx-swap="outerHTML">
+      <div class="card-header"><div><h2>Observability</h2><p>Loading metrics and logs…</p></div></div>
+    </div>{{else}}{{template "observability-off"}}{{end}}
     <div class="card">
       <div class="card-header">
         <div><h2>Runtime</h2><p>{{if $d.Revision.Number}}Config c{{$d.Revision.Number}} · saved {{ago $d.Revision.CreatedAt}}{{else}}Defaults · nothing saved yet{{end}}</p></div>
@@ -234,16 +236,54 @@
 </div>
 {{end}}
 
-{{define "observability"}}
+{{define "observability-off"}}
 <div class="card">
-  <div class="card-header"><div><h2>Observability</h2><p>Live from Prometheus and Loki, last 6 hours</p></div>
-    {{if .Enabled}}<div class="actions"><a class="btn btn-sm" href="/grafana/d/{{.UID}}?var-env={{.Env}}" target="_blank" rel="noopener">{{icon "activity"}}Dashboard {{icon "external"}}</a></div>{{end}}</div>
-  {{if .Enabled}}
-  <div class="panels">
-    {{$uid := .UID}}{{$env := .Env}}
-    {{range $panel := (list 1 2 3 4)}}{{template "panel" dict "UID" $uid "Env" $env "Panel" $panel "Class" ""}}{{end}}
-    {{template "panel" dict "UID" $uid "Env" $env "Panel" 6 "Class" "wide"}}
+  <div class="card-header"><div><h2>Observability</h2></div></div>
+  {{template "empty" dict "Icon" "activity" "Title" "Observability isn't connected" "Text" "Set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN to read metrics and logs." "Href" "" "Action" ""}}
+</div>
+{{end}}
+
+{{define "observability-unavailable"}}
+<div class="card" id="observability">
+  <div class="card-header"><div><h2>Observability</h2></div></div>
+  {{template "empty" dict "Icon" "activity" "Title" "Metrics are unavailable right now" "Text" "Prometheus or Loki did not answer. Reload the page in a minute." "Href" "" "Action" ""}}
+</div>
+{{end}}
+
+{{define "observability"}}
+<div class="card" id="observability" hx-target="this" hx-swap="outerHTML">
+  <div class="card-header">
+    <div><h2>Observability</h2><p>From Prometheus and Loki · times in UTC</p></div>
+    <div class="actions">
+      <nav class="segmented" aria-label="Time window">{{range .Windows}}<a href="{{.Href}}" hx-get="{{.Href}}"{{if .Active}} class="active" aria-current="true"{{end}}>{{.Label}}</a>{{end}}</nav>
+      {{with .Dashboard}}<a class="btn btn-sm" href="{{.}}" target="_blank" rel="noopener">{{icon "activity"}}Grafana {{icon "external"}}</a>{{end}}
+    </div>
   </div>
-  {{else}}{{template "empty" dict "Icon" "activity" "Title" "Observability isn't connected" "Text" "Set PLATFORM_GRAFANA_URL and PLATFORM_GRAFANA_TOKEN to embed dashboards here." "Href" "" "Action" ""}}{{end}}
+  <div class="obs-tiles">{{range .Tiles}}
+    <button type="button" class="obs-tile{{if .Selected}} selected{{end}}" hx-get="{{.Href}}" aria-pressed="{{.Selected}}">
+      <span class="obs-tile-label">{{.Label}}</span>
+      <span class="obs-tile-value">{{.Value}}</span>
+      <span class="obs-tile-note{{if .Hot}} hot{{end}}">{{.Note}}</span>
+      <svg viewBox="0 0 120 28" preserveAspectRatio="none" aria-hidden="true"><path d="{{.Spark}}"/></svg>
+    </button>{{end}}
+  </div>
+  {{with .Chart}}<div class="obs-chart">
+    <div class="obs-head"><b>{{.Title}}</b><span>{{.Note}}</span></div>
+    <div class="obs-plot">
+      <div class="obs-ticks" aria-hidden="true">{{range .Ticks}}<span>{{.}}</span>{{end}}</div>
+      <svg viewBox="0 0 640 180" preserveAspectRatio="none" role="img" aria-label="{{.Title}}, {{.Note}}">
+        <line class="obs-grid" x1="0" y1="90" x2="640" y2="90"/>
+        {{if .HasLimit}}<line class="obs-limit" x1="0" y1="{{.LimitY}}" x2="640" y2="{{.LimitY}}"/>{{end}}
+        {{range .Markers}}<line class="obs-marker" x1="{{.X}}" y1="0" x2="{{.X}}" y2="180"/>{{end}}
+        <path class="obs-line" d="{{.Path}}"/>
+      </svg>
+    </div>
+    <div class="obs-axis">{{range .Axis}}<span>{{.}}</span>{{end}}</div>
+    {{if .Markers}}<div class="obs-deploys">Deployed: {{range $i, $m := .Markers}}{{if $i}}, {{end}}{{$m.Label}}{{end}}</div>{{end}}
+  </div>{{end}}
+  <div class="obs-logs">
+    <div class="obs-head"><b>Logs</b><nav class="segmented" aria-label="Log lines">{{range .LogModes}}<a href="{{.Href}}" hx-get="{{.Href}}"{{if .Active}} class="active" aria-current="true"{{end}}>{{.Label}}</a>{{end}}</nav></div>
+    {{if .LogsNote}}<p class="muted">{{.LogsNote}}</p>{{else}}<div class="logview">{{range .Logs}}<div class="logline {{.Tone}}"><span class="at">{{.At}}</span><span>{{.Line}}</span></div>{{else}}<div class="muted">No lines in this window.</div>{{end}}</div>{{end}}
+  </div>
 </div>
 {{end}}
