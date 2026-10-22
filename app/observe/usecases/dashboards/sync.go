@@ -11,6 +11,8 @@ import (
 var syncedOn = map[string]bool{
 	"service.created": true, "service.updated": true,
 	"database.attached": true, "database.detached": true, "database.adopted": true, "database.deleted": true, "database.released": true,
+	"team.created": true, "team.deleted": true, "team.member_put": true, "team.member_removed": true,
+	"user.admin_granted": true, "user.admin_revoked": true,
 }
 
 func (u DashboardsUsecase) Sync(ctx context.Context) error {
@@ -20,7 +22,7 @@ func (u DashboardsUsecase) Sync(ctx context.Context) error {
 	}
 	services = WithSharing(services)
 	_, writeErr := u.Write(ctx, services)
-	return errors.Join(writeErr, u.WritePlatform(ctx), u.publish(ctx, services))
+	return errors.Join(writeErr, u.WritePlatform(ctx), u.publish(ctx, services), u.orgs.Sync(ctx, services))
 }
 
 func (u DashboardsUsecase) publish(ctx context.Context, services []entities.Service) error {
