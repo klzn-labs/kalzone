@@ -93,6 +93,10 @@ func (u HealthUsecase) NowAll(ctx context.Context, targets []Target) map[string]
 	return result
 }
 
+func (u HealthUsecase) ResponseLimit(limits catalog.Limits) int {
+	return or(limits.ResponseMS, u.defaults.ResponseMS)
+}
+
 func (u HealthUsecase) probes(t Target) []probe {
 	probes := []probe{{entities.MetricResponse, entities.ResponseQuery(t.Slug), or(t.Limits.ResponseMS, u.defaults.ResponseMS)}}
 	if t.CPUMillis > 0 {
