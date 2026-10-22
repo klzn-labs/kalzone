@@ -23,9 +23,10 @@ func HashToken(token string) string {
 
 type Authenticated struct {
 	User      User
+	Teams     []string
 	CSRFToken string
 }
 
 func (a Authenticated) Actor() actor.Actor {
-	return actor.Actor{UserID: a.User.ID, Login: a.User.Login, Admin: a.User.Admin}
+	return actor.Actor{UserID: a.User.ID, Login: a.User.Login, Admin: a.User.Admin, Teams: a.Teams}
 }

@@ -74,11 +74,12 @@ func (t AccessToken) Check(now time.Time) error {
 
 type TokenAuthenticated struct {
 	User  User
+	Teams []string
 	Token AccessToken
 }
 
 func (t TokenAuthenticated) Actor() actor.Actor {
-	return actor.Actor{UserID: t.User.ID, Login: t.User.Login, Admin: t.User.Admin, Token: actor.Token{
+	return actor.Actor{UserID: t.User.ID, Login: t.User.Login, Admin: t.User.Admin, Teams: t.Teams, Token: actor.Token{
 		ID: t.Token.ID, Name: t.Token.Name, Prefix: t.Token.Prefix, Scopes: t.Token.Scopes,
 		TeamIDs: t.Token.TeamIDs, Bypass: t.Token.Bypass, ExpiresAt: t.Token.ExpiresAt,
 	}}

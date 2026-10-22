@@ -11,12 +11,26 @@ type TeamFinder interface {
 	FindByIDs(ctx context.Context, ids []string) ([]team.Team, error)
 }
 
-type Lookup struct {
-	teams TeamFinder
+type MemberTeams interface {
+	TeamIDsOf(ctx context.Context, userID string) ([]string, error)
+	UserIDsIn(ctx context.Context, teamIDs []string) ([]string, error)
 }
 
-func NewLookup(teams TeamFinder) Lookup {
-	return Lookup{teams: teams}
+type Lookup struct {
+	teams   TeamFinder
+	members MemberTeams
+}
+
+func NewLookup(teams TeamFinder, members MemberTeams) Lookup {
+	return Lookup{teams: teams, members: members}
+}
+
+func (l Lookup) UserIDsIn(ctx context.Context, teamIDs []string) ([]string, error) {
+	return l.members.UserIDsIn(ctx, teamIDs)
+}
+
+func (l Lookup) VisibleTeamIDs(ctx context.Context, userID string) ([]string, error) {
+	return l.members.TeamIDsOf(ctx, userID)
 }
 
 func (l Lookup) IDBySlug(ctx context.Context, slug string) (string, error) {

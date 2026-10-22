@@ -59,6 +59,7 @@ type Filter struct {
 	Status    Status
 	ServiceID string
 	TeamIDs   []string
+	AllTeams  bool
 	Before    *time.Time
 	BeforeID  string
 	Limit     int

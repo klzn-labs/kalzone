@@ -42,7 +42,7 @@ func (r RequestRepository) List(ctx context.Context, f entities.Filter) ([]entit
 	if f.Status != "" {
 		tx = tx.Where("status = ?", f.Status)
 	}
-	if len(f.TeamIDs) > 0 {
+	if !f.AllTeams {
 		tx = tx.Where("team_id IN ?", f.TeamIDs)
 	}
 	if f.ServiceID != "" {

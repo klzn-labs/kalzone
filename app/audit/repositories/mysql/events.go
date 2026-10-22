@@ -46,10 +46,14 @@ func filtered(tx *gorm.DB, f entities.Filter) *gorm.DB {
 	tx = whereSet(tx, "actor_id = ?", f.ActorID)
 	tx = whereSet(tx, "token_id = ?", f.TokenID)
 	tx = whereSet(tx, "environment = ?", f.Environment)
-	if len(f.TeamIDs) > 0 {
-		tx = tx.Where("team_id IN ?", f.TeamIDs)
+	return before(visible(tx, f), f)
+}
+
+func visible(tx *gorm.DB, f entities.Filter) *gorm.DB {
+	if f.AllTeams {
+		return tx
 	}
-	return before(tx, f)
+	return tx.Where("team_id IN ? OR (team_id = '' AND actor_id = ?)", f.TeamIDs, f.ViewerID)
 }
 
 func before(tx *gorm.DB, f entities.Filter) *gorm.DB {
