@@ -24,6 +24,7 @@ type fakeControlPlane struct {
 	mu      sync.Mutex
 	desired queuedapi.Desired
 	stats   []queuedapi.Stats
+	runs    []queuedapi.CronRun
 	done    []string
 }
 
@@ -39,12 +40,20 @@ func (f *fakeControlPlane) handler(t *testing.T) http.Handler {
 			var report queuedapi.StatsReport
 			json.NewDecoder(r.Body).Decode(&report)
 			f.stats = report.Stats
+		case r.URL.Path == queuedapi.CronRunsPath:
+			f.runs = append(f.runs, decodeRuns(r)...)
 		case strings.HasSuffix(r.URL.Path, "/done"):
 			f.done = append(f.done, r.URL.Path)
 			f.desired.Commands = nil
 		}
 		w.WriteHeader(http.StatusOK)
 	})
+}
+
+func decodeRuns(r *http.Request) []queuedapi.CronRun {
+	var report queuedapi.CronRunReport
+	json.NewDecoder(r.Body).Decode(&report)
+	return report.Runs
 }
 
 func (f *fakeControlPlane) read() ([]queuedapi.Stats, []string) {
@@ -126,5 +135,57 @@ func Test_Gateway_PublishDeliverReportAndCommand(t *testing.T) {
 	require.Eventually(t, func() bool {
 		stats, done := cp.read()
 		return len(stats) == 1 && stats[0].DeliveredPerMinute >= 1 && stats[0].Depth == 0 && len(done) == 1
+	}, 5*time.Second, 50*time.Millisecond)
+}
+
+func (f *fakeControlPlane) cronRuns() ([]queuedapi.CronRun, []string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]queuedapi.CronRun{}, f.runs...), append([]string{}, f.done...)
+}
+
+func cronConsumer(t *testing.T) (*httptest.Server, chan http.Header) {
+	received := make(chan http.Header, 1)
+	consumer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		if signing.Verify(r.Header.Get("Platform-Signature"), []string{"signing-key"}, body, time.Now(), time.Minute) != nil || string(body) != `{"full":true}` {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		received <- r.Header.Clone()
+	}))
+	t.Cleanup(consumer.Close)
+	return consumer, received
+}
+
+func cronDesired(target string) queuedapi.Desired {
+	return queuedapi.Desired{
+		Crons: []queuedapi.Cron{{
+			ID: "cron1", Name: "nightly-import", Environment: "dev", Service: "worker", Schedule: "@yearly", Target: target,
+			Payload: []byte(`{"full":true}`), Timeout: "5s", SigningKey: "signing-key",
+		}},
+		Commands: []queuedapi.Command{{ID: "k1", CronID: "cron1", Kind: "run"}},
+	}
+}
+
+func Test_Gateway_RunsCronOnCommandAndReports(t *testing.T) {
+	consumer, received := cronConsumer(t)
+	cp := &fakeControlPlane{desired: cronDesired(consumer.URL + "/hooks/import")}
+	platform := httptest.NewServer(cp.handler(t))
+	defer platform.Close()
+	startGateway(t, platform.URL)
+
+	var header http.Header
+	select {
+	case header = <-received:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the cron target was never called")
+	}
+	require.Equal(t, "nightly-import", header.Get("Platform-Cron"))
+	require.Equal(t, "k1", header.Get("Platform-Run-Id"))
+	require.Equal(t, "1", header.Get("Platform-Attempt"))
+	require.Eventually(t, func() bool {
+		runs, done := cp.cronRuns()
+		return len(runs) == 1 && runs[0].ID == "k1" && runs[0].Status == "succeeded" && runs[0].Manual && len(done) == 1
 	}, 5*time.Second, 50*time.Millisecond)
 }

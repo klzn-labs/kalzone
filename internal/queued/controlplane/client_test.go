@@ -14,6 +14,7 @@ import (
 
 type fakePlatform struct {
 	reported queuedapi.StatsReport
+	runs     queuedapi.CronRunReport
 	done     string
 }
 
@@ -25,6 +26,8 @@ func (f *fakePlatform) serve(t *testing.T) *httptest.Server {
 			json.NewEncoder(w).Encode(queuedapi.Desired{Queues: []queuedapi.Queue{{ID: "q1"}}})
 		case queuedapi.StatsPath:
 			json.NewDecoder(r.Body).Decode(&f.reported)
+		case queuedapi.CronRunsPath:
+			json.NewDecoder(r.Body).Decode(&f.runs)
 		case queuedapi.DonePath("c1"):
 			f.done = "c1"
 		}
@@ -60,4 +63,14 @@ func Test_Client_ReportsAnUnreachableOrFailingControlPlane(t *testing.T) {
 
 	require.Error(t, unreachable)
 	require.ErrorContains(t, status, "503")
+}
+
+func Test_Client_ReportsCronRuns(t *testing.T) {
+	platform := &fakePlatform{}
+	server := platform.serve(t)
+
+	err := controlplane.New(server.URL, "tok", server.Client()).ReportRuns(context.Background(), []queuedapi.CronRun{{ID: "r1", Status: "succeeded"}})
+
+	require.NoError(t, err)
+	require.Equal(t, []queuedapi.CronRun{{ID: "r1", Status: "succeeded"}}, platform.runs.Runs)
 }

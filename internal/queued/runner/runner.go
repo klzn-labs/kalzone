@@ -12,6 +12,7 @@ type ControlPlane interface {
 	Desired(ctx context.Context) (queuedapi.Desired, error)
 	Report(ctx context.Context, stats []queuedapi.Stats) error
 	Done(ctx context.Context, commandID string) error
+	ReportRuns(ctx context.Context, runs []queuedapi.CronRun) error
 }
 
 type Applier interface {
@@ -22,16 +23,22 @@ type StatsSource interface {
 	Collect(ctx context.Context) []queuedapi.Stats
 }
 
+type RunSource interface {
+	Drain() []queuedapi.CronRun
+	Restore(runs []queuedapi.CronRun)
+}
+
 type Loop struct {
 	controlPlane ControlPlane
 	applier      Applier
 	stats        StatsSource
+	runs         RunSource
 	poll         time.Duration
 	report       time.Duration
 }
 
-func New(cp ControlPlane, applier Applier, stats StatsSource, poll, report time.Duration) Loop {
-	return Loop{controlPlane: cp, applier: applier, stats: stats, poll: poll, report: report}
+func New(cp ControlPlane, applier Applier, stats StatsSource, runs RunSource, poll, report time.Duration) Loop {
+	return Loop{controlPlane: cp, applier: applier, stats: stats, runs: runs, poll: poll, report: report}
 }
 
 func (l Loop) Run(ctx context.Context) {
@@ -52,6 +59,7 @@ func (l Loop) Run(ctx context.Context) {
 }
 
 func (l Loop) PollOnce(ctx context.Context) {
+	l.ReportRuns(ctx)
 	desired, err := l.controlPlane.Desired(ctx)
 	if err != nil {
 		log.Printf("desired state unavailable, keeping the current queues: %v", err)
@@ -65,6 +73,17 @@ func (l Loop) PollOnce(ctx context.Context) {
 		if err := l.controlPlane.Done(ctx, id); err != nil {
 			log.Printf("confirming command %s: %v", id, err)
 		}
+	}
+}
+
+func (l Loop) ReportRuns(ctx context.Context) {
+	runs := l.runs.Drain()
+	if len(runs) == 0 {
+		return
+	}
+	if err := l.controlPlane.ReportRuns(ctx, runs); err != nil {
+		log.Printf("reporting %d cron runs, keeping them for the next poll: %v", len(runs), err)
+		l.runs.Restore(runs)
 	}
 }
 
