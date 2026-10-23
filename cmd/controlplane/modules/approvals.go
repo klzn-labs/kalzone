@@ -2,6 +2,7 @@ package modules
 
 import (
 	requestsHandler "github.com/klzn-labs/kalzone/app/approvals/handlers/requests"
+	approvalsCron "github.com/klzn-labs/kalzone/app/approvals/repositories/cron"
 	approvalsDatabase "github.com/klzn-labs/kalzone/app/approvals/repositories/database"
 	approvalsDeploy "github.com/klzn-labs/kalzone/app/approvals/repositories/deploy"
 	approvalsConfig "github.com/klzn-labs/kalzone/app/approvals/repositories/envconfig"
@@ -10,6 +11,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/approvals/usecases/requests"
 	"github.com/klzn-labs/kalzone/app/approvals/usecases/submit"
 	"github.com/klzn-labs/kalzone/app/authz"
+	"github.com/klzn-labs/kalzone/app/cron/usecases/crons"
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
@@ -27,7 +29,7 @@ func Approvals() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			approvalsMysql.NewRequestRepository, discord.NewNotifier, submit.NewSubmitUsecase, requests.NewRequestsUsecase,
-			approvalsConfig.NewExecutor, approvalsDeploy.NewExecutor, approvalsQueue.NewExecutor, approvalsDatabase.NewExecutor, executors,
+			approvalsConfig.NewExecutor, approvalsDeploy.NewExecutor, approvalsQueue.NewExecutor, approvalsDatabase.NewExecutor, approvalsCron.NewExecutor, executors,
 			requestsHandler.NewRequestsHandler,
 		),
 		approvalsInjections(),
@@ -49,6 +51,7 @@ func approvalsInjections() fx.Option {
 		func(u deployments.DeploymentsUsecase) approvalsDeploy.Deployments { return u },
 		func(u queues.QueuesUsecase) approvalsQueue.Queues { return u },
 		func(u databases.DatabasesUsecase) approvalsDatabase.Databases { return u },
+		func(u crons.CronsUsecase) approvalsCron.Crons { return u },
 		func(u requests.RequestsUsecase) requestsHandler.Requests { return u },
 		func(u requests.RequestsUsecase) wait.Requests { return u },
 	)
@@ -60,15 +63,17 @@ func submitInjections() fx.Option {
 		func(u submit.SubmitUsecase) deployments.Requests { return u },
 		func(u submit.SubmitUsecase) queues.Requests { return u },
 		func(u submit.SubmitUsecase) databases.Requests { return u },
+		func(u submit.SubmitUsecase) crons.Requests { return u },
 	)
 }
 
-func executors(c approvalsConfig.Executor, d approvalsDeploy.Executor, q approvalsQueue.Executor, db approvalsDatabase.Executor) requests.Executors {
+func executors(c approvalsConfig.Executor, d approvalsDeploy.Executor, q approvalsQueue.Executor, db approvalsDatabase.Executor, cr approvalsCron.Executor) requests.Executors {
 	return requests.Executors{
 		approval.KindConfigRevise: c, approval.KindSecretSet: c, approval.KindSecretUnset: c,
 		approval.KindDeploy: d, approval.KindPromote: d, approval.KindRollback: d, approval.KindConfigApply: d, approval.KindRemove: d,
 		approval.KindQueueCreate: q, approval.KindQueueUpdate: q, approval.KindQueueDelete: q,
 		approval.KindDatabaseCreate: db, approval.KindDatabaseAttach: db, approval.KindDatabaseDetach: db, approval.KindDatabaseDelete: db,
+		approval.KindCronCreate: cr, approval.KindCronUpdate: cr, approval.KindCronDelete: cr,
 	}
 }
 

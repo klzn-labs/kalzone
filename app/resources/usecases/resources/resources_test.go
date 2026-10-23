@@ -60,7 +60,7 @@ func Test_ListFor_RejectsUnknownKind(t *testing.T) {
 	var invalid *apperror.AppError
 	require.ErrorAs(t, err, &invalid)
 	require.Equal(t, "kind", invalid.Field)
-	require.Equal(t, "send one of queue, database", invalid.Hint)
+	require.Equal(t, "send one of queue, database, cron", invalid.Hint)
 }
 
 func Test_ListFor_KnownKindWithoutSourceIsEmpty(t *testing.T) {

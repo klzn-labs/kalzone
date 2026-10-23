@@ -3,6 +3,7 @@ package gatewayapi
 import (
 	"context"
 	"crypto/subtle"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -27,13 +28,20 @@ type Gateway interface {
 	Done(ctx context.Context, commandID string) error
 }
 
+type Crons interface {
+	Desired(ctx context.Context) ([]queuedapi.Cron, []queuedapi.Command, error)
+	Record(ctx context.Context, runs []queuedapi.CronRun) error
+	Done(ctx context.Context, commandID string) error
+}
+
 type GatewayAPIHandler struct {
 	token   []byte
 	gateway Gateway
+	crons   Crons
 }
 
-func NewGatewayAPIHandler(cfg config.Config, gateway Gateway) GatewayAPIHandler {
-	return GatewayAPIHandler{token: []byte(cfg.Queues.Token), gateway: gateway}
+func NewGatewayAPIHandler(cfg config.Config, gateway Gateway, crons Crons) GatewayAPIHandler {
+	return GatewayAPIHandler{token: []byte(cfg.Queues.Token), gateway: gateway, crons: crons}
 }
 
 func (h GatewayAPIHandler) authenticate(c *gin.Context) {
@@ -48,12 +56,31 @@ func (h GatewayAPIHandler) authenticate(c *gin.Context) {
 }
 
 func (h GatewayAPIHandler) Desired(c *gin.Context) {
-	desired, err := h.gateway.Desired(c.Request.Context())
+	desired, err := h.desired(c.Request.Context())
 	if err != nil {
 		httperror.Abort(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, toDesiredDTO(desired))
+	c.JSON(http.StatusOK, desired)
+}
+
+func (h GatewayAPIHandler) desired(ctx context.Context) (queuedapi.Desired, error) {
+	queues, err := h.gateway.Desired(ctx)
+	if err != nil {
+		return queuedapi.Desired{}, err
+	}
+	crons, commands, err := h.crons.Desired(ctx)
+	desired := toDesiredDTO(queues)
+	desired.Crons, desired.Commands = crons, append(desired.Commands, commands...)
+	return desired, err
+}
+
+func (h GatewayAPIHandler) CronRuns(c *gin.Context) {
+	var body queuedapi.CronRunReport
+	if !httperror.BindJSON(c, &body) {
+		return
+	}
+	reply(c, h.crons.Record(c.Request.Context(), body.Runs))
 }
 
 func (h GatewayAPIHandler) Stats(c *gin.Context) {
@@ -65,7 +92,8 @@ func (h GatewayAPIHandler) Stats(c *gin.Context) {
 }
 
 func (h GatewayAPIHandler) Done(c *gin.Context) {
-	reply(c, h.gateway.Done(c.Request.Context(), c.Param("id")))
+	ctx, id := c.Request.Context(), c.Param("id")
+	reply(c, errors.Join(h.gateway.Done(ctx, id), h.crons.Done(ctx, id)))
 }
 
 func reply(c *gin.Context, err error) {
@@ -79,5 +107,6 @@ func reply(c *gin.Context, err error) {
 func RegisterGatewayAPIRoutes(public httpserver.Public, h GatewayAPIHandler) {
 	public.GET(queuedapi.DesiredPath, h.authenticate, h.Desired)
 	public.POST(queuedapi.StatsPath, h.authenticate, h.Stats)
+	public.POST(queuedapi.CronRunsPath, h.authenticate, h.CronRuns)
 	public.POST(queuedapi.DonePath(":id"), h.authenticate, h.Done)
 }
