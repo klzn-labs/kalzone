@@ -18,7 +18,9 @@ require (
 	github.com/nats-io/nats.go v1.48.0
 	github.com/nats-io/nuid v1.0.1
 	github.com/prometheus/client_golang v1.24.1
+	github.com/prometheus/common v0.71.0
 	github.com/prometheus/prometheus v0.315.1
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	github.com/swaggest/jsonschema-go v0.3.78
@@ -66,7 +68,6 @@ require (
 	github.com/oasdiff/yaml3 v0.0.14 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/common v0.71.0 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
