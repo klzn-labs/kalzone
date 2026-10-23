@@ -4,6 +4,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/authz"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	"github.com/klzn-labs/kalzone/app/cron/handlers/queuedfeed"
 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
 	"github.com/klzn-labs/kalzone/app/queue/handlers/gatewayapi"
 	queuesHandler "github.com/klzn-labs/kalzone/app/queue/handlers/queues"
@@ -60,5 +61,6 @@ func queueUsecaseInjections() fx.Option {
 		func(b *eventbus.Bus) queues.Publisher { return b },
 		func(u queues.QueuesUsecase) queuesHandler.Queues { return u },
 		func(u gateway.GatewayUsecase) gatewayapi.Gateway { return u },
+		func(f queuedfeed.Feed) gatewayapi.Crons { return f },
 	)
 }

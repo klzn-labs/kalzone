@@ -1,10 +1,14 @@
 package queuedapi
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 const (
-	DesiredPath = "/queued/v1/desired"
-	StatsPath   = "/queued/v1/stats"
+	DesiredPath  = "/queued/v1/desired"
+	StatsPath    = "/queued/v1/stats"
+	CronRunsPath = "/queued/v1/cron-runs"
 )
 
 func DonePath(commandID string) string {
@@ -41,16 +45,49 @@ type Queue struct {
 	PreviousKey     string   `json:"previous_key,omitempty"`
 }
 
+type Cron struct {
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Environment string          `json:"environment"`
+	Service     string          `json:"service"`
+	Schedule    string          `json:"schedule"`
+	Target      string          `json:"target"`
+	Payload     json.RawMessage `json:"payload"`
+	Timeout     string          `json:"timeout"`
+	Paused      bool            `json:"paused"`
+	SigningKey  string          `json:"signing_key"`
+	PreviousKey string          `json:"previous_key,omitempty"`
+}
+
 type Command struct {
 	ID       string `json:"id"`
 	QueueID  string `json:"queue_id"`
+	CronID   string `json:"cron_id,omitempty"`
 	Kind     string `json:"kind"`
 	Argument string `json:"argument,omitempty"`
 }
 
 type Desired struct {
 	Queues   []Queue   `json:"queues"`
+	Crons    []Cron    `json:"crons"`
 	Commands []Command `json:"commands"`
+}
+
+type CronRun struct {
+	ID          string    `json:"id"`
+	CronID      string    `json:"cron_id"`
+	Manual      bool      `json:"manual"`
+	Status      string    `json:"status"`
+	ScheduledAt time.Time `json:"scheduled_at"`
+	StartedAt   time.Time `json:"started_at"`
+	FinishedAt  time.Time `json:"finished_at"`
+	Attempts    int       `json:"attempts"`
+	LastStatus  int       `json:"last_status"`
+	Error       string    `json:"error,omitempty"`
+}
+
+type CronRunReport struct {
+	Runs []CronRun `json:"runs"`
 }
 
 type DeadLetter struct {

@@ -48,3 +48,16 @@ func Test_ActivityFrom_LinksRequestEventsToTheRequest(t *testing.T) {
 	require.Equal(t, "/requests/c1", got[0].Link)
 	require.Equal(t, "deploy release #2 to prod", got[0].Detail)
 }
+
+func Test_ActivityFrom_PhrasesCronEvents(t *testing.T) {
+	events := []audit.Event{
+		{ActorLogin: "bob", Action: "cron.created", TargetName: "nightly"},
+		{ActorLogin: "bob", Action: "cron.run_requested", TargetName: "nightly"},
+		{ActorLogin: "decommission", Action: "cron.deleted", TargetName: "nightly"},
+	}
+
+	got := web.ActivityFrom(events)
+
+	require.Equal(t, []string{"created cron", "asked to run cron", "deleted cron"}, []string{got[0].Phrase, got[1].Phrase, got[2].Phrase})
+	require.Empty(t, got[0].Link)
+}

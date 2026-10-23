@@ -15,7 +15,7 @@ type Source interface {
 	Resources(ctx context.Context, a actor.Actor, environment string) ([]entities.Resource, error)
 }
 
-var knownKinds = []entities.Kind{entities.KindQueue, entities.KindDatabase}
+var knownKinds = []entities.Kind{entities.KindQueue, entities.KindDatabase, entities.KindCron}
 
 type Sources map[entities.Kind]Source
 
@@ -54,7 +54,7 @@ func (u ResourcesUsecase) chosen(kind entities.Kind) ([]Source, error) {
 	if slices.Contains(knownKinds, kind) {
 		return nil, nil
 	}
-	return nil, apperror.Invalid("unknown resource kind " + string(kind)).WithField("kind").WithHint("send one of queue, database")
+	return nil, apperror.Invalid("unknown resource kind " + string(kind)).WithField("kind").WithHint("send one of queue, database, cron")
 }
 
 func compare(a, b entities.Resource) int {
