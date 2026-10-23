@@ -94,6 +94,11 @@ func (w *world) DetachService(context.Context, actor.Actor, string) error {
 	return nil
 }
 
+func (w *world) DeleteForService(context.Context, actor.Actor, string) error {
+	w.record("delete crons")
+	return nil
+}
+
 func (w *world) Delete(context.Context, string) error {
 	w.record("delete dashboard")
 	return w.dashErr
@@ -107,10 +112,10 @@ func newWorld(removed map[string]bool) *world {
 }
 
 func usecase(w *world) decommission.DecommissionUsecase {
-	return decommission.NewDecommissionUsecase(w, w, w, w, w, w, w)
+	return decommission.NewDecommissionUsecase(w, w, w, w, w, w, w, w)
 }
 
-var finishCalls = []string{"detach queues", "detach databases", "forget runtime", "delete dashboard", "mark deleted by decommission"}
+var finishCalls = []string{"detach queues", "detach databases", "delete crons", "forget runtime", "delete dashboard", "mark deleted by decommission"}
 
 func Test_Start_DeletesAServiceThatNeverRanAtOnce(t *testing.T) {
 	w := newWorld(map[string]bool{})

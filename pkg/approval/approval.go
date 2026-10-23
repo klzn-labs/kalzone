@@ -18,6 +18,9 @@ const (
 	KindDatabaseAttach = "database.attach"
 	KindDatabaseDetach = "database.detach"
 	KindDatabaseDelete = "database.delete"
+	KindCronCreate     = "cron.create"
+	KindCronUpdate     = "cron.update"
+	KindCronDelete     = "cron.delete"
 )
 
 type Change struct {

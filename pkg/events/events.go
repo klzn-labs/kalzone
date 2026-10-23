@@ -35,6 +35,7 @@ const (
 	TargetDeployment = "deployment"
 	TargetQueue      = "queue"
 	TargetDatabase   = "database"
+	TargetCron       = "cron"
 	TargetToken      = "token"
 	TargetRequest    = "request"
 )

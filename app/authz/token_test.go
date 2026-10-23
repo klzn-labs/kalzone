@@ -45,6 +45,8 @@ var tokenCases = []tokenCase{
 	{"queues go with services", via("member", only(scope.Services), places, false), authz.EditQueue, "dev", ""},
 	{"databases go with services", via("member", only(scope.Services), places, false), authz.EditDatabase, "dev", ""},
 	{"databases on prod need approval", via("maintainer", only(scope.Services, scope.Protected), places, false), authz.EditDatabase, "prod", apperror.CodeApprovalRequired},
+	{"crons go with services", via("member", only(scope.Services), places, false), authz.EditCron, "dev", ""},
+	{"crons on prod need approval", via("maintainer", only(scope.Services, scope.Protected), places, false), authz.EditCron, "prod", apperror.CodeApprovalRequired},
 	{"deleting needs services:admin", via("maintainer", only(scope.Services), places, false), authz.DeleteService, "", apperror.CodeMissingScope},
 	{"adopting needs services:admin", via("admin", only(scope.Services), places, false), authz.AdoptDatabase, "prod", apperror.CodeMissingScope},
 	{"an admin's token adopts prod with services:admin alone", via("admin", only(scope.ServicesAdmin), places, false), authz.AdoptDatabase, "prod", ""},
