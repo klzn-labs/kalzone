@@ -59,6 +59,8 @@ var matrix = []rule{
 	{authz.EditQueue, "prod", []string{"maintainer", "admin"}},
 	{authz.EditDatabase, "dev", []string{"member", "maintainer", "admin"}},
 	{authz.EditDatabase, "prod", []string{"maintainer", "admin"}},
+	{authz.EditCron, "dev", []string{"member", "maintainer", "admin"}},
+	{authz.EditCron, "prod", []string{"maintainer", "admin"}},
 	{authz.Deploy, "dev", []string{"member", "maintainer", "admin"}},
 	{authz.Deploy, "prod", []string{"maintainer", "admin"}},
 	{authz.DeleteService, "", []string{"maintainer", "admin"}},
