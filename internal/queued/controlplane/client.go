@@ -36,6 +36,10 @@ func (c Client) Done(ctx context.Context, commandID string) error {
 	return c.call(ctx, http.MethodPost, queuedapi.DonePath(commandID), nil, nil)
 }
 
+func (c Client) ReportRuns(ctx context.Context, runs []queuedapi.CronRun) error {
+	return c.call(ctx, http.MethodPost, queuedapi.CronRunsPath, queuedapi.CronRunReport{Runs: runs}, nil)
+}
+
 func (c Client) call(ctx context.Context, method, path string, body, out any) error {
 	req, err := c.request(ctx, method, path, body)
 	if err != nil {

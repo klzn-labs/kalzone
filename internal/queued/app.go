@@ -7,6 +7,7 @@ import (
 
 	"github.com/klzn-labs/kalzone/internal/queued/backend/jetstream"
 	"github.com/klzn-labs/kalzone/internal/queued/controlplane"
+	"github.com/klzn-labs/kalzone/internal/queued/cron"
 	"github.com/klzn-labs/kalzone/internal/queued/dispatch"
 	"github.com/klzn-labs/kalzone/internal/queued/model"
 	"github.com/klzn-labs/kalzone/internal/queued/publish"
@@ -18,10 +19,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+const outboxLimit = 1000
+
 type App struct {
 	cfg       Config
 	driver    *jetstream.Driver
 	registry  *registry.Registry
+	scheduler *cron.Scheduler
+	outbox    *cron.Outbox
 	collector *stats.Collector
 	metrics   *prometheus.Registry
 	cancel    context.CancelFunc
@@ -36,6 +41,8 @@ func Build(cfg Config, conn *nats.Conn) (*App, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	app := &App{cfg: cfg, driver: driver, metrics: prometheus.NewRegistry(), cancel: cancel, ctx: ctx}
 	app.registry = registry.New(ctx, driver, app.dispatcher)
+	app.outbox = cron.NewOutbox(outboxLimit)
+	app.scheduler = cron.New(ctx, cron.Options{Client: &http.Client{}, Clock: cron.RealClock{}, Backoff: cron.DefaultBackoff, Outbox: app.outbox})
 	app.collector = stats.New(app.registry, driver, app.metrics, time.Now)
 	return app, nil
 }
@@ -54,10 +61,12 @@ func (a *App) MetricsHandler() http.Handler {
 
 func (a *App) Run(ctx context.Context) {
 	client := controlplane.New(a.cfg.PlatformURL, a.cfg.Token, &http.Client{Timeout: 10 * time.Second})
-	runner.New(client, a.registry, a.collector, a.cfg.Poll, a.cfg.StatsEvery).Run(ctx)
+	queuesAndCrons := applier{queues: a.registry, crons: a.scheduler}
+	runner.New(client, queuesAndCrons, a.collector, a.outbox, a.cfg.Poll, a.cfg.StatsEvery).Run(ctx)
 }
 
 func (a *App) Stop() {
 	a.cancel()
 	a.registry.StopAll()
+	a.scheduler.StopAll()
 }

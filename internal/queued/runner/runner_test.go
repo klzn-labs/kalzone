@@ -13,11 +13,23 @@ import (
 )
 
 type controlPlane struct {
-	mu       sync.Mutex
-	failures int
-	calls    int
-	done     []string
-	reports  int
+	mu        sync.Mutex
+	failures  int
+	calls     int
+	done      []string
+	reports   int
+	runs      []queuedapi.CronRun
+	runsError error
+}
+
+func (c *controlPlane) ReportRuns(_ context.Context, runs []queuedapi.CronRun) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.runsError != nil {
+		return c.runsError
+	}
+	c.runs = append(c.runs, runs...)
+	return nil
 }
 
 func (c *controlPlane) Desired(context.Context) (queuedapi.Desired, error) {
@@ -68,13 +80,25 @@ func (a *applier) count() int {
 	return a.applied
 }
 
+type finished struct{ runs []queuedapi.CronRun }
+
+func (f *finished) Drain() []queuedapi.CronRun {
+	runs := f.runs
+	f.runs = nil
+	return runs
+}
+
+func (f *finished) Restore(runs []queuedapi.CronRun) {
+	f.runs = append(runs, f.runs...)
+}
+
 type stats struct{}
 
 func (stats) Collect(context.Context) []queuedapi.Stats { return []queuedapi.Stats{{QueueID: "q1"}} }
 
 func Test_Run_SurvivesAnUnreachableControlPlaneAndReports(t *testing.T) {
 	cp, a := &controlPlane{failures: 2}, &applier{}
-	loop := runner.New(cp, a, stats{}, 10*time.Millisecond, 15*time.Millisecond)
+	loop := runner.New(cp, a, stats{}, &finished{}, 10*time.Millisecond, 15*time.Millisecond)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -85,4 +109,21 @@ func Test_Run_SurvivesAnUnreachableControlPlaneAndReports(t *testing.T) {
 	require.GreaterOrEqual(t, calls, 3)
 	require.Contains(t, done, "c1")
 	require.Eventually(t, func() bool { _, _, reports := cp.snapshot(); return reports >= 1 }, 2*time.Second, 5*time.Millisecond)
+}
+
+func Test_PollOnce_ReportsFinishedCronRuns(t *testing.T) {
+	cp, runs := &controlPlane{}, &finished{runs: []queuedapi.CronRun{{ID: "r1"}}}
+
+	runner.New(cp, &applier{}, stats{}, runs, time.Second, time.Second).PollOnce(context.Background())
+
+	require.Equal(t, []queuedapi.CronRun{{ID: "r1"}}, cp.runs)
+	require.Empty(t, runs.runs)
+}
+
+func Test_PollOnce_KeepsRunsTheControlPlaneRefused(t *testing.T) {
+	cp, runs := &controlPlane{runsError: errors.New("503")}, &finished{runs: []queuedapi.CronRun{{ID: "r1"}}}
+
+	runner.New(cp, &applier{}, stats{}, runs, time.Second, time.Second).PollOnce(context.Background())
+
+	require.Equal(t, []queuedapi.CronRun{{ID: "r1"}}, runs.runs)
 }
