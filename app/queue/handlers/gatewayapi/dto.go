@@ -26,7 +26,8 @@ func toQueueDTO(q gateway.DesiredQueue) queuedapi.Queue {
 
 func fromSettings(s entities.Settings) queuedapi.Settings {
 	return queuedapi.Settings{
-		Path: s.Path, RatePerSecond: s.RatePerSecond, MaxInFlight: s.MaxInFlight, MaxAttempts: s.MaxAttempts,
+		Path: s.Path, RatePerSecond: s.RatePerSecond, Adaptive: s.Adaptive, MinRatePerSecond: s.MinRatePerSecond,
+		MaxInFlight: s.MaxInFlight, MaxAttempts: s.MaxAttempts,
 		Backoff:         queuedapi.Backoff{Kind: s.Backoff.Kind, Initial: s.Backoff.Initial.String(), Max: s.Backoff.Max.String()},
 		DeliveryTimeout: s.DeliveryTimeout.String(), Retention: s.Retention.String(), MaxMessageBytes: s.MaxMessageBytes,
 	}
