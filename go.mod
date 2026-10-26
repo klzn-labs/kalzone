@@ -3,6 +3,7 @@ module github.com/klzn-labs/kalzone
 go 1.26.0
 
 require (
+	github.com/adrianozp/gaardrail v0.3.0
 	github.com/creasty/defaults v1.11.0
 	github.com/getkin/kin-openapi v0.149.0
 	github.com/gin-gonic/gin v1.12.0
@@ -18,6 +19,7 @@ require (
 	github.com/nats-io/nats.go v1.48.0
 	github.com/nats-io/nuid v1.0.1
 	github.com/prometheus/client_golang v1.24.1
+	github.com/prometheus/client_model v0.6.3
 	github.com/prometheus/common v0.71.0
 	github.com/prometheus/prometheus v0.315.1
 	github.com/robfig/cron/v3 v3.0.1
@@ -67,7 +69,6 @@ require (
 	github.com/oasdiff/yaml v0.1.1 // indirect
 	github.com/oasdiff/yaml3 v0.0.14 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
-	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
