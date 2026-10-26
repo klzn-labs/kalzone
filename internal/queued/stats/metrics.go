@@ -14,6 +14,7 @@ type metrics struct {
 	depth      *prometheus.GaugeVec
 	inFlight   *prometheus.GaugeVec
 	dead       *prometheus.GaugeVec
+	effective  *prometheus.GaugeVec
 	deliveries *prometheus.CounterVec
 	duration   *prometheus.HistogramVec
 }
@@ -24,10 +25,11 @@ func newMetrics(r prometheus.Registerer) metrics {
 		depth:      prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "platform_queue_depth", Help: "Messages waiting, delayed or in flight."}, labels),
 		inFlight:   prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "platform_queue_in_flight", Help: "Deliveries waiting for an answer."}, labels),
 		dead:       prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "platform_queue_dead_letters", Help: "Messages in the dead-letter stream."}, labels),
+		effective:  prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "platform_queue_effective_rate", Help: "Deliveries per second the queue may start now."}, labels),
 		deliveries: prometheus.NewCounterVec(prometheus.CounterOpts{Name: "platform_queue_delivered_total", Help: "Deliveries by outcome."}, append(labels, "outcome")),
 		duration:   prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "platform_queue_delivery_seconds", Help: "Delivery round trips.", Buckets: prometheus.DefBuckets}, labels),
 	}
-	r.MustRegister(m.depth, m.inFlight, m.dead, m.deliveries, m.duration)
+	r.MustRegister(m.depth, m.inFlight, m.dead, m.effective, m.deliveries, m.duration)
 	return m
 }
 

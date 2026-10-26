@@ -181,3 +181,18 @@ func Test_AnAdaptiveRateReachesTheGateway(t *testing.T) {
 	require.Contains(t, read.Body, `"adaptive":true,"min_rate_per_second":2`)
 	require.Contains(t, desired.Body, `"rate_per_second":10,"adaptive":true,"min_rate_per_second":2`)
 }
+
+func Test_TheStatsShowTheEffectiveRateAndTheGovernor(t *testing.T) {
+	s, p := setupQueue(t)
+	q := createQueue(t, p.bob, "dev", http.StatusCreated)
+	adaptive := map[string]any{"factor": 0.4, "database_cpu": 62.5, "target_cpu": 50, "fail_safe": false}
+
+	s.Queued(t, http.MethodPost, "/queued/v1/stats", map[string]any{"stats": []map[string]any{
+		{"queue_id": q.ID, "effective_rate_per_second": 4.06, "adaptive": adaptive},
+	}})
+	got := p.bob.Do(t, http.MethodGet, "/api/v1/queues/dev/place-import/stats", nil)
+
+	require.Equal(t, http.StatusOK, got.Status, got.Body)
+	require.Contains(t, got.Body, `"effective_rate_per_second":4.06`)
+	require.Contains(t, got.Body, `"adaptive":{"factor":0.4,"database_cpu":62.5,"target_cpu":50,"fail_safe":false}`)
+}

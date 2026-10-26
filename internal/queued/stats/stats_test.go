@@ -9,6 +9,7 @@ import (
 	"github.com/klzn-labs/kalzone/internal/queued/model"
 	"github.com/klzn-labs/kalzone/internal/queued/natstest"
 	"github.com/klzn-labs/kalzone/internal/queued/stats"
+	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func (backend) Dead(context.Context, model.Queue, int) ([]model.DeadLetter, erro
 func Test_Collector_ReportsBackendStatsRatesAndDeadPreviews(t *testing.T) {
 	q := natstest.Queue("jobs")
 	now := time.Now()
-	c := stats.New(source{queues: []model.Queue{q}}, backend{}, prometheus.NewRegistry(), func() time.Time { return now })
+	c := stats.New(source{queues: []model.Queue{q}}, backend{}, model.FixedThrottle{}, prometheus.NewRegistry(), func() time.Time { return now })
 	c.Delivered(q.ID, dispatch.Ack, time.Millisecond)
 	c.Delivered(q.ID, dispatch.Ack, time.Millisecond)
 	c.Delivered(q.ID, dispatch.Retry, time.Millisecond)
@@ -51,11 +52,43 @@ func Test_Collector_ReportsBackendStatsRatesAndDeadPreviews(t *testing.T) {
 func Test_Collector_ForgetsDeliveriesOlderThanAMinute(t *testing.T) {
 	q := natstest.Queue("jobs")
 	now := time.Now()
-	c := stats.New(source{queues: []model.Queue{q}}, backend{}, prometheus.NewRegistry(), func() time.Time { return now })
+	c := stats.New(source{queues: []model.Queue{q}}, backend{}, model.FixedThrottle{}, prometheus.NewRegistry(), func() time.Time { return now })
 	c.Delivered(q.ID, dispatch.Ack, time.Millisecond)
 	now = now.Add(61 * time.Second)
 
 	got := c.Collect(context.Background())
 
 	require.Zero(t, got[0].DeliveredPerMinute)
+}
+
+type halfThrottle struct{}
+
+func (halfThrottle) Adaptive() model.AdaptiveState {
+	return model.AdaptiveState{On: true, Factor: 0.5, Measured: 70, Setpoint: 50}
+}
+
+func collectWith(t *testing.T, q model.Queue, throttle stats.Throttle) []queuedapi.Stats {
+	t.Helper()
+	c := stats.New(source{queues: []model.Queue{q}}, backend{}, throttle, prometheus.NewRegistry(), time.Now)
+	return c.Collect(context.Background())
+}
+
+func Test_Collector_ReportsTheEffectiveRateAndTheGovernor(t *testing.T) {
+	q := natstest.Queue("jobs")
+	q.Settings.RatePerSecond, q.Settings.Adaptive, q.Settings.MinRatePerSecond = 10, true, 2
+
+	got := collectWith(t, q, halfThrottle{})
+
+	require.Equal(t, 6.0, got[0].EffectiveRate)
+	require.Equal(t, &queuedapi.Adaptive{Factor: 0.5, DatabaseCPU: 70, TargetCPU: 50}, got[0].Adaptive)
+}
+
+func Test_Collector_AFixedQueueReportsItsRateAlone(t *testing.T) {
+	q := natstest.Queue("jobs")
+	q.Settings.RatePerSecond = 10
+
+	got := collectWith(t, q, halfThrottle{})
+
+	require.Equal(t, 10.0, got[0].EffectiveRate)
+	require.Nil(t, got[0].Adaptive)
 }

@@ -27,22 +27,27 @@ type Backend interface {
 	Dead(ctx context.Context, q model.Queue, limit int) ([]model.DeadLetter, error)
 }
 
+type Throttle interface {
+	Adaptive() model.AdaptiveState
+}
+
 type event struct {
 	at        time.Time
 	delivered bool
 }
 
 type Collector struct {
-	queues  QueueSource
-	backend Backend
-	now     func() time.Time
-	metrics metrics
-	mu      sync.Mutex
-	events  map[string][]event
+	queues   QueueSource
+	backend  Backend
+	throttle Throttle
+	now      func() time.Time
+	metrics  metrics
+	mu       sync.Mutex
+	events   map[string][]event
 }
 
-func New(queues QueueSource, backend Backend, registerer prometheus.Registerer, now func() time.Time) *Collector {
-	return &Collector{queues: queues, backend: backend, now: now, metrics: newMetrics(registerer), events: map[string][]event{}}
+func New(queues QueueSource, backend Backend, throttle Throttle, registerer prometheus.Registerer, now func() time.Time) *Collector {
+	return &Collector{queues: queues, backend: backend, throttle: throttle, now: now, metrics: newMetrics(registerer), events: map[string][]event{}}
 }
 
 func (c *Collector) Delivered(queueID string, verdict dispatch.Verdict, took time.Duration) {
@@ -81,11 +86,23 @@ func (c *Collector) collect(ctx context.Context, q model.Queue) (queuedapi.Stats
 	}
 	dead, err := c.backend.Dead(ctx, q, deadReported)
 	delivered, failed := c.rates(q.ID)
-	c.metrics.observe(prometheus.Labels{"queue": q.Name, "environment": q.Environment}, b)
-	return queuedapi.Stats{
+	labels := prometheus.Labels{"queue": q.Name, "environment": q.Environment}
+	c.metrics.observe(labels, b)
+	s := queuedapi.Stats{
 		QueueID: q.ID, Depth: b.Depth, InFlight: b.InFlight, OldestAgeSeconds: b.OldestAge.Seconds(),
 		DeliveredPerMinute: delivered, FailedPerMinute: failed, DeadLetters: b.DeadLetters, NewestDead: previews(dead),
-	}, err
+	}
+	c.addRate(&s, q, labels)
+	return s, err
+}
+
+func (c *Collector) addRate(s *queuedapi.Stats, q model.Queue, labels prometheus.Labels) {
+	state := c.throttle.Adaptive()
+	s.EffectiveRate = q.Settings.EffectiveRate(state.Factor)
+	c.metrics.effective.With(labels).Set(s.EffectiveRate)
+	if q.Settings.Adaptive && state.On {
+		s.Adaptive = &queuedapi.Adaptive{Factor: state.Factor, DatabaseCPU: state.Measured, TargetCPU: state.Setpoint, FailSafe: state.FailSafe}
+	}
 }
 
 func (c *Collector) rates(queueID string) (float64, float64) {
