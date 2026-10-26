@@ -32,6 +32,17 @@ func Test_FromAPI_ParsesDurations(t *testing.T) {
 	require.Equal(t, []string{"k", "old"}, q.Keys())
 }
 
+func Test_FromAPI_KeepsTheAdaptiveRate(t *testing.T) {
+	adaptive := apiQueue()
+	adaptive.Settings.Adaptive, adaptive.Settings.MinRatePerSecond = true, 0.5
+
+	q, err := model.FromAPI(adaptive)
+
+	require.NoError(t, err)
+	require.True(t, q.Settings.Adaptive)
+	require.Equal(t, 0.5, q.Settings.MinRatePerSecond)
+}
+
 func Test_FromAPI_RejectsBadDuration(t *testing.T) {
 	bad := apiQueue()
 	bad.Settings.Retention = "forever"

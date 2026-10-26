@@ -20,14 +20,16 @@ type Backoff struct {
 }
 
 type Settings struct {
-	Path            string
-	RatePerSecond   float64
-	MaxInFlight     int
-	MaxAttempts     int
-	Backoff         Backoff
-	DeliveryTimeout time.Duration
-	Retention       time.Duration
-	MaxMessageBytes int
+	Path             string
+	RatePerSecond    float64
+	Adaptive         bool
+	MinRatePerSecond float64
+	MaxInFlight      int
+	MaxAttempts      int
+	Backoff          Backoff
+	DeliveryTimeout  time.Duration
+	Retention        time.Duration
+	MaxMessageBytes  int
 }
 
 type Queue struct {
@@ -62,7 +64,8 @@ func settingsFromAPI(s queuedapi.Settings) (Settings, error) {
 		parsed[name] = d
 	}
 	return Settings{
-		Path: s.Path, RatePerSecond: s.RatePerSecond, MaxInFlight: s.MaxInFlight, MaxAttempts: s.MaxAttempts,
+		Path: s.Path, RatePerSecond: s.RatePerSecond, Adaptive: s.Adaptive, MinRatePerSecond: s.MinRatePerSecond,
+		MaxInFlight: s.MaxInFlight, MaxAttempts: s.MaxAttempts,
 		Backoff:         Backoff{Kind: s.Backoff.Kind, Initial: parsed["backoff.initial"], Max: parsed["backoff.max"]},
 		DeliveryTimeout: parsed["delivery_timeout"], Retention: parsed["retention"], MaxMessageBytes: s.MaxMessageBytes,
 	}, nil

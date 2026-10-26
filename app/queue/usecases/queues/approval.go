@@ -192,6 +192,7 @@ func (u QueuesUsecase) publisherSlugs(ctx context.Context, q entities.Queue, req
 func settingFields(s entities.Settings) [][2]string {
 	return [][2]string{
 		{"path", s.Path}, {"rate_per_second", strconv.FormatFloat(s.RatePerSecond, 'g', -1, 64)},
+		{"adaptive", strconv.FormatBool(s.Adaptive)}, {"min_rate_per_second", strconv.FormatFloat(s.MinRatePerSecond, 'g', -1, 64)},
 		{"max_in_flight", strconv.Itoa(s.MaxInFlight)}, {"max_attempts", strconv.Itoa(s.MaxAttempts)},
 		{"backoff", fmt.Sprintf("%s %s to %s", s.Backoff.Kind, s.Backoff.Initial, s.Backoff.Max)},
 		{"delivery_timeout", s.DeliveryTimeout.String()}, {"retention", s.Retention.String()},

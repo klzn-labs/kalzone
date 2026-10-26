@@ -158,3 +158,26 @@ func Test_ReservedQueueNamesCannotBeSetByHand(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, resp.Status, resp.Body)
 	require.Contains(t, resp.Body, "set by the platform")
 }
+
+func adaptiveSettings(minRate float64) map[string]any {
+	return map[string]any{"path": "/hooks/place-import", "rate_per_second": 10, "adaptive": true, "min_rate_per_second": minRate,
+		"max_in_flight": 4, "max_attempts": 5, "backoff": map[string]string{"kind": "fixed", "initial": "1s", "max": "1s"},
+		"delivery_timeout": "30s", "retention": "24h", "max_message_bytes": 65536}
+}
+
+func Test_AnAdaptiveRateReachesTheGateway(t *testing.T) {
+	s, p := setupQueue(t)
+	createQueue(t, p.bob, "dev", http.StatusCreated)
+	path := "/api/v1/queues/dev/place-import"
+
+	tooLow := p.bob.Do(t, http.MethodPatch, path, map[string]any{"settings": adaptiveSettings(11), "version": 1})
+	updated := p.bob.Do(t, http.MethodPatch, path, map[string]any{"settings": adaptiveSettings(2), "version": 1})
+	read := p.bob.Do(t, http.MethodGet, path, nil)
+	desired := s.Queued(t, http.MethodGet, "/queued/v1/desired", nil)
+
+	require.Equal(t, http.StatusBadRequest, tooLow.Status, tooLow.Body)
+	require.Contains(t, tooLow.Body, "minimum rate")
+	require.Equal(t, http.StatusOK, updated.Status, updated.Body)
+	require.Contains(t, read.Body, `"adaptive":true,"min_rate_per_second":2`)
+	require.Contains(t, desired.Body, `"rate_per_second":10,"adaptive":true,"min_rate_per_second":2`)
+}

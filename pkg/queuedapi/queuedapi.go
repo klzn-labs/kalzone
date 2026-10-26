@@ -22,14 +22,16 @@ type Backoff struct {
 }
 
 type Settings struct {
-	Path            string  `json:"path"`
-	RatePerSecond   float64 `json:"rate_per_second"`
-	MaxInFlight     int     `json:"max_in_flight"`
-	MaxAttempts     int     `json:"max_attempts"`
-	Backoff         Backoff `json:"backoff"`
-	DeliveryTimeout string  `json:"delivery_timeout"`
-	Retention       string  `json:"retention"`
-	MaxMessageBytes int     `json:"max_message_bytes"`
+	Path             string  `json:"path"`
+	RatePerSecond    float64 `json:"rate_per_second"`
+	Adaptive         bool    `json:"adaptive,omitempty"`
+	MinRatePerSecond float64 `json:"min_rate_per_second,omitempty"`
+	MaxInFlight      int     `json:"max_in_flight"`
+	MaxAttempts      int     `json:"max_attempts"`
+	Backoff          Backoff `json:"backoff"`
+	DeliveryTimeout  string  `json:"delivery_timeout"`
+	Retention        string  `json:"retention"`
+	MaxMessageBytes  int     `json:"max_message_bytes"`
 }
 
 type Queue struct {

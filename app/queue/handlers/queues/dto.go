@@ -14,14 +14,16 @@ type backoffDTO struct {
 }
 
 type settingsDTO struct {
-	Path            string     `json:"path"`
-	RatePerSecond   float64    `json:"rate_per_second"`
-	MaxInFlight     int        `json:"max_in_flight"`
-	MaxAttempts     int        `json:"max_attempts"`
-	Backoff         backoffDTO `json:"backoff"`
-	DeliveryTimeout string     `json:"delivery_timeout"`
-	Retention       string     `json:"retention"`
-	MaxMessageBytes int        `json:"max_message_bytes"`
+	Path             string     `json:"path"`
+	RatePerSecond    float64    `json:"rate_per_second" description:"the fixed rate; the ceiling when adaptive"`
+	Adaptive         bool       `json:"adaptive,omitempty" description:"let queued lower the rate while the shared database is busy"`
+	MinRatePerSecond float64    `json:"min_rate_per_second,omitempty" description:"the floor while adaptive, between 0.1 and rate_per_second"`
+	MaxInFlight      int        `json:"max_in_flight"`
+	MaxAttempts      int        `json:"max_attempts"`
+	Backoff          backoffDTO `json:"backoff"`
+	DeliveryTimeout  string     `json:"delivery_timeout"`
+	Retention        string     `json:"retention"`
+	MaxMessageBytes  int        `json:"max_message_bytes"`
 }
 
 type QueueDTO struct {
@@ -77,7 +79,8 @@ func toStatsDTO(s entities.Stats, fresh bool) statsDTO {
 
 func fromSettings(s entities.Settings) settingsDTO {
 	return settingsDTO{
-		Path: s.Path, RatePerSecond: s.RatePerSecond, MaxInFlight: s.MaxInFlight, MaxAttempts: s.MaxAttempts,
+		Path: s.Path, RatePerSecond: s.RatePerSecond, Adaptive: s.Adaptive, MinRatePerSecond: s.MinRatePerSecond,
+		MaxInFlight: s.MaxInFlight, MaxAttempts: s.MaxAttempts,
 		Backoff:         backoffDTO{Kind: s.Backoff.Kind, Initial: s.Backoff.Initial.String(), Max: s.Backoff.Max.String()},
 		DeliveryTimeout: s.DeliveryTimeout.String(), Retention: s.Retention.String(), MaxMessageBytes: s.MaxMessageBytes,
 	}
@@ -92,7 +95,8 @@ func toSettings(d settingsDTO) (entities.Settings, error) {
 		return entities.Settings{}, err
 	}
 	return entities.Settings{
-		Path: d.Path, RatePerSecond: d.RatePerSecond, MaxInFlight: d.MaxInFlight, MaxAttempts: d.MaxAttempts,
+		Path: d.Path, RatePerSecond: d.RatePerSecond, Adaptive: d.Adaptive, MinRatePerSecond: d.MinRatePerSecond,
+		MaxInFlight: d.MaxInFlight, MaxAttempts: d.MaxAttempts,
 		Backoff:         entities.Backoff{Kind: d.Backoff.Kind, Initial: durations["backoff.initial"], Max: durations["backoff.max"]},
 		DeliveryTimeout: durations["delivery_timeout"], Retention: durations["retention"], MaxMessageBytes: d.MaxMessageBytes,
 	}, nil
