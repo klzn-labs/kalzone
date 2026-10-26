@@ -1,5 +1,7 @@
 # Kalzone
 
+[![CI](https://github.com/klzn-labs/kalzone/actions/workflows/ci.yml/badge.svg)](https://github.com/klzn-labs/kalzone/actions/workflows/ci.yml)
+
 Kalzone is an internal developer platform, built as platform-engineering practice and
 first used for the Plateful services. It runs at https://platform.kalz.one. Teams register their services, keep per-environment config and secrets, and
 (in later sub-projects) build, release, deploy and watch them from one website.
@@ -407,3 +409,7 @@ Tests share it, so they run with `-p 1`.
 blue-green through [kalzone-infra](https://github.com/klzn-labs/kalzone-infra)'s deployctl.
 The repository needs `DOCKER_USERNAME`, `DOCKER_PASSWORD`,
 `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` and `INFRA_DEPLOY_KEY`.
+
+## License
+
+[MIT](LICENSE)
