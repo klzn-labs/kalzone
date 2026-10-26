@@ -97,16 +97,25 @@ func settingsFrom(c *gin.Context) (entities.Settings, error) {
 		return entities.Settings{}, err
 	}
 	rate, rateErr := strconv.ParseFloat(strings.TrimSpace(c.PostForm("rate_per_second")), 64)
+	minimum, minErr := optionalRate(c.PostForm("min_rate_per_second"))
 	durations, durErr := formDurations(c, "backoff_initial", "backoff_max", "delivery_timeout", "retention")
-	if rateErr != nil || durErr != nil {
-		return entities.Settings{}, apperror.Invalid("rate must be a number and durations look like 30s, 5m or 24h")
+	if rateErr != nil || minErr != nil || durErr != nil {
+		return entities.Settings{}, apperror.Invalid("rates must be numbers and durations look like 30s, 5m or 24h")
 	}
 	return entities.Settings{
 		Path: strings.TrimSpace(c.PostForm("path")), RatePerSecond: rate, MaxInFlight: numbers["max_in_flight"],
+		Adaptive: c.PostForm("adaptive") == "on", MinRatePerSecond: minimum,
 		MaxAttempts: numbers["max_attempts"], MaxMessageBytes: numbers["max_message_bytes"],
 		Backoff:         entities.Backoff{Kind: c.PostForm("backoff_kind"), Initial: durations["backoff_initial"], Max: durations["backoff_max"]},
 		DeliveryTimeout: durations["delivery_timeout"], Retention: durations["retention"],
 	}, nil
+}
+
+func optionalRate(raw string) (float64, error) {
+	if raw = strings.TrimSpace(raw); raw == "" {
+		return 0, nil
+	}
+	return strconv.ParseFloat(raw, 64)
 }
 
 func formNumbers(c *gin.Context, fields ...string) (map[string]int, error) {

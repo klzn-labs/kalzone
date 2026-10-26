@@ -2,8 +2,10 @@
 <div class="form-row">
   <div class="field"><label for="path">Path on the consumer</label><input id="path" name="path" type="text" class="mono" value="{{.Path}}" required></div>
   <div class="field"><label for="rate_per_second">Rate (per second)</label><input id="rate_per_second" name="rate_per_second" type="number" step="0.1" min="0.1" max="1000" value="{{.RatePerSecond}}" required></div>
+  <div class="field"><label for="min_rate_per_second">Minimum rate (per second)</label><input id="min_rate_per_second" name="min_rate_per_second" type="number" step="0.1" min="0" max="1000" value="{{.MinRatePerSecond}}"></div>
   <div class="field"><label for="max_in_flight">In flight</label><input id="max_in_flight" name="max_in_flight" type="number" min="1" max="100" value="{{.MaxInFlight}}" required></div>
 </div>
+<div class="field"><label class="switch"><input type="checkbox" name="adaptive" {{if .Adaptive}}checked{{end}}>Adaptive <span class="muted">slows down toward the minimum rate when the database is busy</span></label></div>
 <div class="form-row">
   <div class="field"><label for="max_attempts">Attempts</label><input id="max_attempts" name="max_attempts" type="number" min="1" max="50" value="{{.MaxAttempts}}" required></div>
   <div class="field"><label for="backoff_kind">Backoff</label><select id="backoff_kind" name="backoff_kind"><option value="exponential" {{if eq .Backoff.Kind "exponential"}}selected{{end}}>exponential</option><option value="fixed" {{if eq .Backoff.Kind "fixed"}}selected{{end}}>fixed</option></select></div>
