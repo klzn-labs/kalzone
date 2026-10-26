@@ -69,6 +69,29 @@ func Test_TheQueuePageReplaysAndDeletes(t *testing.T) {
 	require.NotContains(t, list.Body, "place-import")
 }
 
+func Test_TheQueuePageSavesAdaptiveSettingsAndShowsTheRate(t *testing.T) {
+	s, p := setupQueue(t)
+	q := createQueue(t, p.bob, "dev", http.StatusCreated)
+	form := queueForm(p.bob.CSRFToken)
+	form.Set("version", "1")
+	form.Set("adaptive", "on")
+	form.Set("min_rate_per_second", "0.5")
+	adaptive := map[string]any{"factor": 0.4, "database_cpu": 62.5, "target_cpu": 50, "fail_safe": false}
+
+	saved := p.bob.Form(t, "/resources/queues/dev/place-import/settings", form)
+	s.Queued(t, http.MethodPost, "/queued/v1/stats", map[string]any{"stats": []map[string]any{
+		{"queue_id": q.ID, "effective_rate_per_second": 2.3, "adaptive": adaptive},
+	}})
+	page := p.mia.Do(t, http.MethodGet, "/resources/queues/dev/place-import?tab=settings", nil)
+
+	require.Equal(t, http.StatusNoContent, saved.Status, saved.Body)
+	require.Contains(t, page.Body, "Adaptive · slowing down")
+	require.Contains(t, page.Body, "2.3 / s")
+	require.Contains(t, page.Body, "DB CPU 62.5% of a core, target 50% · never below 0.5 / s")
+	require.Contains(t, page.Body, "5 / s, adaptive down to 0.5 / s, 2 in flight")
+	require.Contains(t, page.Body, `name="adaptive" checked`)
+}
+
 func Test_TheQueuePageSavesSettingsAsANewVersion(t *testing.T) {
 	_, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)

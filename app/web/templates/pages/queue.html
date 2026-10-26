@@ -6,6 +6,7 @@
     <div class="row" style="margin-top:6px">
       {{template "env-badge" $q.Environment}}
       <span class="badge {{$d.Row.Badge}}"><span class="dot"></span>{{$d.Row.State}}</span>
+      {{if $d.Row.Rate.Adaptive}}<span class="badge {{$d.Row.Rate.BadgeClass}}">{{$d.Row.Rate.Badge}}</span>{{end}}
       <span class="muted small">delivers to <span class="mono">{{$d.Row.Consumer}}{{$q.Settings.Path}}</span> · version {{$q.Version}}</span>
     </div>
   </div>
@@ -15,9 +16,11 @@
   </div>
 </div>
 
-<div class="grid stat-strip">
+{{with $d.Row.Rate}}{{if .Adaptive}}<div class="rate-line"><span>{{.Line}}</span>{{if .Reading}}<span class="meter" aria-hidden="true"><span class="meter-fill{{if .Over}} meter-over{{end}}" style="width: {{.CPUWidth}}%"></span></span>{{end}}</div>{{end}}{{end}}
+<div class="grid stat-strip stat-strip-5">
   <div class="card stat"><div class="stat-label">Waiting</div><div class="stat-value">{{if $d.Row.Fresh}}{{$d.Row.Stats.Depth}}{{else}}—{{end}}</div></div>
   <div class="card stat"><div class="stat-label">In flight</div><div class="stat-value">{{if $d.Row.Fresh}}{{$d.Row.Stats.InFlight}}{{else}}—{{end}}</div><div class="stat-hint">of {{$q.Settings.MaxInFlight}} allowed</div></div>
+  <div class="card stat"><div class="stat-label">Rate now</div><div class="stat-value">{{$d.Row.Rate.Now}}</div><div class="stat-hint">{{$d.Row.Rate.Hint}}</div></div>
   <div class="card stat"><div class="stat-label">Oldest message</div><div class="stat-value">{{if and $d.Row.Fresh $d.Row.Stats.OldestAgeSeconds}}{{printf "%.0fs" $d.Row.Stats.OldestAgeSeconds}}{{else}}—{{end}}</div></div>
   <div class="card stat"><div class="stat-label">Dead letters</div><div class="stat-value">{{if $d.Row.Fresh}}{{$d.Row.Stats.DeadLetters}}{{else}}—{{end}}</div></div>
 </div>
@@ -65,7 +68,7 @@
     <dl class="kv">
       <div><dt>Consumer</dt><dd>{{.Row.Consumer}} → {{$s.Path}}</dd></div>
       <div><dt>Publishers</dt><dd {{if not .Row.Publishers}}class="empty"{{end}}>{{if .Row.Publishers}}{{.Row.Publishers}}{{else}}consumer only{{end}}</dd></div>
-      <div><dt>Rate</dt><dd>{{$s.RatePerSecond}} / s, {{$s.MaxInFlight}} in flight</dd></div>
+      <div><dt>Rate</dt><dd>{{$s.RatePerSecond}} / s{{if $s.Adaptive}}, adaptive down to {{$s.MinRatePerSecond}} / s{{end}}, {{$s.MaxInFlight}} in flight</dd></div>
       <div><dt>Retries</dt><dd>{{$s.MaxAttempts}} attempts, {{$s.Backoff.Kind}} {{span $s.Backoff.Initial}} → {{span $s.Backoff.Max}}</dd></div>
       <div><dt>Timeout</dt><dd>{{span $s.DeliveryTimeout}}</dd></div>
       <div><dt>Retention</dt><dd>{{span $s.Retention}}</dd></div>

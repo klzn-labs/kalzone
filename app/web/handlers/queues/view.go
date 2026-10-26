@@ -20,6 +20,7 @@ type Row struct {
 	Fresh      bool
 	State      string
 	Badge      string
+	Rate       RateView
 }
 
 type detailView struct {
@@ -42,6 +43,7 @@ func (h QueuesHandler) row(ctx context.Context, q entities.Queue) Row {
 	consumer, _ := h.names.SlugOf(ctx, q.ConsumerID)
 	r := Row{Queue: q, Consumer: consumer, Publishers: strings.Join(h.slugs(ctx, q.Publishers), ", "), Attached: h.slugs(ctx, q.Attached()), Stats: st, Fresh: st.Fresh(clock.Now().UTC())}
 	r.State, r.Badge = state(r)
+	r.Rate = rateView(r)
 	return r
 }
 
