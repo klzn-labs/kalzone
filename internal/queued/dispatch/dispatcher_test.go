@@ -72,7 +72,7 @@ func start(t *testing.T, q model.Queue) (*jetstream.Driver, *dispatch.Dispatcher
 	d, err := jetstream.New(natstest.Start(t))
 	require.NoError(t, err)
 	require.NoError(t, d.Ensure(ctx, q))
-	disp := dispatch.New(d, &http.Client{}, q, &recorder{})
+	disp := dispatch.New(d, &http.Client{}, q, &recorder{}, model.FixedThrottle{})
 	disp.Start(ctx)
 	t.Cleanup(disp.Stop)
 	return d, disp
@@ -208,7 +208,7 @@ func Test_Dispatcher_NeverHoldsAFetchedMessageWhileWaitingForTheRate(t *testing.
 	q.Settings.RatePerSecond = 4
 	q.Settings.MaxInFlight = 20
 	m := newMemory(8)
-	disp := dispatch.New(m, &http.Client{}, q, &recorder{})
+	disp := dispatch.New(m, &http.Client{}, q, &recorder{}, model.FixedThrottle{})
 	disp.Start(ctx)
 	defer disp.Stop()
 
@@ -244,4 +244,42 @@ func distinctIDs(c *consumer) int {
 		seen[h.Get("Platform-Message-Id")] = true
 	}
 	return len(seen)
+}
+
+type stuckThrottle struct{ factor float64 }
+
+func (s stuckThrottle) Adaptive() model.AdaptiveState {
+	return model.AdaptiveState{On: true, Factor: s.factor}
+}
+
+func ackedWithin(t *testing.T, q model.Queue, throttle model.Throttle, window time.Duration) int {
+	t.Helper()
+	m := newMemory(100)
+	disp := dispatch.New(m, &http.Client{}, q, &recorder{}, throttle)
+	disp.Start(ctx)
+	time.Sleep(window)
+	disp.Stop()
+	_, acked := m.longestHeld()
+	return acked
+}
+
+func Test_Dispatcher_AnAdaptiveQueueFollowsTheFactor(t *testing.T) {
+	c := &consumer{}
+	q := queueFor(c.serve(t, func(int32) (int, time.Duration) { return 200, 0 }))
+	q.Settings.RatePerSecond, q.Settings.MaxInFlight = 20, 20
+	q.Settings.Adaptive, q.Settings.MinRatePerSecond = true, 2
+
+	throttled := ackedWithin(t, q, stuckThrottle{factor: 0}, 2*time.Second)
+	open := ackedWithin(t, q, stuckThrottle{factor: 1}, 2*time.Second)
+
+	require.LessOrEqual(t, throttled, 6)
+	require.GreaterOrEqual(t, open, 30)
+}
+
+func Test_Dispatcher_AFixedQueueIgnoresTheFactor(t *testing.T) {
+	c := &consumer{}
+	q := queueFor(c.serve(t, func(int32) (int, time.Duration) { return 200, 0 }))
+	q.Settings.RatePerSecond, q.Settings.MaxInFlight = 20, 20
+
+	require.GreaterOrEqual(t, ackedWithin(t, q, stuckThrottle{factor: 0}, 2*time.Second), 30)
 }

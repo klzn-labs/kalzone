@@ -40,6 +40,7 @@ func toEntityStats(report queuedapi.StatsReport) []entities.Stats {
 			QueueID: s.QueueID, Depth: s.Depth, InFlight: s.InFlight, OldestAgeSeconds: s.OldestAgeSeconds,
 			DeliveredPerMinute: s.DeliveredPerMinute, FailedPerMinute: s.FailedPerMinute,
 			DeadLetters: s.DeadLetters, NewestDead: toEntityDead(s.NewestDead),
+			EffectiveRate: s.EffectiveRate, Adaptive: (*entities.Adaptive)(s.Adaptive),
 		})
 	}
 	return result

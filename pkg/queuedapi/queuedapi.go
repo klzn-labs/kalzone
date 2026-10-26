@@ -110,6 +110,15 @@ type Stats struct {
 	FailedPerMinute    float64      `json:"failed_per_minute"`
 	DeadLetters        int64        `json:"dead_letters"`
 	NewestDead         []DeadLetter `json:"newest_dead"`
+	EffectiveRate      float64      `json:"effective_rate_per_second"`
+	Adaptive           *Adaptive    `json:"adaptive,omitempty"`
+}
+
+type Adaptive struct {
+	Factor      float64 `json:"factor"`
+	DatabaseCPU float64 `json:"database_cpu"`
+	TargetCPU   float64 `json:"target_cpu"`
+	FailSafe    bool    `json:"fail_safe"`
 }
 
 type StatsReport struct {

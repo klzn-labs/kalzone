@@ -27,6 +27,7 @@ type Dispatcher struct {
 	backend  backend.Backend
 	sender   sender
 	recorder Recorder
+	throttle model.Throttle
 	mu       sync.Mutex
 	queue    model.Queue
 	limiter  *rate.Limiter
@@ -36,9 +37,9 @@ type Dispatcher struct {
 	work     sync.WaitGroup
 }
 
-func New(b backend.Backend, client httpDoer, q model.Queue, recorder Recorder) *Dispatcher {
-	d := &Dispatcher{backend: b, sender: sender{client: client}, recorder: recorder, queue: q}
-	d.limiter = rate.NewLimiter(rate.Limit(q.Settings.RatePerSecond), 1)
+func New(b backend.Backend, client httpDoer, q model.Queue, recorder Recorder, throttle model.Throttle) *Dispatcher {
+	d := &Dispatcher{backend: b, sender: sender{client: client}, recorder: recorder, throttle: throttle, queue: q}
+	d.limiter = rate.NewLimiter(d.limitFor(q), 1)
 	return d
 }
 
@@ -61,7 +62,17 @@ func (d *Dispatcher) Update(q model.Queue) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.queue = q
-	d.limiter.SetLimit(rate.Limit(q.Settings.RatePerSecond))
+	d.applyRate(q)
+}
+
+func (d *Dispatcher) limitFor(q model.Queue) rate.Limit {
+	return rate.Limit(q.Settings.EffectiveRate(d.throttle.Adaptive().Factor))
+}
+
+func (d *Dispatcher) applyRate(q model.Queue) {
+	if limit := d.limitFor(q); limit != d.limiter.Limit() {
+		d.limiter.SetLimit(limit)
+	}
 }
 
 func (d *Dispatcher) snapshot() model.Queue {
@@ -87,6 +98,7 @@ func (d *Dispatcher) step(ctx context.Context, q model.Queue) {
 		sleep(ctx, fullWait)
 		return
 	}
+	d.applyRate(q)
 	if err := d.limiter.Wait(ctx); err != nil {
 		return
 	}

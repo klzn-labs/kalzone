@@ -31,3 +31,48 @@ func Test_LoadConfig_NeedsThePlatformTokenAndNATS(t *testing.T) {
 
 	require.ErrorContains(t, err, "QUEUED_TOKEN")
 }
+
+func baseEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv("QUEUED_PLATFORM_URL", "https://platform.kalz.one")
+	t.Setenv("QUEUED_TOKEN", "tok")
+	t.Setenv("QUEUED_NATS_URL", "nats://nats:4222")
+}
+
+func Test_LoadConfig_LeavesTheGovernorOffByDefault(t *testing.T) {
+	baseEnv(t)
+
+	cfg, err := queued.LoadConfig()
+
+	require.NoError(t, err)
+	require.Empty(t, cfg.Adaptive.PrometheusURL)
+	require.Equal(t, 50.0, cfg.Adaptive.Governor.Setpoint)
+	require.Equal(t, 15*time.Second, cfg.Adaptive.Governor.Period)
+	require.Equal(t, 3, cfg.Adaptive.Governor.StaleAfter)
+	require.Contains(t, cfg.Adaptive.Query, `container_label_com_docker_compose_service="mysql"`)
+}
+
+func Test_LoadConfig_ReadsTheGovernorSettings(t *testing.T) {
+	baseEnv(t)
+	t.Setenv("QUEUED_ADAPTIVE_PROMETHEUS_URL", "http://prometheus:9090")
+	t.Setenv("QUEUED_ADAPTIVE_SETPOINT", "60")
+	t.Setenv("QUEUED_ADAPTIVE_KP", "0.02")
+	t.Setenv("QUEUED_ADAPTIVE_PERIOD", "30s")
+
+	cfg, err := queued.LoadConfig()
+
+	require.NoError(t, err)
+	require.Equal(t, "http://prometheus:9090", cfg.Adaptive.PrometheusURL)
+	require.Equal(t, 60.0, cfg.Adaptive.Governor.Setpoint)
+	require.Equal(t, 0.02, cfg.Adaptive.Governor.Kp)
+	require.Equal(t, 30*time.Second, cfg.Adaptive.Governor.Period)
+}
+
+func Test_LoadConfig_RefusesABrokenGovernor(t *testing.T) {
+	baseEnv(t)
+	t.Setenv("QUEUED_ADAPTIVE_STALE_AFTER", "0")
+
+	_, err := queued.LoadConfig()
+
+	require.ErrorContains(t, err, "STALE_AFTER")
+}
