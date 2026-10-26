@@ -47,6 +47,24 @@ func Test_Settings_Limits(t *testing.T) {
 	}
 }
 
+func Test_Settings_AdaptiveMinimum(t *testing.T) {
+	adaptive := func(min float64) entities.Settings {
+		s := entities.DefaultSettings("/hooks/x")
+		s.Adaptive, s.MinRatePerSecond = true, min
+		return s
+	}
+	require.NoError(t, adaptive(0.1).Validate())
+	require.NoError(t, adaptive(10).Validate(), "a minimum equal to the rate is a constant rate")
+	require.Error(t, adaptive(0.05).Validate())
+	require.Error(t, adaptive(10.5).Validate())
+}
+
+func Test_Settings_FixedQueueIgnoresMinimum(t *testing.T) {
+	s := entities.DefaultSettings("/hooks/x")
+	s.MinRatePerSecond = 0
+	require.NoError(t, s.Validate(), "versions stored before adaptive rates have no minimum")
+}
+
 func Test_Backoff_Delay(t *testing.T) {
 	expo := entities.Backoff{Kind: entities.BackoffExponential, Initial: time.Second, Max: 10 * time.Second}
 	fixed := entities.Backoff{Kind: entities.BackoffFixed, Initial: 3 * time.Second, Max: 3 * time.Second}

@@ -2,6 +2,7 @@ package entities
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ func ValidateName(name string) error {
 }
 
 func (s Settings) Validate() error {
-	for _, c := range append(s.deliveryChecks(), s.Backoff.checks()...) {
+	for _, c := range slices.Concat(s.deliveryChecks(), s.adaptiveChecks(), s.Backoff.checks()) {
 		if !c.ok {
 			return apperror.Invalid(c.message)
 		}
@@ -40,6 +41,15 @@ func (s Settings) deliveryChecks() []check {
 		{s.DeliveryTimeout >= time.Second && s.DeliveryTimeout <= 15*time.Minute, "delivery timeout must be between 1s and 15m"},
 		{s.Retention >= time.Hour && s.Retention <= 720*time.Hour, "retention must be between 1 hour and 30 days"},
 		{s.MaxMessageBytes >= 1<<10 && s.MaxMessageBytes <= 1<<20, "message size must be between 1 KiB and 1 MiB"},
+	}
+}
+
+func (s Settings) adaptiveChecks() []check {
+	if !s.Adaptive {
+		return nil
+	}
+	return []check{
+		{s.MinRatePerSecond >= 0.1 && s.MinRatePerSecond <= s.RatePerSecond, "minimum rate must be at least 0.1 and at most the rate"},
 	}
 }
 

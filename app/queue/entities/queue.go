@@ -17,14 +17,16 @@ type Backoff struct {
 }
 
 type Settings struct {
-	Path            string        `json:"path"`
-	RatePerSecond   float64       `json:"rate_per_second"`
-	MaxInFlight     int           `json:"max_in_flight"`
-	MaxAttempts     int           `json:"max_attempts"`
-	Backoff         Backoff       `json:"backoff"`
-	DeliveryTimeout time.Duration `json:"delivery_timeout"`
-	Retention       time.Duration `json:"retention"`
-	MaxMessageBytes int           `json:"max_message_bytes"`
+	Path             string        `json:"path"`
+	RatePerSecond    float64       `json:"rate_per_second"`
+	Adaptive         bool          `json:"adaptive"`
+	MinRatePerSecond float64       `json:"min_rate_per_second"`
+	MaxInFlight      int           `json:"max_in_flight"`
+	MaxAttempts      int           `json:"max_attempts"`
+	Backoff          Backoff       `json:"backoff"`
+	DeliveryTimeout  time.Duration `json:"delivery_timeout"`
+	Retention        time.Duration `json:"retention"`
+	MaxMessageBytes  int           `json:"max_message_bytes"`
 }
 
 type Queue struct {
@@ -56,7 +58,7 @@ type Version struct {
 
 func DefaultSettings(path string) Settings {
 	return Settings{
-		Path: path, RatePerSecond: 10, MaxInFlight: 4, MaxAttempts: 5,
+		Path: path, RatePerSecond: 10, MinRatePerSecond: 0.1, MaxInFlight: 4, MaxAttempts: 5,
 		Backoff:         Backoff{Kind: BackoffExponential, Initial: time.Second, Max: 5 * time.Minute},
 		DeliveryTimeout: 30 * time.Second, Retention: 7 * 24 * time.Hour, MaxMessageBytes: 256 << 10,
 	}
