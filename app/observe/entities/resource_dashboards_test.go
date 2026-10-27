@@ -27,13 +27,19 @@ func Test_TheQueueDashboardFiltersEveryPanelByTheQueueID(t *testing.T) {
 }
 
 func Test_TheEmbeddedPanelsExistOnBothResourceDashboards(t *testing.T) {
-	for _, d := range []map[string]any{entities.DatabaseDashboard(), entities.QueueDashboard()} {
-		ids := map[int]bool{}
-		for _, panel := range d["panels"].([]any) {
-			ids[panel.(map[string]any)["id"].(int)] = true
-		}
-		for _, id := range entities.EmbeddedResourcePanels {
-			require.True(t, ids[id], "%s lacks panel %d", d["uid"], id)
-		}
+	require.Equal(t, []string{"MySQL CPU (shared)", "Connections", "Queries per second", "Slowest queries"}, embeddedTitles(entities.DatabaseDashboard(), entities.DatabaseEmbeds))
+	require.Equal(t, []string{"Waiting", "Deliveries per second", "Delivery p95", "Rate allowed now"}, embeddedTitles(entities.QueueDashboard(), entities.QueueEmbeds))
+}
+
+func embeddedTitles(d map[string]any, embeds []entities.EmbeddedPanel) []string {
+	titles := map[int]string{}
+	for _, panel := range d["panels"].([]any) {
+		p := panel.(map[string]any)
+		titles[p["id"].(int)] = p["title"].(string)
 	}
+	result := []string{}
+	for _, e := range embeds {
+		result = append(result, titles[e.ID])
+	}
+	return result
 }

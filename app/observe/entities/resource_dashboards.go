@@ -6,12 +6,12 @@ const (
 	DatabaseDashboardUID = "kalzone-database"
 	QueueDashboardUID    = "kalzone-queue"
 
-	PanelDatabaseQueries     = 1
-	PanelDatabaseLatency     = 2
-	PanelDatabaseConnections = 3
-	PanelDatabaseLoad        = 4
-	PanelDatabaseCPU         = 5
-	PanelDatabaseSlow        = 6
+	PanelDatabaseCPU         = 1
+	PanelDatabaseConnections = 2
+	PanelDatabaseQueries     = 3
+	PanelDatabaseSlow        = 4
+	PanelDatabaseLatency     = 5
+	PanelDatabaseLoad        = 6
 
 	PanelQueueWaiting    = 1
 	PanelQueueDeliveries = 2
@@ -24,19 +24,26 @@ const (
 	queueSelector  = `{queue_id="$queue_id"}`
 )
 
-var EmbeddedResourcePanels = []int{1, 2, 3, 4}
+type EmbeddedPanel struct {
+	ID   int
+	Wide bool
+}
+
+var DatabaseEmbeds = []EmbeddedPanel{{ID: PanelDatabaseCPU}, {ID: PanelDatabaseConnections}, {ID: PanelDatabaseQueries}, {ID: PanelDatabaseSlow, Wide: true}}
+
+var QueueEmbeds = []EmbeddedPanel{{ID: PanelQueueWaiting}, {ID: PanelQueueDeliveries}, {ID: PanelQueueLatency}, {ID: PanelQueueRate}}
 
 func DatabaseDashboard() map[string]any {
 	statementsOf := func(counter string) string {
 		return fmt.Sprintf("sum(rate(%s_%s%s[$__rate_interval]))", statements, counter, databaseSchema)
 	}
 	return resourceDashboard(DatabaseDashboardUID, "Database", []string{"schema", "user"}, []any{
-		timeseries(PanelDatabaseQueries, "Queries per second", "reqps", 0, 0, statementsOf("total")),
-		timeseries(PanelDatabaseLatency, "Average query time", "s", 8, 0, statementsOf("seconds_total")+" / "+statementsOf("total")),
-		timeseries(PanelDatabaseConnections, "Connections", "none", 16, 0, `sum(mysql_info_schema_processlist_processes_by_user{mysql_user="$user"})`),
-		timeseries(PanelDatabaseLoad, "Time in queries", "s", 0, 8, statementsOf("seconds_total")),
-		placed(mysqlCPU(0), PanelDatabaseCPU, 8, 8, 16),
-		placed(slowQueries(fmt.Sprintf("group by (schema) (%s_total%s)", statements, databaseSchema), 0), PanelDatabaseSlow, 0, 16, 24),
+		placed(mysqlCPU(0), PanelDatabaseCPU, 0, 0, 8),
+		timeseries(PanelDatabaseConnections, "Connections", "none", 8, 0, `sum(mysql_info_schema_processlist_processes_by_user{mysql_user="$user"})`),
+		timeseries(PanelDatabaseQueries, "Queries per second", "reqps", 16, 0, statementsOf("total")),
+		placed(slowQueries(fmt.Sprintf("group by (schema) (%s_total%s)", statements, databaseSchema), 0), PanelDatabaseSlow, 0, 8, 24),
+		timeseries(PanelDatabaseLatency, "Average query time", "s", 0, 18, statementsOf("seconds_total")+" / "+statementsOf("total")),
+		timeseries(PanelDatabaseLoad, "Time in queries", "s", 8, 18, statementsOf("seconds_total")),
 	})
 }
 
