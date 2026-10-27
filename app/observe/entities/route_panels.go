@@ -4,7 +4,7 @@ import "fmt"
 
 const (
 	traefikContainer = "plateful-traefik-1"
-	routeLabel       = "label_format route=\"{{.RequestMethod}} {{regexReplaceAll `/[0-9]+\\\\b` (regexReplaceAll `/[0-9a-fA-F-]{16,}\\\\b` (regexReplaceAll `/[0-9]{4}-[0-9]{2}-[0-9]{2}\\\\b` .RequestPath `/:date`) `/:id`) `/:id`}}\""
+	routeLabel       = "label_format route=\"{{if or (eq .DownstreamStatus `404`) (eq .DownstreamStatus `405`)}}unmatched{{else}}{{.RequestMethod}} {{regexReplaceAll `/[0-9]+\\\\b` (regexReplaceAll `/[0-9a-fA-F-]{16,}\\\\b` (regexReplaceAll `/[0-9]{4}-[0-9]{2}-[0-9]{2}\\\\b` .RequestPath `/:date`) `/:id`) `/:id`}}{{end}}\""
 	topRoutes        = 8
 	latencyInterval  = "5m"
 )
