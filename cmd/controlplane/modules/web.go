@@ -96,6 +96,7 @@ func resourcePageInjections() fx.Option {
 		func(h databasesPage.DatabasesHandler) resourcesPage.DatabaseSection { return h },
 		func(u crons.CronsUsecase) cronsPage.Crons { return u },
 		func(l cronCatalog.Lookup) cronsPage.ServiceNames { return l },
+		func(u services.ServicesUsecase) cronsPage.Services { return u },
 		func(h cronsPage.CronsHandler) resourcesPage.CronSection { return h },
 		func(u resources.ResourcesUsecase) resourcesPage.Inventory { return u },
 	)
@@ -162,7 +163,7 @@ func pageRoutes() fx.Option {
 		web.RegisterStaticRoutes, login.RegisterLoginRoutes, overviewPage.RegisterOverviewRoutes,
 		servicesPage.RegisterServicesRoutes, servicePage.RegisterServiceRoutes, environmentPage.RegisterEnvironmentRoutes,
 		teamsPage.RegisterTeamsRoutes, teamPage.RegisterTeamRoutes, auditPage.RegisterAuditRoutes, peoplePage.RegisterPeopleRoutes,
-		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, platformPage.RegisterPlatformRoutes, queuesPage.RegisterQueuesRoutes, databasesPage.RegisterDatabasesRoutes, resourcesPage.RegisterResourcesRoutes,
+		releasesPage.RegisterReleasesRoutes, agentsPage.RegisterAgentsRoutes, platformPage.RegisterPlatformRoutes, queuesPage.RegisterQueuesRoutes, databasesPage.RegisterDatabasesRoutes, cronsPage.RegisterCronsRoutes, resourcesPage.RegisterResourcesRoutes,
 		tokensPage.RegisterTokensRoutes, requestsPage.RegisterRequestsRoutes,
 	)
 }
