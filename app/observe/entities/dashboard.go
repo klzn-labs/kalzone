@@ -80,7 +80,7 @@ func workloadPanels(name string) []any {
 	traefik := fmt.Sprintf(`service=~"%s-(blue|green)@file"`, name)
 	container := fmt.Sprintf(`name=~"%s-(blue|green)"`, name)
 	return []any{
-		counted(timeseries(PanelRequests, "Requests", "short", 0, 0, fmt.Sprintf("sum(increase(traefik_service_requests_total{%s}[$__interval]))", traefik))),
+		requestsByOutcome(traefik),
 		timeseries(PanelErrors, "5xx ratio", "percentunit", 8, 0, fmt.Sprintf(
 			"sum(rate(traefik_service_requests_total{%s,code=~\"5..\"}[1m])) / sum(rate(traefik_service_requests_total{%s}[1m]))", traefik, traefik)),
 		timeseries(PanelLatency, "p95 latency", "s", 16, 0, fmt.Sprintf(
@@ -89,6 +89,25 @@ func workloadPanels(name string) []any {
 		timeseries(PanelCPU, "CPU", "percentunit", 8, 8, fmt.Sprintf("sum by (name) (rate(container_cpu_usage_seconds_total{%s}[1m]))", container)),
 		stepped(timeseries(PanelTraffic, "Traffic weight", "percent", 16, 8, fmt.Sprintf(
 			"max by (colour) (kalzone_traffic_weight_percent{service=\"%s\"})", name))),
+	}
+}
+
+func requestsByOutcome(traefik string) map[string]any {
+	count := "sum(increase(traefik_service_requests_total{%s,code%s\"5..\"}[$__interval]))"
+	panel := counted(timeseries(PanelRequests, "Requests", "short", 0, 0, fmt.Sprintf(count, traefik, "!~")))
+	succeeded := panel["targets"].([]map[string]any)[0]
+	succeeded["legendFormat"] = "succeeded"
+	failed := prometheusTarget("B", fmt.Sprintf(count, traefik, "=~"))
+	failed["legendFormat"] = "5xx"
+	panel["targets"] = []map[string]any{succeeded, failed}
+	panel["fieldConfig"].(map[string]any)["overrides"] = []any{fixedColor("succeeded", "green"), fixedColor("5xx", "red")}
+	return panel
+}
+
+func fixedColor(series, color string) map[string]any {
+	return map[string]any{
+		"matcher":    map[string]string{"id": "byName", "options": series},
+		"properties": []map[string]any{{"id": "color", "value": map[string]string{"mode": "fixed", "fixedColor": color}}},
 	}
 }
 

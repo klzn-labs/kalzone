@@ -248,7 +248,7 @@
   <div class="card-header"><div><h2>Observability</h2><p>Live from Grafana, last 6 hours</p></div>
     <div class="actions"><a class="btn btn-sm" href="/grafana/d/{{$uid}}?orgId={{$org}}&var-env={{$env}}" target="_blank" rel="noopener">{{icon "activity"}}Dashboard {{icon "external"}}</a></div></div>
   <div class="panels">
-    {{range $panel := (list 1 2 3 4)}}{{template "panel" dict "Org" $org "UID" $uid "Env" $env "Panel" $panel "Class" ""}}{{end}}
+    {{range $panel := (list 5 4 3 1)}}{{template "panel" dict "Org" $org "UID" $uid "Env" $env "Panel" $panel "Class" ""}}{{end}}
     {{template "panel" dict "Org" $org "UID" $uid "Env" $env "Panel" 6 "Class" "wide"}}
   </div>
 </div>
