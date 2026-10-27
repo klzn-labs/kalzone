@@ -12,7 +12,7 @@ import (
 )
 
 func telemetryAuth(team string) map[string]string {
-	token := telemetry.NewTelemetryUsecase(integration.TelemetryKey, "", nil, nil, nil).Token(team)
+	token := telemetry.NewTelemetryUsecase(integration.TelemetryKey, "", nil, nil, nil, nil).Token(team)
 	return map[string]string{"Authorization": "Bearer " + token, "Content-Type": "application/x-www-form-urlencoded"}
 }
 
@@ -64,4 +64,14 @@ func Test_ATeamWithoutServicesReadsNothing(t *testing.T) {
 
 	query := s.Telemetry.Received()[0].Form.Get("query")
 	require.True(t, strings.Contains(query, `kalzone_out_of_scope="true"`), query)
+}
+
+func Test_ATeamsPrometheusDatasourceReadsItsOwnQueues(t *testing.T) {
+	s, p := setupQueue(t)
+	q := createQueue(t, p.bob, "dev", http.StatusCreated)
+	form := url.Values{"query": {`platform_queue_depth`}}
+
+	s.Raw(t, http.MethodPost, "/telemetry/places/prometheus/api/v1/query", []byte(form.Encode()), telemetryAuth("places"))
+
+	require.Equal(t, `platform_queue_depth{queue_id=~"(?:`+q.ID+`)"}`, s.Telemetry.Received()[0].Form.Get("query"))
 }

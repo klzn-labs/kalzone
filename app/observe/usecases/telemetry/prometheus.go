@@ -106,6 +106,10 @@ func (u TelemetryUsecase) teamScope(ctx context.Context, team string) (entities.
 	if err != nil {
 		return entities.Scope{}, err
 	}
+	resources, err := u.resources.Resources(ctx)
+	if err != nil {
+		return entities.Scope{}, err
+	}
 	environments, err := u.directory.Environments(ctx)
-	return entities.TeamScope(services, teamID, environments), err
+	return entities.TeamScope(services, resources, teamID, environments), err
 }

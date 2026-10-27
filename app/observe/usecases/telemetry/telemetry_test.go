@@ -22,6 +22,15 @@ func (catalog) Services(context.Context) ([]entities.Service, error) {
 	}, nil
 }
 
+type resources struct{}
+
+func (resources) Resources(context.Context) (entities.Resources, error) {
+	return entities.Resources{
+		Databases: []entities.OwnedDatabase{{TeamID: "t1", Database: entities.Database{Schema: "ledger", User: "ledger_dev"}}},
+		Queues:    []entities.OwnedQueue{{TeamID: "t1", ID: "q1"}, {TeamID: "t2", ID: "q2"}},
+	}, nil
+}
+
 type directory struct{}
 
 func (directory) TeamID(_ context.Context, slug string) (string, error) {
@@ -54,7 +63,7 @@ func (u *upstream) Loki(_ context.Context, call entities.LokiCall) (entities.Tel
 
 func setup(key string) (*upstream, telemetry.TelemetryUsecase) {
 	u := &upstream{}
-	return u, telemetry.NewTelemetryUsecase(key, "all-token", catalog{}, directory{}, u)
+	return u, telemetry.NewTelemetryUsecase(key, "all-token", catalog{}, resources{}, directory{}, u)
 }
 
 func prometheus(uc telemetry.TelemetryUsecase, team, path string, form url.Values) error {
@@ -94,11 +103,20 @@ func Test_Prometheus_ScopesTheQueryToTheTeamsServices(t *testing.T) {
 	require.Equal(t, "60", up.form.Get("step"))
 }
 
+func Test_Prometheus_ScopesToTheTeamsOwnDatabasesAndQueues(t *testing.T) {
+	up, uc := setup("k1")
+
+	require.NoError(t, prometheus(uc, "alpha", "/api/v1/query", url.Values{"query": {"platform_queue_depth + on() mysql_perf_schema_events_statements_total"}}))
+
+	require.Contains(t, up.form.Get("query"), `platform_queue_depth{queue_id=~"(?:q1)"}`)
+	require.Contains(t, up.form.Get("query"), `mysql_perf_schema_events_statements_total{schema=~"(?:shop|ledger)"}`)
+}
+
 func Test_Prometheus_ScopesMatchersAndAddsThemWhenMissing(t *testing.T) {
 	up, uc := setup("k1")
 
 	require.NoError(t, prometheus(uc, "alpha", "/api/v1/label/__name__/values", nil))
-	require.Contains(t, up.form["match[]"], `{__name__=~"mysql_info_schema_processlist_.*",mysql_user=~"(?:api_prod)"}`)
+	require.Contains(t, up.form["match[]"], `{__name__=~"mysql_info_schema_processlist_.*",mysql_user=~"(?:api_prod|ledger_dev)"}`)
 
 	require.NoError(t, prometheus(uc, "alpha", "/api/v1/series", url.Values{"match[]": {"kalzone_database_attachment"}}))
 	require.Equal(t, []string{`{__name__="kalzone_database_attachment",service=~"(?:api)"}`}, up.form["match[]"])
@@ -162,7 +180,7 @@ func Test_Loki_RefusesPushDeleteAndPathTricks(t *testing.T) {
 
 func Test_TheAllScopeTakesOnlyItsOwnToken(t *testing.T) {
 	_, uc := setup("k1")
-	unset := telemetry.NewTelemetryUsecase("k1", "", catalog{}, directory{}, &upstream{})
+	unset := telemetry.NewTelemetryUsecase("k1", "", catalog{}, resources{}, directory{}, &upstream{})
 
 	require.Equal(t, apperror.CodeUnauthenticated, apperror.CodeOf(loki(uc, entities.AllTeams, "/loki/api/v1/labels")))
 	require.Equal(t, apperror.CodeUnauthenticated, apperror.CodeOf(lokiWith(unset, entities.AllTeams, "", "/loki/api/v1/labels")))

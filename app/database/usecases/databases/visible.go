@@ -77,3 +77,7 @@ func (u DatabasesUsecase) viewOf(ctx context.Context, at entities.Attachment) (A
 	draining, err := u.running.RunsSince(ctx, at.ServiceID, at.Environment, *at.DetachedAt)
 	return AttachmentView{Service: slug, AttachedAt: at.AttachedAt, DetachedAt: at.DetachedAt, Draining: draining}, err
 }
+
+func (u DatabasesUsecase) All(ctx context.Context) ([]entities.Database, error) {
+	return u.store.List(ctx, "", "")
+}

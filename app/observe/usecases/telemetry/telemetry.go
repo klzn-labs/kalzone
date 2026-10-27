@@ -22,6 +22,10 @@ type Catalog interface {
 	Services(ctx context.Context) ([]entities.Service, error)
 }
 
+type ResourceCatalog interface {
+	Resources(ctx context.Context) (entities.Resources, error)
+}
+
 type Directory interface {
 	TeamID(ctx context.Context, teamSlug string) (string, error)
 	Environments(ctx context.Context) ([]string, error)
@@ -36,12 +40,13 @@ type TelemetryUsecase struct {
 	key       []byte
 	allToken  string
 	catalog   Catalog
+	resources ResourceCatalog
 	directory Directory
 	upstream  Upstream
 }
 
-func NewTelemetryUsecase(key, allToken string, catalog Catalog, directory Directory, upstream Upstream) TelemetryUsecase {
-	return TelemetryUsecase{key: []byte(key), allToken: allToken, catalog: catalog, directory: directory, upstream: upstream}
+func NewTelemetryUsecase(key, allToken string, catalog Catalog, resources ResourceCatalog, directory Directory, upstream Upstream) TelemetryUsecase {
+	return TelemetryUsecase{key: []byte(key), allToken: allToken, catalog: catalog, resources: resources, directory: directory, upstream: upstream}
 }
 
 func (u TelemetryUsecase) Enabled() bool {

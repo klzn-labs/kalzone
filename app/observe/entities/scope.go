@@ -16,6 +16,7 @@ type Scope struct {
 	Environments []string
 	MySQLUsers   []string
 	Schemas      []string
+	Queues       []string
 }
 
 type scopeRule struct {
@@ -31,6 +32,7 @@ var scopeRules = []scopeRule{
 	{prefix: "container_", limit: func(s Scope) *labels.Matcher { return s.colours("name", "") }},
 	{prefix: "kalzone_traffic_weight_percent", limit: func(s Scope) *labels.Matcher { return s.deployed("service") }},
 	{prefix: "kalzone_database_attachment", limit: func(s Scope) *labels.Matcher { return oneOf("service", s.Services) }},
+	{prefix: "platform_queue_", limit: func(s Scope) *labels.Matcher { return oneOf("queue_id", s.Queues) }},
 }
 
 var promql = parser.NewParser(parser.Options{})
