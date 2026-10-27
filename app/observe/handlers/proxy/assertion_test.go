@@ -75,7 +75,7 @@ func Test_Identify_ReplacesForgedHeadersWithTheViewersAssertion(t *testing.T) {
 
 	require.NotEqual(t, "forged", h.Get(AssertionHeader))
 	require.Empty(t, h.Get("X-WEBAUTH-ROLE"))
-	require.Equal(t, "bob", h.Get("X-WEBAUTH-USER"))
+	require.Empty(t, h.Get("X-WEBAUTH-USER"))
 }
 
 func Test_Identify_DropsAForgedAssertionWhenSigningIsOff(t *testing.T) {
