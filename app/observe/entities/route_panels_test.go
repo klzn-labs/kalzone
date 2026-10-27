@@ -18,6 +18,13 @@ func Test_AccessLog_ReadsTheServicesTraefikLinesWithIDsCollapsed(t *testing.T) {
 	require.Contains(t, query, "regexReplaceAll `/[0-9]{4}-[0-9]{2}-[0-9]{2}\\\\b` .RequestPath `/:date`")
 }
 
+func Test_AccessLog_FoldsNotFoundAndNotAllowedIntoOneRoute(t *testing.T) {
+	query := entities.AccessLog("api-${env}")
+
+	require.Contains(t, query, "label_format route=\"{{if or (eq .DownstreamStatus `404`) (eq .DownstreamStatus `405`)}}unmatched{{else}}{{.RequestMethod}} ")
+	require.Contains(t, query, "`/:id`}}{{end}}\"")
+}
+
 func Test_Dashboard_CountsRequestsInsteadOfRates(t *testing.T) {
 	body := dashboardJSON(t, entities.Service{Slug: "web", Name: "Web"})
 
