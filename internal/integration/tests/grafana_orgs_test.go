@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,6 +44,11 @@ func Test_TheEnvironmentPageEmbedsTheTeamsOwnOrg(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, page.Status)
 	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d-solo/platform-places-api?orgId=%d&panelId=1&var-env=dev`, org))
+	cpu := strings.Index(page.Body, fmt.Sprintf(`orgId=%d&panelId=5&`, org))
+	memory := strings.Index(page.Body, fmt.Sprintf(`orgId=%d&panelId=4&`, org))
+	latency := strings.Index(page.Body, fmt.Sprintf(`orgId=%d&panelId=3&`, org))
+	requests := strings.Index(page.Body, fmt.Sprintf(`orgId=%d&panelId=1&`, org))
+	require.True(t, cpu >= 0 && cpu < memory && memory < latency && latency < requests, "panels out of order")
 	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d/platform-places-api?orgId=%d&var-env=dev`, org))
 }
 

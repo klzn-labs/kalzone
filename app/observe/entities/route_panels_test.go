@@ -25,11 +25,14 @@ func Test_AccessLog_FoldsNotFoundAndNotAllowedIntoOneRoute(t *testing.T) {
 	require.Contains(t, query, "`/:id`}}{{end}}\"")
 }
 
-func Test_Dashboard_CountsRequestsInsteadOfRates(t *testing.T) {
+func Test_Dashboard_CountsSucceededAnd5xxRequestsInsteadOfRates(t *testing.T) {
 	body := dashboardJSON(t, entities.Service{Slug: "web", Name: "Web"})
 
 	require.Contains(t, body, `"title":"Requests"`)
-	require.Contains(t, body, `sum(increase(traefik_service_requests_total{service=~\"web-${env}-(blue|green)@file\"}[$__interval]))`)
+	require.Contains(t, body, `sum(increase(traefik_service_requests_total{service=~\"web-${env}-(blue|green)@file\",code!~\"5..\"}[$__interval]))`)
+	require.Contains(t, body, `sum(increase(traefik_service_requests_total{service=~\"web-${env}-(blue|green)@file\",code=~\"5..\"}[$__interval]))`)
+	require.Contains(t, body, `"legendFormat":"succeeded"`)
+	require.Contains(t, body, `"legendFormat":"5xx"`)
 	require.Contains(t, body, `"calcs":["sum"]`)
 	require.Contains(t, body, `"drawStyle":"bars"`)
 	require.NotContains(t, body, `"reqps"`)
