@@ -7,14 +7,22 @@ const (
 	NoTenant       = "kalzone-none"
 )
 
-func TeamScope(services []Service, teamID string, environments []string) Scope {
-	s := Scope{Services: []string{}, Environments: environments, MySQLUsers: []string{}, Schemas: []string{}}
+func TeamScope(services []Service, resources Resources, teamID string, environments []string) Scope {
+	s := Scope{Services: []string{}, Environments: environments, MySQLUsers: []string{}, Schemas: []string{}, Queues: []string{}}
 	for _, svc := range services {
 		if svc.TeamID != teamID {
 			continue
 		}
 		s.Services = append(s.Services, svc.Slug)
 		s.MySQLUsers, s.Schemas = withDatabases(s.MySQLUsers, s.Schemas, svc.Databases)
+	}
+	return withResources(s, resources.OwnedBy(teamID))
+}
+
+func withResources(s Scope, owned Resources) Scope {
+	s.MySQLUsers, s.Schemas = withDatabases(s.MySQLUsers, s.Schemas, owned.databases())
+	for _, q := range owned.Queues {
+		s.Queues = appendNew(s.Queues, q.ID)
 	}
 	return s
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/observe/usecases/logs"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/orgs"
 	"github.com/klzn-labs/kalzone/app/observe/usecases/telemetry"
+	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
 	"github.com/klzn-labs/kalzone/app/team/usecases/source"
 	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
 	"github.com/klzn-labs/kalzone/internal/eventbus"
@@ -70,8 +71,11 @@ func observeTelemetry() fx.Option {
 			func(t teams.TeamsUsecase, e environments.EnvironmentsUsecase) observeCatalog.Directory {
 				return observeCatalog.NewDirectory(t, e)
 			},
-			func(cfg config.Config, u services.ServicesUsecase, d databases.DatabasesUsecase, dir observeCatalog.Directory, c upstream.Client) telemetry.TelemetryUsecase {
-				return telemetry.NewTelemetryUsecase(cfg.Telemetry.Key, cfg.Telemetry.AllToken, observeCatalog.NewServices(u, d), dir, c)
+			func(d databases.DatabasesUsecase, q queues.QueuesUsecase) observeCatalog.Resources {
+				return observeCatalog.NewResources(d, q)
+			},
+			func(cfg config.Config, u services.ServicesUsecase, d databases.DatabasesUsecase, r observeCatalog.Resources, dir observeCatalog.Directory, c upstream.Client) telemetry.TelemetryUsecase {
+				return telemetry.NewTelemetryUsecase(cfg.Telemetry.Key, cfg.Telemetry.AllToken, observeCatalog.NewServices(u, d), r, dir, c)
 			},
 			func(u telemetry.TelemetryUsecase) telemetryHandler.Telemetry { return u },
 			telemetryHandler.NewTelemetryHandler,

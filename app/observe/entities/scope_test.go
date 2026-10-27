@@ -34,6 +34,11 @@ func Test_ScopeQuery_LimitsEverySelectorOnBothSidesOfAJoin(t *testing.T) {
 	require.Contains(t, query, `kalzone_database_attachment{service="api",service=~"(?:api|web\\.v2)"}`)
 }
 
+func Test_ScopeQuery_LimitsQueueSeriesToTheTeamsQueues(t *testing.T) {
+	require.Equal(t, `platform_queue_depth{queue_id=~"(?:q1)"}`, scoped(t, `platform_queue_depth`, entities.Scope{Queues: []string{"q1"}}))
+	require.Contains(t, scoped(t, `platform_queue_depth`, teamA), "kalzone_out_of_scope")
+}
+
 func Test_ScopeQuery_LimitsStatementsBySchemaAndLeavesServerWideCountersAlone(t *testing.T) {
 	require.Equal(t, `mysql_perf_schema_events_statements_total{schema=~"(?:api)"}`, scoped(t, `mysql_perf_schema_events_statements_total`, teamA))
 	require.Equal(t, `mysql_global_status_threads_connected`, scoped(t, `mysql_global_status_threads_connected`, teamA))
@@ -88,11 +93,17 @@ func Test_TeamScope_TakesOnlyTheTeamsServicesAndTheirDatabasesOnce(t *testing.T)
 		{Slug: "other", TeamID: "t2", Databases: []entities.Database{{Schema: "other", User: "other"}}},
 	}
 
-	s := entities.TeamScope(services, "t1", []string{"dev"})
+	resources := entities.Resources{
+		Databases: []entities.OwnedDatabase{{TeamID: "t1", Database: entities.Database{Schema: "ledger", User: "ledger_dev"}}, {TeamID: "t2", Database: entities.Database{Schema: "x", User: "x"}}},
+		Queues:    []entities.OwnedQueue{{TeamID: "t1", ID: "q1"}, {TeamID: "t2", ID: "q2"}},
+	}
+
+	s := entities.TeamScope(services, resources, "t1", []string{"dev"})
 
 	require.Equal(t, []string{"api", "worker"}, s.Services)
-	require.Equal(t, []string{"api_dev", "api_prod"}, s.MySQLUsers)
-	require.Equal(t, []string{"shop"}, s.Schemas)
+	require.Equal(t, []string{"api_dev", "api_prod", "ledger_dev"}, s.MySQLUsers)
+	require.Equal(t, []string{"shop", "ledger"}, s.Schemas)
+	require.Equal(t, []string{"q1"}, s.Queues)
 }
 
 func Test_AllTenants_AddsThePlatformAndTheLogsFromBeforeTenants(t *testing.T) {
