@@ -73,18 +73,18 @@
     <thead><tr><th>Cron</th><th>Env</th><th>Service</th><th>Schedule</th><th>Path</th><th>Last run</th><th>State</th></tr></thead>
     <tbody>
     {{range .Crons}}
-      <tr>
-        <td class="mono"><b>{{.Cron.Name}}</b></td>
+      <tr class="row-linked">
+        <td><a class="mono row-link" href="/resources/crons/{{.Cron.Environment}}/{{.Cron.Name}}"><b>{{.Cron.Name}}</b></a></td>
         <td>{{template "env-badge" .Cron.Environment}}</td>
         <td class="mono">{{.Service}}</td>
         <td class="mono">{{.Cron.Schedule}}</td>
         <td class="mono">{{.Cron.Path}}</td>
         <td>{{if .HasRun}}<span class="badge {{.RunBadge}}"><span class="dot"></span>{{.LastRun.Status}}</span> <span class="muted small">{{ago .LastRun.ScheduledAt}}</span>{{else}}<span class="muted">never</span>{{end}}</td>
-        <td>{{if .Cron.Paused}}<span class="badge badge-warn"><span class="dot"></span>Paused</span>{{else}}<span class="badge badge-ok"><span class="dot"></span>Active</span>{{end}}</td>
+        <td>{{template "cron-state" .Cron.Paused}}</td>
       </tr>
     {{end}}
     </tbody>
   </table></div>
-  {{else}}{{template "empty" dict "Icon" "clock" "Title" "No crons yet" "Text" "Create one with POST /api/v1/crons or the createCron tool of the Kalzone MCP server. Kalzone then calls its path on schedule." "Href" "" "Action" ""}}{{end}}
+  {{else}}{{template "empty" dict "Icon" "clock" "Title" "No crons yet" "Text" "Create a cron to have Kalzone call one of your services on a schedule." "Href" "/resources/new/cron" "Action" "New cron"}}{{end}}
 </div>
 {{end}}

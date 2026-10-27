@@ -40,3 +40,5 @@
 {{end}}{{end}}
 
 {{define "demo-note"}}<div class="demo-note">{{icon "lock"}}<span>{{.}}</span><a href="/login">Sign in to try it</a></div>{{end}}
+
+{{define "cron-state"}}{{if .}}<span class="badge badge-warn"><span class="dot"></span>Paused</span>{{else}}<span class="badge badge-ok"><span class="dot"></span>Active</span>{{end}}{{end}}

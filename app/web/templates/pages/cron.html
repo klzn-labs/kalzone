@@ -1,0 +1,75 @@
+{{define "content"}}{{$d := .Data}}{{$c := $d.Row.Cron}}{{$base := printf "/resources/crons/%s/%s" $c.Environment $c.Name}}{{$csrf := .Viewer.CSRFToken}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/resources">Resources</a><span aria-hidden="true">/</span><a href="/resources/crons">Crons</a></div>
+    <h1>{{$c.Name}}</h1>
+    <div class="row" style="margin-top:6px">
+      {{template "env-badge" $c.Environment}}
+      {{template "cron-state" $c.Paused}}
+      <span class="muted small">calls <span class="mono">{{$d.Row.Service}}{{$c.Path}}</span></span>
+    </div>
+  </div>
+  {{if $d.CanEdit}}<div class="actions">
+    <form method="post" action="{{$base}}/run" hx-post="{{$base}}/run" hx-target="find .form-error">{{template "csrf" $csrf}}<div class="form-error"></div><button class="btn">{{icon "play"}}Run now</button></form>
+    <form method="post" action="{{$base}}/{{if $c.Paused}}resume{{else}}pause{{end}}" hx-post="{{$base}}/{{if $c.Paused}}resume{{else}}pause{{end}}" hx-target="find .form-error">{{template "csrf" $csrf}}<div class="form-error"></div><button class="btn">{{if $c.Paused}}{{icon "play"}}Resume{{else}}{{icon "pause"}}Pause{{end}}</button></form>
+  </div>{{end}}
+</div>
+
+<div class="card">
+  <div class="card-header"><div><h2>Settings</h2><p>Created {{date $c.CreatedAt}} · changed {{ago $c.UpdatedAt}}</p></div></div>
+  <div class="card-body">
+    <dl class="kv kv-4">
+      <div><dt>Schedule</dt><dd><span class="mono">{{$c.Schedule}}</span> <span class="muted">UTC</span></dd></div>
+      <div><dt>Next run</dt><dd>{{with $d.NextRun}}{{date .}}<div class="small muted" style="font-weight:400">in {{left .}}</div>{{else}}<span class="muted">none while paused</span>{{end}}</dd></div>
+      <div><dt>Target</dt><dd>{{$d.Row.Service}} → {{$c.Path}}</dd></div>
+      <div><dt>Timeout</dt><dd>{{span $c.Timeout}}</dd></div>
+    </dl>
+    <div class="small muted" style="margin:16px 0 6px">Payload</div>
+    <pre class="code">{{$d.Payload}}</pre>
+    {{if $d.CanEdit}}
+    <details class="disclosure" style="margin-top:16px" {{if $d.Edit}}open{{end}}><summary class="btn btn-sm">{{icon "edit"}}Change settings</summary>
+      <form class="inline-panel" method="post" action="{{$base}}/settings" hx-post="{{$base}}/settings" hx-target="find .form-error">
+        {{template "csrf" $csrf}}<div class="form-error"></div>
+        <div class="form-row">
+          <div class="field"><label for="schedule">Schedule</label><input id="schedule" name="schedule" type="text" class="mono" value="{{$c.Schedule}}" required></div>
+          <div class="field"><label for="path">Path on the service</label><input id="path" name="path" type="text" class="mono" value="{{$c.Path}}" required></div>
+          <div class="field"><label for="timeout">Timeout</label><input id="timeout" name="timeout" type="text" class="mono" value="{{span $c.Timeout}}" required></div>
+        </div>
+        <p class="form-note">5-field cron in UTC, e.g. 0 3 * * *</p>
+        <div class="field"><label for="payload">Payload <span class="muted">(optional JSON)</span></label><textarea id="payload" name="payload" class="mono" rows="6">{{$d.Payload}}</textarea></div>
+        <div class="form-actions"><button class="btn btn-primary">Save settings</button></div>
+      </form>
+    </details>
+    <details class="disclosure" style="margin-top:12px"><summary class="btn btn-sm btn-danger">{{icon "trash"}}Delete cron</summary>
+      <form class="inline-panel" method="post" action="{{$base}}/delete" hx-post="{{$base}}/delete" hx-target="find .form-error">
+        {{template "csrf" $csrf}}<div class="form-error"></div>
+        <p class="muted small">The cron stops and its run history is deleted. The service is not touched.</p>
+        <div class="form-actions"><button class="btn btn-danger">Delete {{$c.Name}}</button></div>
+      </form>
+    </details>
+    {{end}}
+  </div>
+</div>
+
+<div class="card" style="margin-top:24px">
+  <div class="card-header"><div><h2>Recent runs</h2><p>The last 50 runs, newest first</p></div></div>
+  {{if $d.Runs}}
+  <div class="table-scroll"><table class="table runs-table">
+    <thead><tr><th>Status</th><th>Trigger</th><th>Started</th><th class="right">Duration</th><th class="right">Attempts</th><th class="right">HTTP</th><th>Error</th></tr></thead>
+    <tbody>
+    {{range $d.Runs}}
+      <tr>
+        <td><span class="badge {{.Badge}}"><span class="dot"></span>{{.Run.Status}}</span></td>
+        <td>{{.Trigger}}</td>
+        <td><time datetime="{{iso .Started}}" title="{{date .Started}}">{{date .Started}}</time></td>
+        <td class="right">{{.Duration}}</td>
+        <td class="right">{{.Run.Attempts}}</td>
+        <td class="right mono">{{.HTTP}}</td>
+        <td class="muted run-error">{{if .Run.Error}}{{.Run.Error}}{{else}}—{{end}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}{{template "empty" dict "Icon" "clock" "Title" "No runs yet" "Text" "Runs show up here once the schedule fires or someone starts one by hand."}}{{end}}
+</div>
+{{end}}
