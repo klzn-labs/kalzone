@@ -20,7 +20,7 @@ func RegisterDocumentRoutes(lc fx.Lifecycle, api API, cfg config.Config) {
 		Status: http.StatusOK, Response: map[string]any{}, Handler: doc.serve,
 	})
 	lc.Append(fx.StartHook(func() error {
-		raw, err := apispec.Build(api.catalog, cfg.BaseURL)
+		raw, err := api.catalog.Document(cfg.BaseURL)
 		doc.raw = raw
 		return err
 	}))

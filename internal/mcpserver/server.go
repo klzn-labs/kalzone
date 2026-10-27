@@ -24,7 +24,7 @@ type Handler struct {
 }
 
 func (h *Handler) load(catalog *apispec.Catalog, baseURL string) error {
-	raw, err := apispec.Build(catalog, baseURL)
+	raw, err := catalog.Document(baseURL)
 	if err != nil {
 		return err
 	}

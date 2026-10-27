@@ -27,6 +27,16 @@ type WaitParams struct {
 
 var ginParam = regexp.MustCompile(`:([a-zA-Z_]+)`)
 
+func (c *Catalog) Document(baseURL string) ([]byte, error) {
+	if cached, ok := c.built.Load(baseURL); ok {
+		d := cached.(document)
+		return d.raw, d.err
+	}
+	raw, err := Build(c, baseURL)
+	c.built.Store(baseURL, document{raw: raw, err: err})
+	return raw, err
+}
+
 func Build(c *Catalog, baseURL string) ([]byte, error) {
 	r := openapi31.NewReflector()
 	r.DefaultOptions = append(r.DefaultOptions, schemaRules()...)

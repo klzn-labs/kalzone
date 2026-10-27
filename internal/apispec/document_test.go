@@ -204,3 +204,15 @@ func Test_Build_DocumentsAnOperationsOtherAnswers(t *testing.T) {
 	require.Contains(t, responses, "204")
 	require.Contains(t, at(responses, "200", "content", "application/json", "schema", "$ref"), "Apispec_testExtra")
 }
+
+func Test_Document_BuildsOncePerBaseURL(t *testing.T) {
+	c := catalog()
+
+	first, err := c.Document("https://platform.test")
+	require.NoError(t, err)
+	again, _ := c.Document("https://platform.test")
+	other, _ := c.Document("https://other.test")
+
+	require.Same(t, &first[0], &again[0])
+	require.NotSame(t, &first[0], &other[0])
+}
