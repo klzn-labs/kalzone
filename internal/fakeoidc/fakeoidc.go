@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -20,8 +21,10 @@ type Issuer struct {
 	key *rsa.PrivateKey
 }
 
+var signingKey = sync.OnceValues(func() (*rsa.PrivateKey, error) { return rsa.GenerateKey(rand.Reader, 2048) })
+
 func New() *Issuer {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	key, err := signingKey()
 	if err != nil {
 		panic(err)
 	}

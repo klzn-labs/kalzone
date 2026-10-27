@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -21,17 +22,34 @@ type contract struct {
 	router routers.Router
 }
 
+var built struct {
+	once     sync.Once
+	contract *contract
+	err      error
+}
+
 func loadContract(t *testing.T, catalog *apispec.Catalog) *contract {
 	t.Helper()
+	built.once.Do(func() { built.contract, built.err = buildContract(catalog) })
+	require.NoError(t, built.err)
+	return built.contract
+}
+
+func buildContract(catalog *apispec.Catalog) (*contract, error) {
 	raw, err := apispec.Build(catalog, "http://platform.test")
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
 	doc, err := openapi3.NewLoader().LoadFromData(raw)
-	require.NoError(t, err)
-	require.NoError(t, doc.Validate(context.Background()))
+	if err != nil {
+		return nil, err
+	}
+	if err := doc.Validate(context.Background()); err != nil {
+		return nil, err
+	}
 	doc.Servers = nil
 	router, err := legacy.NewRouter(doc)
-	require.NoError(t, err)
-	return &contract{router: router}
+	return &contract{router: router}, err
 }
 
 func (c *contract) check(t *testing.T, req *http.Request, resp Response) {
