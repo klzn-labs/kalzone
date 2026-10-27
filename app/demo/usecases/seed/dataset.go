@@ -28,19 +28,7 @@ type workload struct {
 var workloads = []workload{
 	{
 		slug: "demo-shop-api", name: "Shop API", description: "Serves the catalog, carts and orders to the storefront.",
-		releases: 18, prod: 17, env: map[string]string{"LOG_LEVEL": "info", "CURRENCY": "EUR", "CART_TTL": "72h"},
-	},
-	{
-		slug: "demo-checkout-worker", name: "Checkout worker", description: "Charges carts from the checkout queue and emails the receipt.",
-		releases: 9, prod: 9, env: map[string]string{"LOG_LEVEL": "info", "MAX_RETRIES": "5"},
-	},
-	{
-		slug: "demo-storefront", name: "Storefront", description: "The web shop customers browse and buy from.",
-		releases: 31, prod: 29, rolledBack: 30, env: map[string]string{"LOG_LEVEL": "warn", "SHOP_API_URL": "http://demo-shop-api:8080"},
-	},
-	{
-		slug: "demo-mailer", name: "Mailer", description: "Sends order confirmations and shipping updates.",
-		releases: 4, prod: 4, env: map[string]string{"LOG_LEVEL": "info", "FROM": "orders@shop.demo.invalid"},
+		releases: 18, prod: 17, rolledBack: 18, env: map[string]string{"LOG_LEVEL": "info", "CURRENCY": "EUR", "CART_TTL": "72h"},
 	},
 }
 

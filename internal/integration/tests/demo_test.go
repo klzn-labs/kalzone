@@ -40,7 +40,7 @@ func Test_AGuestSeesOnlyTheDemoTeam(t *testing.T) {
 	overview := guest.Do(t, http.MethodGet, "/", nil)
 	hidden := guest.Do(t, http.MethodGet, "/api/v1/services/places-api", nil)
 
-	require.Len(t, services.Services, 4)
+	require.Len(t, services.Services, 1)
 	for _, svc := range services.Services {
 		require.True(t, strings.HasPrefix(svc.Slug, "demo-"), svc.Slug)
 	}

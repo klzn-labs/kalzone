@@ -32,6 +32,8 @@ type Users interface {
 
 type Services interface {
 	Create(ctx context.Context, s catalog.Service) error
+	List(ctx context.Context, filter catalog.ServiceFilter) ([]catalog.Service, error)
+	Update(ctx context.Context, s catalog.Service) error
 }
 
 type Configs interface {
@@ -88,11 +90,41 @@ func (u SeedUsecase) Seed(ctx context.Context) error {
 	if !u.enabled {
 		return nil
 	}
-	_, err := u.store.Teams.FindBySlug(ctx, demo.TeamSlug)
-	if !errors.Is(err, apperror.NotFound("")) {
+	t, err := u.store.Teams.FindBySlug(ctx, demo.TeamSlug)
+	if errors.Is(err, apperror.NotFound("")) {
+		return u.plant(ctx, clock.Now().UTC().Truncate(time.Second))
+	}
+	if err != nil {
 		return err
 	}
-	return u.plant(ctx, clock.Now().UTC().Truncate(time.Second))
+	return u.prune(ctx, t.ID)
+}
+
+func (u SeedUsecase) prune(ctx context.Context, teamID string) error {
+	services, err := u.store.Services.List(ctx, catalog.ServiceFilter{OwnerTeamIDs: []string{teamID}})
+	if err != nil {
+		return err
+	}
+	now := clock.Now().UTC()
+	for _, s := range services {
+		if planted(s.Slug) {
+			continue
+		}
+		s.DeletedAt = &now
+		if err := u.store.Services.Update(ctx, s); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func planted(slug string) bool {
+	for _, w := range workloads {
+		if w.slug == slug {
+			return true
+		}
+	}
+	return false
 }
 
 func (u SeedUsecase) Sweep(ctx context.Context) (int, error) {
