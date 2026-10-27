@@ -21,7 +21,7 @@ func Test_TheQueuePagesListAndCreate(t *testing.T) {
 	_, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)
 
-	list := p.mia.Do(t, http.MethodGet, "/resources?kind=queue", nil)
+	list := p.mia.Do(t, http.MethodGet, "/resources/queues", nil)
 	form := p.bob.Do(t, http.MethodGet, "/resources/new/queue", nil)
 	created := p.bob.Form(t, "/resources/queues", queueForm(p.bob.CSRFToken))
 	settings := p.mia.Do(t, http.MethodGet, "/resources/queues/dev/other?tab=settings", nil)
@@ -61,7 +61,7 @@ func Test_TheQueuePageReplaysAndDeletes(t *testing.T) {
 	replay := p.bob.Form(t, base+"/dead/replay-all", url.Values{"_csrf": {p.bob.CSRFToken}})
 	desired := s.Queued(t, http.MethodGet, "/queued/v1/desired", nil)
 	deleted := p.bob.Form(t, base+"/delete", url.Values{"_csrf": {p.bob.CSRFToken}, "force": {"on"}})
-	list := p.mia.Do(t, http.MethodGet, "/resources?kind=queue", nil)
+	list := p.mia.Do(t, http.MethodGet, "/resources/queues", nil)
 
 	require.Equal(t, http.StatusNoContent, replay.Status, replay.Body)
 	require.Contains(t, desired.Body, `"kind":"replay_all"`)

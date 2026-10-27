@@ -1,71 +1,63 @@
 {{define "content"}}{{$d := .Data}}
+{{template "resource-tabs" .Nav}}
 <div class="page-header">
   <div>
     <div class="eyebrow">Workspace</div>
     <h1>Resources</h1>
-    <p class="lead">Queues and databases the platform runs for your services. Attach one to a service and its credentials arrive on the next deploy.</p>
-  </div>
-  <div class="segmented">
-    <a href="/resources{{if $d.Kind}}?kind={{$d.Kind}}{{end}}" class="{{if not $d.Environment}}active{{end}}">All</a>
-    <a href="/resources?{{if $d.Kind}}kind={{$d.Kind}}&amp;{{end}}environment=dev" class="{{if eq $d.Environment "dev"}}active{{end}}">dev</a>
-    <a href="/resources?{{if $d.Kind}}kind={{$d.Kind}}&amp;{{end}}environment=prod" class="{{if eq $d.Environment "prod"}}active{{end}}">prod</a>
+    <p class="lead">What Kalzone can run for your services, grouped by what it does for them.</p>
   </div>
 </div>
 
-{{range $d.Sections}}
-<section class="resource-section">
-  <div class="section-head">
-    <h2>{{.Title}} <span class="muted">{{.Count}}</span></h2>
-    <a href="{{.NewHref}}">+ New {{.Noun}}</a>
+<section class="offering-group">
+  <div class="offering-group-head"><h2>Background work</h2><span>Move work off the request path</span></div>
+  <div class="offering-grid">
+    <article class="card offering">
+      <div class="offering-head"><span class="offering-icon">{{icon "queue"}}</span><div><h3>Queues</h3>{{template "offering-usage" index $d.Usage "queue"}}</div></div>
+      <p>One service hands work to another. The consumer receives each message once, at a rate it can take.</p>
+      <ul class="facts">
+        <li>Retries with fixed or exponential backoff</li>
+        <li>Dead letters you can replay or purge</li>
+        <li>An adaptive rate that slows down when the database is busy</li>
+      </ul>
+      <div class="offering-foot">
+        <a class="btn btn-primary btn-sm" href="/resources/new/queue">{{icon "plus"}}New queue</a>
+        <a class="offering-link" href="/resources/queues">View queues{{icon "arrow"}}</a>
+      </div>
+    </article>
+    <article class="card offering">
+      <div class="offering-head"><span class="offering-icon">{{icon "clock"}}</span><div><h3>Crons</h3>{{template "offering-usage" index $d.Usage "cron"}}</div></div>
+      <p>Kalzone calls a path on one of your services on a schedule, so nothing in your code has to keep time.</p>
+      <ul class="facts">
+        <li>A cron schedule with an optional JSON payload</li>
+        <li>A timeout per run and the last 50 runs kept</li>
+        <li>Pause, resume or run it now</li>
+      </ul>
+      <div class="offering-foot">
+        <span class="muted small">New ones via the API or MCP</span>
+        <a class="offering-link" href="/resources/crons">View crons{{icon "arrow"}}</a>
+      </div>
+    </article>
   </div>
-  {{if eq .Kind "queue"}}{{template "queue-section" .}}{{end}}
-  {{if eq .Kind "database"}}{{template "database-section" .}}{{end}}
+</section>
+
+<section class="offering-group">
+  <div class="offering-group-head"><h2>Data</h2><span>Keep state outside your containers</span></div>
+  <div class="offering-grid">
+    <article class="card offering">
+      <div class="offering-head"><span class="offering-icon">{{icon "database"}}</span><div><h3>Databases</h3>{{template "offering-usage" index $d.Usage "database"}}</div></div>
+      <p>A MySQL 8 database on the shared server. Attach it to a service and its credentials arrive on the next deploy.</p>
+      <ul class="facts">
+        <li>Its own user that can only see this database</li>
+        <li>Existing schemas adopted in place, data untouched</li>
+        <li>Live Grafana charts on its page</li>
+      </ul>
+      <div class="offering-foot">
+        <a class="btn btn-primary btn-sm" href="/resources/new/database">{{icon "plus"}}New database</a>
+        <a class="offering-link" href="/resources/databases">View databases{{icon "arrow"}}</a>
+      </div>
+    </article>
+  </div>
 </section>
 {{end}}
-{{end}}
 
-{{define "queue-section"}}
-<div class="card">
-  {{if .Queues}}
-  <div class="table-scroll"><table class="table">
-    <thead><tr><th>Queue</th><th>Env</th><th>Consumer</th><th>Publishers</th><th class="right">Waiting</th><th class="right">Delivered / min</th><th class="right">Oldest</th><th class="right">Dead letters</th><th>State</th></tr></thead>
-    <tbody>
-    {{range .Queues}}
-      <tr class="row-linked">
-        <td><a class="mono row-link" href="/resources/queues/{{.Queue.Environment}}/{{.Queue.Name}}"><b>{{.Queue.Name}}</b></a></td>
-        <td>{{template "env-badge" .Queue.Environment}}</td>
-        <td class="mono">{{.Consumer}}</td>
-        <td class="mono">{{if .Attached}}{{join .Attached ", "}}{{else}}<span class="muted">none</span>{{end}}</td>
-        <td class="right">{{if .Fresh}}{{.Stats.Depth}}{{else}}—{{end}}</td>
-        <td class="right">{{if .Fresh}}{{printf "%.0f" .Stats.DeliveredPerMinute}}{{else}}—{{end}}</td>
-        <td class="right">{{if and .Fresh .Stats.OldestAgeSeconds}}{{printf "%.0fs" .Stats.OldestAgeSeconds}}{{else}}—{{end}}</td>
-        <td class="right">{{if .Fresh}}{{.Stats.DeadLetters}}{{else}}—{{end}}</td>
-        <td><span class="badge {{.Badge}}"><span class="dot"></span>{{.State}}</span></td>
-      </tr>
-    {{end}}
-    </tbody>
-  </table></div>
-  {{else}}{{template "empty" dict "Icon" "layers" "Title" "No queues yet" "Text" "Create a queue to let services hand work to each other with retries and a rate limit." "Href" "/resources/new/queue" "Action" "New queue"}}{{end}}
-</div>
-{{end}}
-
-{{define "database-section"}}
-<div class="card">
-  {{if .Databases}}
-  <div class="table-scroll"><table class="table">
-    <thead><tr><th>Database</th><th>Env</th><th>Schema</th><th>Attached services</th><th>Team</th></tr></thead>
-    <tbody>
-    {{range .Databases}}
-      <tr class="row-linked">
-        <td><a class="mono row-link" href="/resources/databases/{{.Database.Environment}}/{{.Database.Name}}"><b>{{.Database.Name}}</b></a>{{if .Database.Adopted}} <span class="badge">Adopted</span>{{end}}</td>
-        <td>{{template "env-badge" .Database.Environment}}</td>
-        <td class="mono">{{.Database.Schema}}</td>
-        <td class="mono">{{if .Attached}}{{join .Attached ", "}}{{else}}<span class="muted">none</span>{{end}}</td>
-        <td>{{.Team}}</td>
-      </tr>
-    {{end}}
-    </tbody>
-  </table></div>
-  {{else}}{{template "empty" dict "Icon" "layers" "Title" "No databases yet" "Text" "Create a database and attach it to a service; its credentials arrive on the next deploy." "Href" "/resources/new/database" "Action" "New database"}}{{end}}
-</div>
-{{end}}
+{{define "offering-usage"}}<div class="offering-usage">{{if .Total}}<b>{{.Total}} in use</b>{{range $env, $n := .ByEnvironment}}<span>{{$env}} {{$n}}</span>{{end}}{{else}}None yet{{end}}</div>{{end}}

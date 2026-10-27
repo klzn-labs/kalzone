@@ -8,6 +8,8 @@ import (
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/decommission"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/environments"
 	"github.com/klzn-labs/kalzone/app/catalog/usecases/services"
+	cronCatalog "github.com/klzn-labs/kalzone/app/cron/repositories/catalog"
+	"github.com/klzn-labs/kalzone/app/cron/usecases/crons"
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/agents"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
@@ -22,12 +24,14 @@ import (
 	"github.com/klzn-labs/kalzone/app/queue/usecases/queues"
 	"github.com/klzn-labs/kalzone/app/release/usecases/changelogs"
 	"github.com/klzn-labs/kalzone/app/release/usecases/releases"
+	"github.com/klzn-labs/kalzone/app/resources/usecases/resources"
 	"github.com/klzn-labs/kalzone/app/team/usecases/members"
 	"github.com/klzn-labs/kalzone/app/team/usecases/source"
 	"github.com/klzn-labs/kalzone/app/team/usecases/teams"
 	"github.com/klzn-labs/kalzone/app/web"
 	agentsPage "github.com/klzn-labs/kalzone/app/web/handlers/agents"
 	auditPage "github.com/klzn-labs/kalzone/app/web/handlers/audit"
+	cronsPage "github.com/klzn-labs/kalzone/app/web/handlers/crons"
 	databasesPage "github.com/klzn-labs/kalzone/app/web/handlers/databases"
 	environmentPage "github.com/klzn-labs/kalzone/app/web/handlers/environment"
 	"github.com/klzn-labs/kalzone/app/web/handlers/login"
@@ -53,7 +57,7 @@ func Web() fx.Option {
 			login.NewLoginHandler, overviewPage.NewOverviewHandler, servicesPage.NewServicesHandler,
 			servicePage.NewServiceHandler, environmentPage.NewEnvironmentHandler, teamsPage.NewTeamsHandler,
 			teamPage.NewTeamHandler, auditPage.NewAuditHandler, peoplePage.NewPeopleHandler,
-			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, platformPage.NewPlatformHandler, queuesPage.NewQueuesHandler, databasesPage.NewDatabasesHandler, resourcesPage.NewResourcesHandler,
+			releasesPage.NewReleasesHandler, agentsPage.NewAgentsHandler, platformPage.NewPlatformHandler, queuesPage.NewQueuesHandler, databasesPage.NewDatabasesHandler, cronsPage.NewCronsHandler, resourcesPage.NewResourcesHandler,
 			tokensPage.NewTokensHandler, requestsPage.NewRequestsHandler,
 		),
 		viewInjections(),
@@ -71,13 +75,6 @@ func viewInjections() fx.Option {
 		func(u agents.AgentsUsecase) agentsPage.Agents { return u },
 		func(u platform.PlatformUsecase) platformPage.Platform { return u },
 		func(u platform.PlatformUsecase) servicesPage.Platform { return u },
-		func(u queues.QueuesUsecase) queuesPage.Queues { return u },
-		func(l queueCatalog.Lookup) queuesPage.ServiceNames { return l },
-		func(h queuesPage.QueuesHandler) resourcesPage.QueueSection { return h },
-		func(u databases.DatabasesUsecase) databasesPage.Databases { return u },
-		func(u services.ServicesUsecase) databasesPage.Services { return u },
-		func(u teams.TeamsUsecase) databasesPage.Teams { return u },
-		func(h databasesPage.DatabasesHandler) resourcesPage.DatabaseSection { return h },
 		func(u environments.EnvironmentsUsecase) web.EnvironmentLister { return u },
 		func(u users.UsersUsecase) web.UserFinder { return u },
 		func(p authz.Policy) web.Authorizer { return p },
@@ -85,7 +82,23 @@ func viewInjections() fx.Option {
 }
 
 func pageInjections() fx.Option {
-	return fx.Options(overviewInjections(), catalogPageInjections(), teamPageInjections(), auditPageInjections(), tokenPageInjections())
+	return fx.Options(overviewInjections(), catalogPageInjections(), resourcePageInjections(), teamPageInjections(), auditPageInjections(), tokenPageInjections())
+}
+
+func resourcePageInjections() fx.Option {
+	return fx.Provide(
+		func(u queues.QueuesUsecase) queuesPage.Queues { return u },
+		func(l queueCatalog.Lookup) queuesPage.ServiceNames { return l },
+		func(h queuesPage.QueuesHandler) resourcesPage.QueueSection { return h },
+		func(u databases.DatabasesUsecase) databasesPage.Databases { return u },
+		func(u services.ServicesUsecase) databasesPage.Services { return u },
+		func(u teams.TeamsUsecase) databasesPage.Teams { return u },
+		func(h databasesPage.DatabasesHandler) resourcesPage.DatabaseSection { return h },
+		func(u crons.CronsUsecase) cronsPage.Crons { return u },
+		func(l cronCatalog.Lookup) cronsPage.ServiceNames { return l },
+		func(h cronsPage.CronsHandler) resourcesPage.CronSection { return h },
+		func(u resources.ResourcesUsecase) resourcesPage.Inventory { return u },
+	)
 }
 
 func overviewInjections() fx.Option {

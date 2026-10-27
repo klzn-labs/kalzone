@@ -1,0 +1,90 @@
+{{define "content"}}{{$d := .Data}}{{$s := $d.Section}}
+{{template "resource-tabs" .Nav}}
+<div class="page-header">
+  <div>
+    <div class="eyebrow"><a href="/resources">Resources</a></div>
+    <h1>{{$s.Title}} <span class="muted">{{$s.Count}}</span></h1>
+    <p class="lead">{{$s.Lead}}</p>
+  </div>
+  <div class="actions">
+    <div class="segmented">
+      <a href="{{$s.Href}}" class="{{if not $d.Environment}}active{{end}}">All</a>
+      <a href="{{$s.Href}}?environment=dev" class="{{if eq $d.Environment "dev"}}active{{end}}">dev</a>
+      <a href="{{$s.Href}}?environment=prod" class="{{if eq $d.Environment "prod"}}active{{end}}">prod</a>
+    </div>
+    {{if $s.NewHref}}<a class="btn btn-primary" href="{{$s.NewHref}}">{{icon "plus"}}New {{$s.Noun}}</a>{{end}}
+  </div>
+</div>
+{{if eq $s.Kind "queue"}}{{template "queue-section" $s}}{{end}}
+{{if eq $s.Kind "database"}}{{template "database-section" $s}}{{end}}
+{{if eq $s.Kind "cron"}}{{template "cron-section" $s}}{{end}}
+{{end}}
+
+{{define "queue-section"}}
+<div class="card">
+  {{if .Queues}}
+  <div class="table-scroll"><table class="table">
+    <thead><tr><th>Queue</th><th>Env</th><th>Consumer</th><th>Publishers</th><th class="right">Waiting</th><th class="right">Delivered / min</th><th class="right">Oldest</th><th class="right">Dead letters</th><th>State</th></tr></thead>
+    <tbody>
+    {{range .Queues}}
+      <tr class="row-linked">
+        <td><a class="mono row-link" href="/resources/queues/{{.Queue.Environment}}/{{.Queue.Name}}"><b>{{.Queue.Name}}</b></a></td>
+        <td>{{template "env-badge" .Queue.Environment}}</td>
+        <td class="mono">{{.Consumer}}</td>
+        <td class="mono">{{if .Attached}}{{join .Attached ", "}}{{else}}<span class="muted">none</span>{{end}}</td>
+        <td class="right">{{if .Fresh}}{{.Stats.Depth}}{{else}}—{{end}}</td>
+        <td class="right">{{if .Fresh}}{{printf "%.0f" .Stats.DeliveredPerMinute}}{{else}}—{{end}}</td>
+        <td class="right">{{if and .Fresh .Stats.OldestAgeSeconds}}{{printf "%.0fs" .Stats.OldestAgeSeconds}}{{else}}—{{end}}</td>
+        <td class="right">{{if .Fresh}}{{.Stats.DeadLetters}}{{else}}—{{end}}</td>
+        <td><span class="badge {{.Badge}}"><span class="dot"></span>{{.State}}</span></td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}{{template "empty" dict "Icon" "queue" "Title" "No queues yet" "Text" "Create a queue to let services hand work to each other with retries and a rate limit." "Href" "/resources/new/queue" "Action" "New queue"}}{{end}}
+</div>
+{{end}}
+
+{{define "database-section"}}
+<div class="card">
+  {{if .Databases}}
+  <div class="table-scroll"><table class="table">
+    <thead><tr><th>Database</th><th>Env</th><th>Schema</th><th>Attached services</th><th>Team</th></tr></thead>
+    <tbody>
+    {{range .Databases}}
+      <tr class="row-linked">
+        <td><a class="mono row-link" href="/resources/databases/{{.Database.Environment}}/{{.Database.Name}}"><b>{{.Database.Name}}</b></a>{{if .Database.Adopted}} <span class="badge">Adopted</span>{{end}}</td>
+        <td>{{template "env-badge" .Database.Environment}}</td>
+        <td class="mono">{{.Database.Schema}}</td>
+        <td class="mono">{{if .Attached}}{{join .Attached ", "}}{{else}}<span class="muted">none</span>{{end}}</td>
+        <td>{{.Team}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}{{template "empty" dict "Icon" "database" "Title" "No databases yet" "Text" "Create a database and attach it to a service; its credentials arrive on the next deploy." "Href" "/resources/new/database" "Action" "New database"}}{{end}}
+</div>
+{{end}}
+
+{{define "cron-section"}}
+<div class="card">
+  {{if .Crons}}
+  <div class="table-scroll"><table class="table">
+    <thead><tr><th>Cron</th><th>Env</th><th>Service</th><th>Schedule</th><th>Path</th><th>Last run</th><th>State</th></tr></thead>
+    <tbody>
+    {{range .Crons}}
+      <tr>
+        <td class="mono"><b>{{.Cron.Name}}</b></td>
+        <td>{{template "env-badge" .Cron.Environment}}</td>
+        <td class="mono">{{.Service}}</td>
+        <td class="mono">{{.Cron.Schedule}}</td>
+        <td class="mono">{{.Cron.Path}}</td>
+        <td>{{if .HasRun}}<span class="badge {{.RunBadge}}"><span class="dot"></span>{{.LastRun.Status}}</span> <span class="muted small">{{ago .LastRun.ScheduledAt}}</span>{{else}}<span class="muted">never</span>{{end}}</td>
+        <td>{{if .Cron.Paused}}<span class="badge badge-warn"><span class="dot"></span>Paused</span>{{else}}<span class="badge badge-ok"><span class="dot"></span>Active</span>{{end}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table></div>
+  {{else}}{{template "empty" dict "Icon" "clock" "Title" "No crons yet" "Text" "Create one with POST /api/v1/crons or the createCron tool of the Kalzone MCP server. Kalzone then calls its path on schedule." "Href" "" "Action" ""}}{{end}}
+</div>
+{{end}}

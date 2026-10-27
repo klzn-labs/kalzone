@@ -1,7 +1,7 @@
 {{define "content"}}{{$d := .Data}}{{$db := $d.Database}}{{$base := printf "/resources/databases/%s/%s" $db.Environment $db.Name}}{{$csrf := .Viewer.CSRFToken}}
 <div class="page-header">
   <div>
-    <div class="eyebrow"><a href="/resources?kind=database">Resources</a></div>
+    <div class="eyebrow"><a href="/resources">Resources</a><span aria-hidden="true">/</span><a href="/resources/databases">Databases</a></div>
     <h1>{{$db.Name}}</h1>
     <div class="row">
       {{template "env-badge" $db.Environment}}

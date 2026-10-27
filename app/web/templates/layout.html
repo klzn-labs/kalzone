@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/static/app.css">
 <script src="/static/theme.js"></script>
+<script src="/static/nav.js"></script>
 <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}],"includeIndicatorStyles":false}'>
 <script src="/static/htmx-2.0.4.min.js" defer></script>
 {{end}}
@@ -26,7 +27,7 @@
     <a class="nav-link {{if eq .Nav "overview"}}active{{end}}" href="/">{{icon "home"}}Overview</a>
     <a class="nav-link {{if eq .Nav "services"}}active{{end}}" href="/services">{{icon "box"}}Services</a>
     <a class="nav-link {{if eq .Nav "requests"}}active{{end}}" href="/requests">{{icon "shield"}}Requests<span class="nav-count" hx-get="/requests/badge" hx-trigger="load, every 30s"></span></a>
-    <a class="nav-link {{if eq .Nav "resources"}}active{{end}}" href="/resources">{{icon "layers"}}Resources</a>
+    {{template "resources-nav" .Nav}}
     <div class="nav-label">Organisation</div>
     <a class="nav-link {{if eq .Nav "teams"}}active{{end}}" href="/teams">{{icon "users"}}Teams</a>
     {{if not .Viewer.Actor.Guest}}<a class="nav-link {{if eq .Nav "people"}}active{{end}}" href="/people">{{icon "user"}}People</a>{{end}}

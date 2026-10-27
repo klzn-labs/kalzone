@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="page-header"><div><div class="eyebrow"><a href="/resources?kind=queue">Resources</a></div><h1>New queue</h1><p class="lead">One consumer service receives each message once. Publishers send messages with the token the platform gives every deployed service.</p></div></div>
+<div class="page-header"><div><div class="eyebrow"><a href="/resources">Resources</a><span aria-hidden="true">/</span><a href="/resources/queues">Queues</a></div><h1>New queue</h1><p class="lead">One consumer service receives each message once. Publishers send messages with the token the platform gives every deployed service.</p></div></div>
 <form class="card card-body" method="post" action="/resources/queues" hx-post="/resources/queues" hx-target="find .form-error">
   {{template "csrf" .Viewer.CSRFToken}}
   <div class="form-error"></div>

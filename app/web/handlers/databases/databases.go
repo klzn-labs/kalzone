@@ -53,7 +53,7 @@ func (h DatabasesHandler) Show(c *gin.Context) {
 		web.ErrorPage(c, h.renderer, err)
 		return
 	}
-	h.renderer.Render(c, http.StatusOK, "database", web.Page{Title: v.Database.Name + " · " + v.Database.Environment, Nav: "resources", Data: v})
+	h.renderer.Render(c, http.StatusOK, "database", web.Page{Title: v.Database.Name + " · " + v.Database.Environment, Nav: "databases", Data: v})
 }
 
 func (h DatabasesHandler) New(c *gin.Context) {
@@ -62,7 +62,7 @@ func (h DatabasesHandler) New(c *gin.Context) {
 		web.ErrorPage(c, h.renderer, err)
 		return
 	}
-	h.renderer.Render(c, http.StatusOK, "database_new", web.Page{Title: "New database", Nav: "resources", Data: newView{Teams: teams, MaxConnections: 10}})
+	h.renderer.Render(c, http.StatusOK, "database_new", web.Page{Title: "New database", Nav: "databases", Data: newView{Teams: teams, MaxConnections: 10}})
 }
 
 func (h DatabasesHandler) selectableTeams(ctx context.Context, a actor.Actor) ([]team.Team, error) {

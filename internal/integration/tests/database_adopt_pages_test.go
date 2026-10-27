@@ -44,7 +44,7 @@ func Test_DatabaseReleaseKeepsTheSchema(t *testing.T) {
 	runToSuccess(t, f.s)
 
 	released := f.p.bob.Form(t, oldPage+"/delete", url.Values{"_csrf": {f.p.bob.CSRFToken}, "confirm": {oldDatabase}})
-	list := f.p.bob.Do(t, http.MethodGet, "/resources?kind=database", nil)
+	list := f.p.bob.Do(t, http.MethodGet, "/resources/databases", nil)
 	gone := f.p.bob.Do(t, http.MethodGet, oldPage, nil)
 
 	require.Equal(t, http.StatusNoContent, released.Status, released.Body)
@@ -58,7 +58,7 @@ func Test_DatabaseReleaseKeepsTheSchema(t *testing.T) {
 func Test_ResourcesListMarksAdoptedRows(t *testing.T) {
 	_, f := adoptedPage(t)
 
-	list := f.p.mia.Do(t, http.MethodGet, "/resources?kind=database", nil)
+	list := f.p.mia.Do(t, http.MethodGet, "/resources/databases", nil)
 
 	require.Contains(t, list.Body, oldDatabase)
 	require.Contains(t, list.Body, `<span class="badge">Adopted</span>`)

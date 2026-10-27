@@ -51,7 +51,7 @@ func (h QueuesHandler) Resume(c *gin.Context) {
 
 func (h QueuesHandler) Delete(c *gin.Context) {
 	err := h.queues.Delete(c.Request.Context(), requestctx.ActorFrom(c), c.Param("env"), c.Param("name"), c.PostForm("force") == "on")
-	h.finish(c, err, "/resources?kind=queue", "Queue "+c.Param("name")+" deleted")
+	h.finish(c, err, "/resources/queues", "Queue "+c.Param("name")+" deleted")
 }
 
 func (h QueuesHandler) Replay(c *gin.Context) {

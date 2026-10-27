@@ -5,17 +5,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	resources "github.com/klzn-labs/kalzone/app/resources/entities"
 	"github.com/klzn-labs/kalzone/app/web"
+	"github.com/klzn-labs/kalzone/app/web/handlers/crons"
 	"github.com/klzn-labs/kalzone/app/web/handlers/databases"
 	"github.com/klzn-labs/kalzone/app/web/handlers/queues"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
 	"github.com/klzn-labs/kalzone/internal/requestctx"
 	"github.com/klzn-labs/kalzone/pkg/actor"
-)
-
-const (
-	queueKind    = "queue"
-	databaseKind = "database"
 )
 
 type DatabaseSection interface {
@@ -26,91 +23,72 @@ type QueueSection interface {
 	Rows(ctx context.Context, a actor.Actor, environment string) ([]queues.Row, error)
 }
 
-type Section struct {
-	Kind      string
-	Title     string
-	Noun      string
-	NewHref   string
-	Count     int
-	Queues    []queues.Row
-	Databases []databases.Row
+type CronSection interface {
+	Rows(ctx context.Context, a actor.Actor, environment string) ([]crons.Row, error)
 }
 
-type listView struct {
-	Sections    []Section
+type Inventory interface {
+	ListFor(ctx context.Context, a actor.Actor, kind resources.Kind, environment string) ([]resources.Resource, error)
+}
+
+type kindView struct {
+	Section     Section
 	Environment string
-	Kind        string
 }
 
 type ResourcesHandler struct {
 	renderer  *web.Renderer
 	queues    QueueSection
 	databases DatabaseSection
+	crons     CronSection
+	inventory Inventory
 }
 
-func NewResourcesHandler(renderer *web.Renderer, queues QueueSection, databases DatabaseSection) ResourcesHandler {
-	return ResourcesHandler{renderer: renderer, queues: queues, databases: databases}
+func NewResourcesHandler(renderer *web.Renderer, queues QueueSection, databases DatabaseSection, crons CronSection, inventory Inventory) ResourcesHandler {
+	return ResourcesHandler{renderer: renderer, queues: queues, databases: databases, crons: crons, inventory: inventory}
 }
 
-func (h ResourcesHandler) List(c *gin.Context) {
-	environment, kind := c.Query("environment"), c.Query("kind")
-	sections, err := h.sections(c.Request.Context(), requestctx.ActorFrom(c), environment, kind)
+func (h ResourcesHandler) Catalog(c *gin.Context) {
+	if info, ok := kinds[c.Query("kind")]; ok {
+		redirectToKind(c, info)
+		return
+	}
+	view, err := h.catalog(c.Request.Context(), requestctx.ActorFrom(c))
 	if err != nil {
 		web.ErrorPage(c, h.renderer, err)
 		return
 	}
-	h.renderer.Render(c, http.StatusOK, "resources", web.Page{Title: "Resources", Nav: "resources", Data: listView{Sections: sections, Environment: environment, Kind: kind}})
+	h.renderer.Render(c, http.StatusOK, "resources", web.Page{Title: "Resources", Nav: "resources", Data: view})
 }
 
-func (h ResourcesHandler) sections(ctx context.Context, a actor.Actor, environment, kind string) ([]Section, error) {
-	sections := []Section{}
-	if kind == "" || kind == queueKind {
-		section, err := h.queueSection(ctx, a, environment)
-		if err != nil {
-			return nil, err
-		}
-		sections = append(sections, section)
-	}
-	if kind == "" || kind == databaseKind {
-		section, err := h.databaseSection(ctx, a, environment)
-		if err != nil {
-			return nil, err
-		}
-		sections = append(sections, section)
-	}
-	return sections, nil
-}
-
-func (h ResourcesHandler) databaseSection(ctx context.Context, a actor.Actor, environment string) (Section, error) {
-	rows, err := h.databases.Rows(ctx, a, environment)
+func (h ResourcesHandler) Counts(c *gin.Context) {
+	view, err := h.catalog(c.Request.Context(), requestctx.ActorFrom(c))
 	if err != nil {
-		return Section{}, err
+		c.Data(http.StatusOK, "text/html; charset=utf-8", nil)
+		return
 	}
-	return Section{Kind: databaseKind, Title: "Databases", Noun: "database", NewHref: "/resources/new/database", Count: len(rows), Databases: rows}, nil
+	h.renderer.Fragment(c, http.StatusOK, "resources", "resource-counts", view)
 }
 
-func (h ResourcesHandler) queueSection(ctx context.Context, a actor.Actor, environment string) (Section, error) {
-	rows, err := h.queues.Rows(ctx, a, environment)
-	if err != nil {
-		return Section{}, err
+func (h ResourcesHandler) kindPage(info kindInfo) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		environment := c.Query("environment")
+		section, err := h.section(c.Request.Context(), requestctx.ActorFrom(c), info, environment)
+		if err != nil {
+			web.ErrorPage(c, h.renderer, err)
+			return
+		}
+		h.renderer.Render(c, http.StatusOK, "resource_kind", web.Page{Title: info.Title, Nav: info.Nav, Data: kindView{Section: section, Environment: environment}})
 	}
-	return Section{Kind: queueKind, Title: "Queues", Noun: "queue", NewHref: "/resources/new/queue", Count: len(rows), Queues: rows}, nil
 }
 
 func RegisterResourcesRoutes(routes httpserver.Web, h ResourcesHandler) {
-	routes.GET("/resources", h.List)
-	routes.GET("/resources/new", redirectTo("/resources/new/queue"))
-	routes.GET("/queues", redirectTo("/resources?kind=queue"))
-	routes.GET("/queues/*rest", redirectOldQueue)
-}
-
-func redirectOldQueue(c *gin.Context) {
-	switch rest := c.Param("rest"); rest {
-	case "", "/":
-		redirectTo("/resources?kind=queue")(c)
-	case "/new":
-		redirectTo("/resources/new/queue")(c)
-	default:
-		redirectTo("/resources/queues" + rest)(c)
+	routes.GET("/resources", h.Catalog)
+	routes.GET("/resources/counts", h.Counts)
+	for _, info := range kinds {
+		routes.GET(info.Href, h.kindPage(info))
 	}
+	routes.GET("/resources/new", redirectTo("/resources/new/queue"))
+	routes.GET("/queues", redirectTo(kinds[queueKind].Href))
+	routes.GET("/queues/*rest", redirectOldQueue)
 }
