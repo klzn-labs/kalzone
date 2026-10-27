@@ -72,6 +72,7 @@ type Grafana struct {
 	AdminPassword string `mapstructure:"admin_password"`
 	PrometheusUID string `mapstructure:"prometheus_uid" default:"prometheus"`
 	LokiUID       string `mapstructure:"loki_uid" default:"loki"`
+	JWTKey        string `mapstructure:"jwt_key"`
 }
 
 type Telemetry struct {
@@ -178,7 +179,7 @@ var envKeys = []string{
 	"admins", "secrets.key", "secrets.key_id", "allowed_domains",
 	"session.ttl", "session.renew_within",
 	"github.app_id", "github.app_private_key", "github.webhook_secret",
-	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.admin_user", "grafana.admin_password", "grafana.prometheus_uid", "grafana.loki_uid",
+	"oidc.issuer", "oidc.audience", "build.timeout", "build.workflow", "registry.username", "registry.token", "registry.auth_url", "deploy.timeout", "agent.token", "grafana.url", "grafana.admin_user", "grafana.admin_password", "grafana.prometheus_uid", "grafana.loki_uid", "grafana.jwt_key",
 	"telemetry.key", "telemetry.all_token", "telemetry.internal_url", "telemetry.prometheus_url", "telemetry.loki_url",
 	"queues.gateway_url", "queues.token", "approvals.webhook_url", "metrics.pushgateway_url",
 	"databases.admin_dsn", "databases.host", "databases.port",
