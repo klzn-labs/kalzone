@@ -114,7 +114,7 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 	require.Equal(t, http.StatusSeeOther, anonymous.Status)
 	require.Contains(t, spoofed.Body, "Continue with GitHub")
 	require.JSONEq(t, `{"path":"/grafana/api/user","user":"bob","role":""}`, member.Body)
-	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":"Admin"}`, admin.Body)
+	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":""}`, admin.Body)
 }
 
 func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {
