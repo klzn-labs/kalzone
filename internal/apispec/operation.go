@@ -2,6 +2,7 @@ package apispec
 
 import (
 	"slices"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/klzn-labs/kalzone/pkg/approval"
@@ -36,6 +37,12 @@ type Answer struct {
 
 type Catalog struct {
 	operations []Operation
+	built      sync.Map
+}
+
+type document struct {
+	raw []byte
+	err error
 }
 
 func NewCatalog() *Catalog {
