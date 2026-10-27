@@ -22,6 +22,15 @@ func Test_ResourcesPageListsQueues(t *testing.T) {
 	require.NotContains(t, prod.Body, "place-import")
 }
 
+func Test_ResourcesPageRowsCarryFullRowLink(t *testing.T) {
+	_, p := setupQueue(t)
+	createQueue(t, p.bob, "dev", http.StatusCreated)
+
+	page := p.mia.Do(t, http.MethodGet, "/resources", nil)
+
+	require.Regexp(t, `<tr class="row-linked">\s*<td><a class="mono row-link" href="/resources/queues/dev/place-import">`, page.Body)
+}
+
 func Test_ResourcesPageFiltersByKind(t *testing.T) {
 	_, p := setupQueue(t)
 	createQueue(t, p.bob, "dev", http.StatusCreated)
