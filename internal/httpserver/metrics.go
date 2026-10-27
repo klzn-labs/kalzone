@@ -19,10 +19,14 @@ func metricsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		route := c.FullPath()
-		if route == "" {
-			route = "unmatched"
-		}
-		requestDuration.WithLabelValues(c.Request.Method, route, strconv.Itoa(c.Writer.Status())).Observe(time.Since(start).Seconds())
+		method, route := requestLabels(c.Request.Method, c.FullPath())
+		requestDuration.WithLabelValues(method, route, strconv.Itoa(c.Writer.Status())).Observe(time.Since(start).Seconds())
 	}
+}
+
+func requestLabels(method, route string) (string, string) {
+	if route == "" {
+		return "ANY", "unmatched"
+	}
+	return method, route
 }
