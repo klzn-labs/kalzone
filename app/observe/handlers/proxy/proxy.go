@@ -47,9 +47,6 @@ func identify(h http.Header, viewer requestctx.Viewer) {
 	}
 	h.Set("X-WEBAUTH-USER", viewer.Actor.Login)
 	h.Set("X-WEBAUTH-NAME", viewer.Name)
-	if viewer.Actor.Admin {
-		h.Set("X-WEBAUTH-ROLE", "Admin")
-	}
 }
 
 func RegisterProxyRoutes(session httpserver.Session, p GrafanaProxy) {
