@@ -113,16 +113,18 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 
 	require.Equal(t, http.StatusSeeOther, anonymous.Status)
 	require.Contains(t, spoofed.Body, "Continue with GitHub")
-	require.JSONEq(t, `{"path":"/grafana/api/user","user":"bob","role":""}`, member.Body)
-	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":""}`, admin.Body)
+	require.JSONEq(t, `{"path":"/grafana/api/user","user":"bob","proxy_user":""}`, member.Body)
+	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","proxy_user":""}`, admin.Body)
 }
 
-func Test_GrafanaKeysAreNotServedWithoutASigningKey(t *testing.T) {
+func Test_GrafanaKeysServeTheSigningKeysPublicHalf(t *testing.T) {
 	s, _ := setupPlaces(t)
 
 	keys := s.Anonymous(t).Do(t, http.MethodGet, "/internal/grafana/keys.json", nil)
 
-	require.Equal(t, http.StatusNotFound, keys.Status)
+	require.Equal(t, http.StatusOK, keys.Status)
+	require.Contains(t, keys.Body, `"crv":"Ed25519"`)
+	require.NotContains(t, keys.Body, `"d"`)
 }
 
 func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {

@@ -50,8 +50,6 @@ func (p GrafanaProxy) identify(h http.Header, viewer requestctx.Viewer) {
 			h.Del(name)
 		}
 	}
-	h.Set("X-WEBAUTH-USER", viewer.Actor.Login)
-	h.Set("X-WEBAUTH-NAME", viewer.Name)
 	if !p.signer.Enabled() {
 		return
 	}

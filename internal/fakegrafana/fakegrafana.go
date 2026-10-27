@@ -1,7 +1,14 @@
 package fakegrafana
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
+
 	"encoding/json"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -138,6 +145,27 @@ func (g *Grafana) search(w http.ResponseWriter, r *http.Request) {
 func echo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]string{
-		"path": r.URL.Path, "user": r.Header.Get("X-WEBAUTH-USER"), "role": r.Header.Get("X-WEBAUTH-ROLE"),
+		"path": r.URL.Path, "user": assertedUser(r.Header.Get("X-JWT-Assertion")), "proxy_user": r.Header.Get("X-WEBAUTH-USER"),
 	})
+}
+
+func assertedUser(assertion string) string {
+	claims := jwt.MapClaims{}
+	if _, _, err := jwt.NewParser().ParseUnverified(assertion, claims); err != nil {
+		return ""
+	}
+	sub, _ := claims["sub"].(string)
+	return sub
+}
+
+func SigningKey() string {
+	_, key, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	der, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		panic(err)
+	}
+	return base64.StdEncoding.EncodeToString(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
 }

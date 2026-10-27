@@ -111,7 +111,7 @@ func testConfig(t *testing.T, s *Suite) config.Config {
 	cfg.Deploy.Timeout = time.Hour
 	cfg.Agent.Token = AgentToken
 	cfg.Queues = config.Queues{GatewayURL: "http://queued:8080", Token: QueuedToken}
-	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", AdminUser: fakegrafana.AdminUser, AdminPassword: fakegrafana.AdminPassword, PrometheusUID: "prometheus", LokiUID: "loki"}
+	cfg.Grafana = config.Grafana{URL: s.Grafana.URL + "/grafana", AdminUser: fakegrafana.AdminUser, AdminPassword: fakegrafana.AdminPassword, PrometheusUID: "prometheus", LokiUID: "loki", JWTKey: fakegrafana.SigningKey()}
 	cfg.Databases = testDatabases(t)
 	cfg.Metrics = config.Metrics{PushgatewayURL: s.Pushgateway.URL}
 	cfg.Telemetry = config.Telemetry{Key: TelemetryKey, InternalURL: "http://controlplane:8080", PrometheusURL: s.Telemetry.URL, LokiURL: s.Telemetry.URL + "/loki-root"}
