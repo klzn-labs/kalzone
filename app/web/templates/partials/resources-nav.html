@@ -1,0 +1,26 @@
+{{define "resources-nav"}}
+<div class="nav-group">
+  <div class="nav-row">
+    <a class="nav-link {{if eq . "resources"}}active{{end}}" href="/resources">{{icon "layers"}}Resources</a>
+    <button type="button" class="nav-caret" data-resources-toggle aria-expanded="true" aria-controls="nav-resources" aria-label="Show or hide resource kinds">{{icon "chevron-down"}}</button>
+  </div>
+  <div class="subnav" id="nav-resources" hx-get="/resources/counts" hx-trigger="load" hx-swap="none">
+    <a class="nav-link {{if eq . "queues"}}active{{end}}" href="/resources/queues">{{icon "queue"}}Queues<span class="nav-count" id="nav-count-queue"></span></a>
+    <a class="nav-link {{if eq . "databases"}}active{{end}}" href="/resources/databases">{{icon "database"}}Databases<span class="nav-count" id="nav-count-database"></span></a>
+    <a class="nav-link {{if eq . "crons"}}active{{end}}" href="/resources/crons">{{icon "clock"}}Crons<span class="nav-count" id="nav-count-cron"></span></a>
+  </div>
+</div>
+{{end}}
+
+{{define "resource-counts"}}<span class="nav-count" id="nav-count-queue" hx-swap-oob="true">{{(index .Usage "queue").Total}}</span>
+<span class="nav-count" id="nav-count-database" hx-swap-oob="true">{{(index .Usage "database").Total}}</span>
+<span class="nav-count" id="nav-count-cron" hx-swap-oob="true">{{(index .Usage "cron").Total}}</span>{{end}}
+
+{{define "resource-tabs"}}
+<nav class="resource-tabs" aria-label="Resource kinds">
+  <a class="{{if eq . "resources"}}active{{end}}" href="/resources">Catalog</a>
+  <a class="{{if eq . "queues"}}active{{end}}" href="/resources/queues">Queues</a>
+  <a class="{{if eq . "databases"}}active{{end}}" href="/resources/databases">Databases</a>
+  <a class="{{if eq . "crons"}}active{{end}}" href="/resources/crons">Crons</a>
+</nav>
+{{end}}

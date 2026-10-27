@@ -1,7 +1,7 @@
 {{define "content"}}{{$d := .Data}}{{$q := $d.Row.Queue}}{{$base := printf "/resources/queues/%s/%s" $q.Environment $q.Name}}{{$csrf := .Viewer.CSRFToken}}
 <div class="page-header">
   <div>
-    <div class="eyebrow"><a href="/resources?kind=queue">Resources</a></div>
+    <div class="eyebrow"><a href="/resources">Resources</a><span aria-hidden="true">/</span><a href="/resources/queues">Queues</a></div>
     <h1>{{$q.Name}}</h1>
     <div class="row" style="margin-top:6px">
       {{template "env-badge" $q.Environment}}

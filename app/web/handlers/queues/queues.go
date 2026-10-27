@@ -67,7 +67,7 @@ func (h QueuesHandler) Show(c *gin.Context) {
 		return
 	}
 	v := detailView{Row: h.row(c.Request.Context(), q), Tab: tab(c.Query("tab")), Edit: c.Query("edit") == "1", Versions: versions, Charts: h.charts(c.Request.Context(), q)}
-	h.renderer.Render(c, http.StatusOK, "queue", web.Page{Title: q.Name + " · " + q.Environment, Nav: "resources", Data: v})
+	h.renderer.Render(c, http.StatusOK, "queue", web.Page{Title: q.Name + " · " + q.Environment, Nav: "queues", Data: v})
 }
 
 func (h QueuesHandler) charts(ctx context.Context, q entities.Queue) web.Charts {
@@ -79,7 +79,7 @@ func (h QueuesHandler) charts(ctx context.Context, q entities.Queue) web.Charts 
 }
 
 func (h QueuesHandler) New(c *gin.Context) {
-	h.renderer.Render(c, http.StatusOK, "queue_new", web.Page{Title: "New queue", Nav: "resources", Data: entities.DefaultSettings("/hooks/")})
+	h.renderer.Render(c, http.StatusOK, "queue_new", web.Page{Title: "New queue", Nav: "queues", Data: entities.DefaultSettings("/hooks/")})
 }
 
 func RegisterQueuesRoutes(routes httpserver.Web, h QueuesHandler) {

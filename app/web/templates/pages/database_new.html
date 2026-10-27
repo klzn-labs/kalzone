@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="page-header"><div><div class="eyebrow"><a href="/resources?kind=database">Resources</a></div><h1>New database</h1><p class="lead">A MySQL 8 database on the shared server, with its own user that can only see this database.</p></div></div>
+<div class="page-header"><div><div class="eyebrow"><a href="/resources">Resources</a><span aria-hidden="true">/</span><a href="/resources/databases">Databases</a></div><h1>New database</h1><p class="lead">A MySQL 8 database on the shared server, with its own user that can only see this database.</p></div></div>
 <form class="card card-body" method="post" action="/resources/databases" hx-post="/resources/databases" hx-target="find .form-error">
   {{template "csrf" .Viewer.CSRFToken}}
   <div class="form-error"></div>

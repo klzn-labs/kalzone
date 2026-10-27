@@ -66,8 +66,8 @@ func Test_DatabaseListsInResources(t *testing.T) {
 	require.Equal(t, http.StatusCreated, createDatabase(t, p.bob, "dev").Status)
 	attachShop(t, p.bob)
 
-	list := p.mia.Do(t, http.MethodGet, "/resources?kind=database", nil)
-	queues := p.mia.Do(t, http.MethodGet, "/resources?kind=queue", nil)
+	list := p.mia.Do(t, http.MethodGet, "/resources/databases", nil)
+	queues := p.mia.Do(t, http.MethodGet, "/resources/queues", nil)
 	form := p.bob.Do(t, http.MethodGet, "/resources/new/database", nil)
 
 	require.Contains(t, list.Body, "New database")

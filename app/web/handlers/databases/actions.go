@@ -52,7 +52,7 @@ func (h DatabasesHandler) Delete(c *gin.Context) {
 		return
 	}
 	err = h.databases.Delete(c.Request.Context(), a, c.Param("env"), c.Param("name"))
-	h.finish(c, err, "/resources?kind=database", deletedMessage(db))
+	h.finish(c, err, "/resources/databases", deletedMessage(db))
 }
 
 func deletedMessage(db entities.Database) string {
