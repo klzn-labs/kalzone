@@ -30,7 +30,7 @@ import (
 func Observe() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			grafana.NewClient, dashboards.NewDashboardsUsecase, proxy.NewGrafanaProxy,
+			grafana.NewClient, dashboards.NewDashboardsUsecase, proxy.NewSigner, proxy.NewGrafanaProxy,
 			func(c grafana.Client) dashboards.Grafana { return c },
 			pushgateway.NewClient,
 			func(c pushgateway.Client) dashboards.Publisher { return c },

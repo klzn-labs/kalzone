@@ -117,6 +117,14 @@ func Test_GrafanaIsBehindThePlatformsSignIn(t *testing.T) {
 	require.JSONEq(t, `{"path":"/grafana/api/user","user":"root","role":""}`, admin.Body)
 }
 
+func Test_GrafanaKeysAreNotServedWithoutASigningKey(t *testing.T) {
+	s, _ := setupPlaces(t)
+
+	keys := s.Anonymous(t).Do(t, http.MethodGet, "/internal/grafana/keys.json", nil)
+
+	require.Equal(t, http.StatusNotFound, keys.Status)
+}
+
 func Test_TheCatalogGroupsServicesUnderTheirTeams(t *testing.T) {
 	_, p := setupPlaces(t)
 	createReviews(t, p)
