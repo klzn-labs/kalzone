@@ -53,6 +53,8 @@
     <div class="card-body"><p class="muted small">Attach and detach take effect on each service's next deploy.</p></div>
   </div>
 
+  {{template "resource-charts" $d.Charts}}
+
   {{if $d.CanEdit}}
   <div class="card danger-zone">
     <div class="card-body">

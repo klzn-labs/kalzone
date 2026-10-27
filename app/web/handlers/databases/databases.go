@@ -40,10 +40,11 @@ type DatabasesHandler struct {
 	databases Databases
 	services  Services
 	teams     Teams
+	grafana   web.GrafanaOrgs
 }
 
-func NewDatabasesHandler(renderer *web.Renderer, views web.Views, databases Databases, services Services, teams Teams) DatabasesHandler {
-	return DatabasesHandler{renderer: renderer, views: views, databases: databases, services: services, teams: teams}
+func NewDatabasesHandler(renderer *web.Renderer, views web.Views, databases Databases, services Services, teams Teams, grafana web.GrafanaOrgs) DatabasesHandler {
+	return DatabasesHandler{renderer: renderer, views: views, databases: databases, services: services, teams: teams, grafana: grafana}
 }
 
 func (h DatabasesHandler) Show(c *gin.Context) {

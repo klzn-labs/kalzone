@@ -28,4 +28,15 @@
   <iframe class="theme-dark" loading="lazy" title="panel {{.Panel}}" src="/grafana/d-solo/{{.UID}}?orgId={{.Org}}&panelId={{.Panel}}&var-env={{.Env}}&from=now-6h&to=now&theme=dark"></iframe>
 </div>{{end}}
 
+{{define "resource-charts"}}{{if .Enabled}}
+<div class="card" id="observability">
+  <div class="card-header"><div><h2>Observability</h2><p>Live from Grafana, last 6 hours</p></div>
+    <div class="actions"><a class="btn btn-sm" href="{{.Dashboard}}" target="_blank" rel="noopener">{{icon "activity"}}Dashboard {{icon "external"}}</a></div></div>
+  <div class="panels">{{range .Panels}}<div class="panel">
+    <iframe class="theme-light" loading="lazy" title="{{.Title}}" src="{{.Light}}"></iframe>
+    <iframe class="theme-dark" loading="lazy" title="{{.Title}}" src="{{.Dark}}"></iframe>
+  </div>{{end}}</div>
+</div>
+{{end}}{{end}}
+
 {{define "demo-note"}}<div class="demo-note">{{icon "lock"}}<span>{{.}}</span><a href="/login">Sign in to try it</a></div>{{end}}

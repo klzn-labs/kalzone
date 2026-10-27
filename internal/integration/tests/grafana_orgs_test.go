@@ -76,3 +76,29 @@ func Test_OnlyAdminsKeepARoleInTheMainOrg(t *testing.T) {
 	require.Eventually(t, func() bool { return s.Grafana.Members(1)["bob"] == "None" }, 5*time.Second, 50*time.Millisecond)
 	require.Equal(t, "Admin", s.Grafana.Members(1)["root"])
 }
+
+func Test_TheDatabasePageEmbedsItsTeamsDatabaseDashboard(t *testing.T) {
+	s, p, _ := setupDatabases(t)
+	org := orgOf(t, s, "team-places")
+	p.bob.Form(t, "/resources/databases", databaseForm(p.bob.CSRFToken))
+
+	page := p.bob.Do(t, http.MethodGet, databasePage, nil)
+
+	require.Equal(t, http.StatusOK, page.Status, page.Body)
+	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d-solo/kalzone-database?from=now-6h&amp;orgId=%d&amp;panelId=4`, org))
+	require.Contains(t, page.Body, "var-schema="+devSchema)
+	require.Contains(t, page.Body, "var-user=kz_"+devSchema)
+	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d/kalzone-database?orgId=%d&amp;var-schema=`+devSchema, org))
+}
+
+func Test_TheQueuePageEmbedsItsTeamsQueueDashboard(t *testing.T) {
+	s, p := setupQueue(t)
+	org := orgOf(t, s, "team-places")
+	q := createQueue(t, p.bob, "dev", http.StatusCreated)
+
+	page := p.bob.Do(t, http.MethodGet, "/resources/queues/dev/place-import", nil)
+
+	require.Equal(t, http.StatusOK, page.Status, page.Body)
+	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d-solo/kalzone-queue?from=now-6h&amp;orgId=%d&amp;panelId=1`, org))
+	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d/kalzone-queue?orgId=%d&amp;var-queue_id=%s`, org, q.ID))
+}
