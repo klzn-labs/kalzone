@@ -32,7 +32,7 @@
 <div class="card" id="observability">
   <div class="card-header"><div><h2>Observability</h2><p>Live from Grafana, last 6 hours</p></div>
     <div class="actions"><a class="btn btn-sm" href="{{.Dashboard}}" target="_blank" rel="noopener">{{icon "activity"}}Dashboard {{icon "external"}}</a></div></div>
-  <div class="panels">{{range .Panels}}<div class="panel">
+  <div class="panels{{if eq .Columns 3}} panels-3{{end}}">{{range .Panels}}<div class="panel{{if .Wide}} wide{{end}}">
     <iframe class="theme-light" loading="lazy" title="{{.Title}}" src="{{.Light}}"></iframe>
     <iframe class="theme-dark" loading="lazy" title="{{.Title}}" src="{{.Dark}}"></iframe>
   </div>{{end}}</div>

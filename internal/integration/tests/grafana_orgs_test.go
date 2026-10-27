@@ -88,6 +88,7 @@ func Test_TheDatabasePageEmbedsItsTeamsDatabaseDashboard(t *testing.T) {
 	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d-solo/kalzone-database?from=now-6h&amp;orgId=%d&amp;panelId=4`, org))
 	require.Contains(t, page.Body, "var-schema="+devSchema)
 	require.Contains(t, page.Body, "var-user=kz_"+devSchema)
+	require.Contains(t, page.Body, `class="panels panels-3"`)
 	require.Contains(t, page.Body, fmt.Sprintf(`/grafana/d/kalzone-database?orgId=%d&amp;var-schema=`+devSchema, org))
 }
 
