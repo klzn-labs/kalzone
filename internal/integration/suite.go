@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http/httptest"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -137,12 +138,20 @@ func testDatabases(t *testing.T) config.Databases {
 	return config.Databases{AdminDSN: parsed.FormatDSN(), Host: host, Port: port}
 }
 
-func appKey(t *testing.T) string {
+var generatedAppKey = sync.OnceValues(func() (string, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", err
+	}
+	return string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})), nil
+})
+
+func appKey(t *testing.T) string {
+	key, err := generatedAppKey()
 	if err != nil {
 		t.Fatal(err)
 	}
-	return string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}))
+	return key
 }
 
 func baseConfig(githubURL string) config.Config {
