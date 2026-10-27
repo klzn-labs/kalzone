@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/klzn-labs/kalzone/app/queue/entities"
+	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 )
 
@@ -28,6 +29,7 @@ type detailView struct {
 	Tab      string
 	Edit     bool
 	Versions []entities.Version
+	Charts   web.Charts
 }
 
 func tab(raw string) string {

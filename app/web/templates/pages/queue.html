@@ -34,6 +34,7 @@
 {{if eq $d.Tab "dead"}}{{template "queue-dead" dict "Row" $d.Row "Base" $base "CSRF" $csrf}}
 {{else if eq $d.Tab "settings"}}{{template "queue-settings" dict "Queue" $q "Row" $d.Row "Base" $base "CSRF" $csrf "Edit" $d.Edit}}
 {{else}}{{template "queue-activity" $d.Versions}}{{end}}
+<div style="margin-top:24px">{{template "resource-charts" $d.Charts}}</div>
 {{end}}
 
 {{define "queue-dead"}}

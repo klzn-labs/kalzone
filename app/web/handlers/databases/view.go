@@ -12,6 +12,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/database/entities"
 	"github.com/klzn-labs/kalzone/app/database/usecases/databases"
 	team "github.com/klzn-labs/kalzone/app/team/entities"
+	"github.com/klzn-labs/kalzone/app/web"
 	"github.com/klzn-labs/kalzone/pkg/actor"
 )
 
@@ -36,6 +37,7 @@ type detailView struct {
 	Attachable  []string
 	Blocker     string
 	CanEdit     bool
+	Charts      web.Charts
 }
 
 type newView struct {
@@ -85,14 +87,16 @@ func (h DatabasesHandler) detail(ctx context.Context, a actor.Actor, environment
 	if err != nil {
 		return detailView{}, err
 	}
-	names, err := h.teamNames(ctx, []entities.Database{db})
+	teams, err := h.views.TeamsByID(ctx, []string{db.TeamID})
 	if err != nil {
 		return detailView{}, err
 	}
+	owner := teams[db.TeamID]
 	attachable, err := h.attachable(ctx, db, views)
 	return detailView{
-		Database: db, Team: names[db.TeamID], Address: h.address(), Attachments: attachmentsOf(views),
+		Database: db, Team: owner.Name, Address: h.address(), Attachments: attachmentsOf(views),
 		Attachable: attachable, Blocker: blocker(views), CanEdit: h.canEdit(ctx, a, db),
+		Charts: web.DatabaseCharts(h.grafana, owner.Slug, db.Schema, db.Username),
 	}, err
 }
 

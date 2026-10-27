@@ -35,10 +35,12 @@ type QueuesHandler struct {
 	renderer *web.Renderer
 	queues   Queues
 	names    ServiceNames
+	views    web.Views
+	grafana  web.GrafanaOrgs
 }
 
-func NewQueuesHandler(renderer *web.Renderer, queues Queues, names ServiceNames) QueuesHandler {
-	return QueuesHandler{renderer: renderer, queues: queues, names: names}
+func NewQueuesHandler(renderer *web.Renderer, queues Queues, names ServiceNames, views web.Views, grafana web.GrafanaOrgs) QueuesHandler {
+	return QueuesHandler{renderer: renderer, queues: queues, names: names, views: views, grafana: grafana}
 }
 
 func (h QueuesHandler) Rows(ctx context.Context, a actor.Actor, environment string) ([]Row, error) {
@@ -64,8 +66,16 @@ func (h QueuesHandler) Show(c *gin.Context) {
 		web.ErrorPage(c, h.renderer, err)
 		return
 	}
-	v := detailView{Row: h.row(c.Request.Context(), q), Tab: tab(c.Query("tab")), Edit: c.Query("edit") == "1", Versions: versions}
+	v := detailView{Row: h.row(c.Request.Context(), q), Tab: tab(c.Query("tab")), Edit: c.Query("edit") == "1", Versions: versions, Charts: h.charts(c.Request.Context(), q)}
 	h.renderer.Render(c, http.StatusOK, "queue", web.Page{Title: q.Name + " · " + q.Environment, Nav: "resources", Data: v})
+}
+
+func (h QueuesHandler) charts(ctx context.Context, q entities.Queue) web.Charts {
+	teams, err := h.views.TeamsByID(ctx, []string{q.TeamID})
+	if err != nil {
+		return web.Charts{}
+	}
+	return web.QueueCharts(h.grafana, teams[q.TeamID].Slug, q.ID)
 }
 
 func (h QueuesHandler) New(c *gin.Context) {
