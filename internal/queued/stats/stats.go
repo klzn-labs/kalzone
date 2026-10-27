@@ -60,10 +60,14 @@ func (c *Collector) Delivered(queueID string, verdict dispatch.Verdict, took tim
 func (c *Collector) labels(queueID string) prometheus.Labels {
 	for _, q := range c.queues.Queues() {
 		if q.ID == queueID {
-			return prometheus.Labels{"queue": q.Name, "environment": q.Environment}
+			return labelsOf(q)
 		}
 	}
-	return prometheus.Labels{"queue": queueID, "environment": ""}
+	return prometheus.Labels{"queue": queueID, "environment": "", "queue_id": queueID}
+}
+
+func labelsOf(q model.Queue) prometheus.Labels {
+	return prometheus.Labels{"queue": q.Name, "environment": q.Environment, "queue_id": q.ID}
 }
 
 func (c *Collector) Collect(ctx context.Context) []queuedapi.Stats {
@@ -86,7 +90,7 @@ func (c *Collector) collect(ctx context.Context, q model.Queue) (queuedapi.Stats
 	}
 	dead, err := c.backend.Dead(ctx, q, deadReported)
 	delivered, failed := c.rates(q.ID)
-	labels := prometheus.Labels{"queue": q.Name, "environment": q.Environment}
+	labels := labelsOf(q)
 	c.metrics.observe(labels, b)
 	s := queuedapi.Stats{
 		QueueID: q.ID, Depth: b.Depth, InFlight: b.InFlight, OldestAgeSeconds: b.OldestAge.Seconds(),

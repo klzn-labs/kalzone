@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"maps"
 	"time"
 
 	"github.com/klzn-labs/kalzone/internal/queued/dispatch"
@@ -20,7 +21,7 @@ type metrics struct {
 }
 
 func newMetrics(r prometheus.Registerer) metrics {
-	labels := []string{"queue", "environment"}
+	labels := []string{"queue", "environment", "queue_id"}
 	m := metrics{
 		depth:      prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "platform_queue_depth", Help: "Messages waiting, delayed or in flight."}, labels),
 		inFlight:   prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "platform_queue_in_flight", Help: "Deliveries waiting for an answer."}, labels),
@@ -34,7 +35,8 @@ func newMetrics(r prometheus.Registerer) metrics {
 }
 
 func (m metrics) delivered(labels prometheus.Labels, verdict dispatch.Verdict, took time.Duration) {
-	withOutcome := prometheus.Labels{"queue": labels["queue"], "environment": labels["environment"], "outcome": outcomes[verdict]}
+	withOutcome := prometheus.Labels{"outcome": outcomes[verdict]}
+	maps.Copy(withOutcome, labels)
 	m.deliveries.With(withOutcome).Inc()
 	m.duration.With(labels).Observe(took.Seconds())
 }

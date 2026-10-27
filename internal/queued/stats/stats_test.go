@@ -11,6 +11,7 @@ import (
 	"github.com/klzn-labs/kalzone/internal/queued/stats"
 	"github.com/klzn-labs/kalzone/pkg/queuedapi"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 )
 
@@ -91,4 +92,29 @@ func Test_Collector_AFixedQueueReportsItsRateAlone(t *testing.T) {
 
 	require.Equal(t, 10.0, got[0].EffectiveRate)
 	require.Nil(t, got[0].Adaptive)
+}
+
+func Test_Collector_LabelsEveryQueueSeriesWithTheQueueID(t *testing.T) {
+	q := natstest.Queue("jobs")
+	registry := prometheus.NewRegistry()
+	c := stats.New(source{queues: []model.Queue{q}}, backend{}, model.FixedThrottle{}, registry, time.Now)
+	c.Delivered(q.ID, dispatch.Ack, time.Millisecond)
+	c.Collect(context.Background())
+
+	families, err := registry.Gather()
+
+	require.NoError(t, err)
+	require.Len(t, families, 6)
+	for _, f := range families {
+		require.Equal(t, q.ID, labelValue(f.GetMetric()[0], "queue_id"), f.GetName())
+	}
+}
+
+func labelValue(m *dto.Metric, name string) string {
+	for _, l := range m.GetLabel() {
+		if l.GetName() == name {
+			return l.GetValue()
+		}
+	}
+	return ""
 }
