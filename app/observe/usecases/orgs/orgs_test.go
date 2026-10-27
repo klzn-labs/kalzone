@@ -157,7 +157,7 @@ func Test_Sync_CreatesAnOrgPerTeamWithItsPeopleDatasourcesAndDashboards(t *testi
 	require.True(t, ok)
 	require.Equal(t, map[string]string{"admin": "Admin", "root": "Admin", "bob": "Viewer"}, g.members[id])
 	require.Contains(t, g.sources[id], "prometheus http://controlplane:8080/telemetry/places/prometheus")
-	require.Equal(t, map[string]bool{"platform-places-api": true}, g.dashboards[id])
+	require.Equal(t, map[string]bool{"kalzone-database": true, "kalzone-queue": true, "platform-places-api": true}, g.dashboards[id])
 	require.True(t, g.users["guest.demo"])
 	demo, _ := uc.OrgID("demo")
 	require.Equal(t, "Viewer", g.members[demo]["guest.demo"])
@@ -177,8 +177,8 @@ func Test_Sync_FollowsMembershipRoleAndOwnershipChanges(t *testing.T) {
 	placesOrg, _ := uc.OrgID("team-places")
 	mapsOrg, _ := uc.OrgID("team-maps")
 	require.Equal(t, map[string]string{"admin": "Admin"}, g.members[placesOrg])
-	require.Empty(t, g.dashboards[placesOrg])
-	require.Equal(t, map[string]bool{"platform-places-api": true}, g.dashboards[mapsOrg])
+	require.Equal(t, map[string]bool{"kalzone-database": true, "kalzone-queue": true}, g.dashboards[placesOrg])
+	require.True(t, g.dashboards[mapsOrg]["platform-places-api"])
 	require.Equal(t, "Viewer", g.members[mapsOrg]["bob"])
 }
 

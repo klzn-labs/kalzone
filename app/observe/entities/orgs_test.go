@@ -58,12 +58,19 @@ func Test_ATeamOrgReadsThroughItsOwnTelemetryEndpoint(t *testing.T) {
 	require.Equal(t, "Authorization", sources[1].JSONData["httpHeaderName1"])
 }
 
-func Test_ATeamOrgHoldsOnlyItsServicesDashboards(t *testing.T) {
+func uids(dashboards []map[string]any) []string {
+	result := []string{}
+	for _, d := range dashboards {
+		result = append(result, d["uid"].(string))
+	}
+	return result
+}
+
+func Test_ATeamOrgHoldsTheResourceDashboardsAndOnlyItsServicesDashboards(t *testing.T) {
 	places := planNamed(t, "team-places").Dashboards
 
-	require.Len(t, places, 1)
-	require.Equal(t, "platform-places-api", places[0]["uid"])
-	require.Empty(t, planNamed(t, "team-empty").Dashboards)
+	require.Equal(t, []string{"kalzone-database", "kalzone-queue", "platform-places-api"}, uids(places))
+	require.Equal(t, []string{"kalzone-database", "kalzone-queue"}, uids(planNamed(t, "team-empty").Dashboards))
 }
 
 func Test_TheDemoOrgHoldsTheGuestAndPeopleOnNoTeam(t *testing.T) {
