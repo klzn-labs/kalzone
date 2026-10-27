@@ -40,7 +40,7 @@ func (u SeedUsecase) history(ctx context.Context, s catalog.Service, w workload,
 			return err
 		}
 	}
-	if w.prod == w.releases || w.rolledBack > 0 {
+	if w.prod == w.releases {
 		return nil
 	}
 	return u.request(ctx, s, built[len(built)-1], now)

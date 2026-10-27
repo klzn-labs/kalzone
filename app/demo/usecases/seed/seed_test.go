@@ -66,6 +66,25 @@ func (f services) Create(_ context.Context, s catalog.Service) error {
 	return nil
 }
 
+func (f services) List(_ context.Context, filter catalog.ServiceFilter) ([]catalog.Service, error) {
+	result := []catalog.Service{}
+	for _, s := range f.s.services {
+		if s.DeletedAt == nil && s.OwnerTeamID == filter.OwnerTeamIDs[0] {
+			result = append(result, s)
+		}
+	}
+	return result, nil
+}
+
+func (f services) Update(_ context.Context, s catalog.Service) error {
+	for i := range f.s.services {
+		if f.s.services[i].ID == s.ID {
+			f.s.services[i] = s
+		}
+	}
+	return nil
+}
+
 type configs struct{ s *store }
 
 func (f configs) Insert(_ context.Context, r envconfig.Revision) error {
@@ -156,8 +175,9 @@ func Test_Seed_PlantsASimulatedDemoTeamOnce(t *testing.T) {
 	require.Equal(t, demo.GuestID, s.users[0].ID)
 	require.True(t, s.users[0].Guest())
 	require.Len(t, s.members, 3)
-	require.Len(t, s.services, 4)
-	require.Len(t, s.revisions, 8)
+	require.Len(t, s.services, 1)
+	require.Equal(t, "demo-shop-api", s.services[0].Slug)
+	require.Len(t, s.revisions, 2)
 	for _, svc := range s.services {
 		require.True(t, svc.Simulated, svc.Slug)
 	}
@@ -178,6 +198,18 @@ func Test_Seed_LeavesOnlyFinishedDeploysAndOneWaitingRequest(t *testing.T) {
 	require.Contains(t, triggers(s.deployments), deploy.TriggerRollback)
 	require.NotEmpty(t, s.changelogs)
 	require.NotEmpty(t, s.events)
+}
+
+func Test_Seed_RemovesDemoServicesNoLongerPlanted(t *testing.T) {
+	s, u := seeder(true)
+	require.NoError(t, u.Seed(context.Background()))
+	teamID := s.teams[0].ID
+	s.services = append(s.services, catalog.Service{ID: "old", Slug: "demo-mailer", OwnerTeamID: teamID, Simulated: true})
+
+	require.NoError(t, u.Seed(context.Background()))
+
+	require.NotNil(t, s.services[1].DeletedAt)
+	require.Nil(t, s.services[0].DeletedAt)
 }
 
 func triggers(list []deploy.Deployment) []deploy.Trigger {
