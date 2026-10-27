@@ -1,0 +1,20 @@
+{{define "content"}}
+<div class="page-header"><div><div class="eyebrow"><a href="/resources">Resources</a><span aria-hidden="true">/</span><a href="/resources/crons">Crons</a></div><h1>New cron</h1><p class="lead">Kalzone POSTs to a path on the service on a schedule. The cron belongs to the service's team.</p></div></div>
+<form class="card card-body" method="post" action="/resources/crons" hx-post="/resources/crons" hx-target="find .form-error">
+  {{template "csrf" .Viewer.CSRFToken}}
+  <div class="form-error"></div>
+  <div class="form-row">
+    <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" class="mono" placeholder="refresh-places" required></div>
+    <div class="field"><label for="environment">Environment</label><select id="environment" name="environment"><option value="dev">dev</option><option value="prod">prod</option></select></div>
+    <div class="field"><label for="service">Service</label><select id="service" name="service" required>{{range .Data.Services}}<option value="{{.Slug}}">{{.Slug}}</option>{{end}}</select></div>
+  </div>
+  <div class="form-row">
+    <div class="field"><label for="path">Path on the service</label><input id="path" name="path" type="text" class="mono" placeholder="/hooks/refresh" required></div>
+    <div class="field"><label for="schedule">Schedule</label><input id="schedule" name="schedule" type="text" class="mono" placeholder="0 3 * * *" required></div>
+    <div class="field"><label for="timeout">Timeout</label><input id="timeout" name="timeout" type="text" class="mono" placeholder="60s"></div>
+  </div>
+  <p class="form-note">5-field cron in UTC, e.g. 0 3 * * *</p>
+  <div class="field"><label for="payload">Payload <span class="muted">(optional JSON)</span></label><textarea id="payload" name="payload" class="mono" rows="6" placeholder="{}"></textarea></div>
+  <div class="form-actions"><button class="btn btn-primary">{{icon "plus"}}Create cron</button></div>
+</form>
+{{end}}

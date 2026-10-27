@@ -292,6 +292,8 @@ p { margin: 0; }
 .table { width: 100%; border-collapse: collapse; }
 .table th { text-align: left; font-size: 12px; font-weight: 400; color: var(--muted); padding: 8px 20px; white-space: nowrap; }
 .table td { padding: 12px 20px; border-top: 1px solid var(--rule); vertical-align: middle; }
+.runs-table td { white-space: nowrap; }
+.runs-table td.run-error { white-space: normal; min-width: 240px; }
 .table tr:hover td { background: var(--surface-2); }
 .table tr.row-linked { position: relative; cursor: pointer; }
 .table .row-link::after { content: ""; position: absolute; inset: 0; }
