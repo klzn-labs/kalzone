@@ -81,7 +81,7 @@ func teamPlan(t OrgTeam, in OrgInputs) OrgPlan {
 			members[login] = RoleViewer
 		}
 	}
-	dashboards := []map[string]any{}
+	dashboards := []map[string]any{DatabaseDashboard(), QueueDashboard()}
 	for _, s := range in.Services {
 		if s.TeamID == t.ID {
 			dashboards = append(dashboards, Dashboard(s))
