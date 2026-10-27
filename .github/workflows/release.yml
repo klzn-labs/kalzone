@@ -14,11 +14,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      passed: ${{ steps.check.outputs.passed }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          runs=$(gh run list -R "${{ github.repository }}" --workflow ci.yml --commit "${{ github.sha }}" --status success --json databaseId --jq length)
+          if [ "$runs" -gt 0 ]; then echo "passed=true" >> "$GITHUB_OUTPUT"; else echo "passed=false" >> "$GITHUB_OUTPUT"; fi
+
   test:
+    needs: ci
+    if: needs.ci.outputs.passed != 'true'
     uses: ./.github/workflows/ci.yml
 
   publish:
-    needs: test
+    needs: [ci, test]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,7 +57,8 @@ jobs:
           docker push adrianozdp/platform-queued:${{ github.sha }}
 
   install-deployctl:
-    needs: test
+    needs: [ci, test]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -56,6 +74,7 @@ jobs:
 
   deploy:
     needs: [publish, install-deployctl]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     concurrency:
