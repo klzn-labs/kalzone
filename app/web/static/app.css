@@ -279,6 +279,10 @@ p { margin: 0; }
 .table th { text-align: left; font-size: 12px; font-weight: 400; color: var(--muted); padding: 8px 20px; white-space: nowrap; }
 .table td { padding: 12px 20px; border-top: 1px solid var(--rule); vertical-align: middle; }
 .table tr:hover td { background: var(--surface-2); }
+.table tr.row-linked { position: relative; cursor: pointer; }
+.table .row-link::after { content: ""; position: absolute; inset: 0; }
+.table .row-link:focus-visible { outline: none; }
+.table tr.row-linked:has(.row-link:focus-visible) td { background: var(--surface-2); }
 .table .key { font-family: var(--mono); font-weight: 500; font-size: 13px; }
 .table .value { font-family: var(--mono); font-size: 13px; color: var(--text-2); word-break: break-all; }
 .table .right, .table th.right { text-align: right; }
