@@ -30,7 +30,7 @@ var kinds = map[string]kindInfo{
 		Lead: "One consumer service receives each message once, with retries and a rate limit. Publishers send with the token every deployed service gets."},
 	databaseKind: {Kind: databaseKind, Title: "Databases", Noun: "database", Nav: "databases", Href: "/resources/databases", NewHref: "/resources/new/database",
 		Lead: "MySQL 8 databases on the shared server. Attach one to a service and its credentials arrive on the next deploy."},
-	cronKind: {Kind: cronKind, Title: "Crons", Noun: "cron", Nav: "crons", Href: "/resources/crons",
+	cronKind: {Kind: cronKind, Title: "Crons", Noun: "cron", Nav: "crons", Href: "/resources/crons", NewHref: "/resources/new/cron",
 		Lead: "Kalzone calls a path on one of your services on a schedule and keeps a record of every run."},
 }
 
