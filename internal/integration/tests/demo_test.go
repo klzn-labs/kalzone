@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -136,7 +137,7 @@ func Test_DemoServicesNeverDeployEvenForAnAdmin(t *testing.T) {
 	desired := s.Agent(t, http.MethodGet, agentapi.DesiredPath, nil)
 
 	require.Equal(t, http.StatusConflict, refused.Status, refused.Body)
-	require.Equal(t, http.StatusConflict, build.Status, build.Body)
+	require.Equal(t, http.StatusForbidden, build.Status, build.Body)
 	require.Equal(t, http.StatusOK, desired.Status)
 	require.NotContains(t, desired.Body, "demo-")
 }
@@ -179,4 +180,22 @@ func Test_TheDemoDoorIsRateLimitedPerAddress(t *testing.T) {
 
 	require.Equal(t, "/", locations[4])
 	require.Equal(t, "/login?error=demo-busy", locations[5])
+}
+
+func Test_TheDemosMemberCannotDecideItsWaitingRequest(t *testing.T) {
+	s, p := setupDemo(t)
+	var listed struct {
+		Items []requestView `json:"items"`
+	}
+	s.Guest(t).MustJSON(t, http.MethodGet, "/api/v1/requests?status=pending", nil, http.StatusOK, &listed)
+	require.Len(t, listed.Items, 1)
+	waiting := pendingChange{ID: listed.Items[0].ID, Poll: "/api/v1/requests/" + listed.Items[0].ID}
+
+	approve := decide(t, p.root, waiting, "approve", url.Values{})
+	reject := decide(t, p.root, waiting, "reject", url.Values{"reason": {"no"}})
+
+	require.Equal(t, http.StatusUnprocessableEntity, approve.Status, approve.Body)
+	require.Contains(t, approve.Body, "the demo is read-only")
+	require.Equal(t, http.StatusUnprocessableEntity, reject.Status, reject.Body)
+	require.Equal(t, "pending", poll(t, p.root, waiting).Status)
 }
