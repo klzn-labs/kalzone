@@ -2,6 +2,7 @@ package source
 
 import (
 	"context"
+	"slices"
 
 	"github.com/klzn-labs/kalzone/app/team/entities"
 )
@@ -51,6 +52,11 @@ func (s LocalTeamSource) VisibleTeamIDs(ctx context.Context, userID string) ([]s
 		return mine, err
 	}
 	return s.memberships.DemoTeamIDs(ctx)
+}
+
+func (s LocalTeamSource) IsDemo(ctx context.Context, teamID string) (bool, error) {
+	ids, err := s.memberships.DemoTeamIDs(ctx)
+	return slices.Contains(ids, teamID), err
 }
 
 func (s LocalTeamSource) UserIDsIn(ctx context.Context, teamIDs []string) ([]string, error) {
