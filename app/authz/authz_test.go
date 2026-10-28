@@ -18,6 +18,10 @@ func (r roles) RoleOf(_ context.Context, teamID, userID string) (string, error) 
 	return r[teamID+"/"+userID], nil
 }
 
+func (r roles) IsDemo(_ context.Context, teamID string) (bool, error) {
+	return teamID == "demo", nil
+}
+
 type protection map[string]bool
 
 func (p protection) IsProtected(_ context.Context, env string) (bool, error) {
@@ -29,7 +33,7 @@ type recorder struct{ events []events.Event }
 func (r *recorder) Publish(_ context.Context, e events.Event) { r.events = append(r.events, e) }
 
 var policy = authz.NewPolicy(
-	roles{"places/member": "member", "places/maintainer": "maintainer"},
+	roles{"places/member": "member", "places/maintainer": "maintainer", "demo/maintainer": "maintainer"},
 	protection{"dev": false, "prod": true},
 )
 
@@ -96,6 +100,23 @@ func Test_Policy_AGuestChangesNothingEvenItsTokens(t *testing.T) {
 
 	require.ErrorIs(t, deploy, apperror.Forbidden(""))
 	require.ErrorIs(t, tokens, apperror.Forbidden(""))
+}
+
+func Test_Policy_TheDemoTeamIsReadOnlyEvenForItsMaintainerAndAdmins(t *testing.T) {
+	ctx := context.Background()
+	demo := authz.Resource{TeamID: "demo", Environment: "prod"}
+
+	for _, name := range []string{"maintainer", "admin"} {
+		approve := policy.Can(ctx, people[name], authz.ApproveRequest, demo)
+		config := policy.Can(ctx, people[name], authz.EditConfig, demo)
+		into := policy.Can(ctx, people[name], authz.TransferService, authz.Resource{TeamID: "places", DestinationTeamID: "demo"})
+		logs := policy.Can(ctx, people[name], authz.ReadLogs, demo)
+
+		require.ErrorIs(t, approve, apperror.Forbidden(""), name)
+		require.ErrorIs(t, config, apperror.Forbidden(""), name)
+		require.ErrorIs(t, into, apperror.Forbidden(""), name)
+		require.NoError(t, logs, name)
+	}
 }
 
 func Test_Policy_RolesInAnotherTeamDoNotCount(t *testing.T) {

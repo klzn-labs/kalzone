@@ -56,6 +56,7 @@ type Resource struct {
 
 type MembershipReader interface {
 	RoleOf(ctx context.Context, teamID, userID string) (string, error)
+	IsDemo(ctx context.Context, teamID string) (bool, error)
 }
 
 type ProtectionReader interface {
@@ -66,6 +67,7 @@ var (
 	errUnauthenticated = apperror.New(apperror.CodeUnauthenticated, "sign in first")
 	errForbidden       = apperror.Forbidden("you are not allowed to do this")
 	errReadOnlyDemo    = apperror.Forbidden("the demo is read-only").WithHint("sign in to change your own team's services")
+	errDemoTeam        = apperror.Forbidden("the demo is read-only").WithHint("its services are simulated and its history is planted, change your own team's services instead")
 )
 
 type Publisher interface {
@@ -93,6 +95,9 @@ func (p Policy) Gate(ctx context.Context, a actor.Actor, action Action, r Resour
 	if a.Guest {
 		return "", errReadOnlyDemo
 	}
+	if err := p.outsideDemo(ctx, action, r); err != nil {
+		return "", err
+	}
 	if err := p.ownerCan(ctx, a, action, r); err != nil {
 		return "", err
 	}
@@ -107,6 +112,26 @@ func Direct(g Gate, err error) (Gate, error) {
 		return "", errApprovalRequired
 	}
 	return g, err
+}
+
+func (p Policy) outsideDemo(ctx context.Context, action Action, r Resource) error {
+	if action == ReadLogs {
+		return nil
+	}
+	for _, teamID := range []string{r.TeamID, r.DestinationTeamID} {
+		demo, err := p.isDemo(ctx, teamID)
+		if err != nil || demo {
+			return firstOr(err, errDemoTeam)
+		}
+	}
+	return nil
+}
+
+func (p Policy) isDemo(ctx context.Context, teamID string) (bool, error) {
+	if teamID == "" {
+		return false, nil
+	}
+	return p.memberships.IsDemo(ctx, teamID)
 }
 
 func (p Policy) ownerCan(ctx context.Context, a actor.Actor, action Action, r Resource) error {

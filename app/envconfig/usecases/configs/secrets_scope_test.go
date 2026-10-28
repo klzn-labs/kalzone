@@ -20,6 +20,10 @@ func (memberOfOwnerTeam) RoleOf(_ context.Context, teamID, _ string) (string, er
 	return "member", nil
 }
 
+func (memberOfOwnerTeam) IsDemo(context.Context, string) (bool, error) {
+	return false, nil
+}
+
 type unprotected struct{}
 
 func (unprotected) IsProtected(context.Context, string) (bool, error) { return false, nil }
