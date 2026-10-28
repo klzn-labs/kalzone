@@ -18,10 +18,14 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/klzn-labs/kalzone/pkg/demo"
+	bus "github.com/klzn-labs/kalzone/pkg/events"
 	"github.com/stretchr/testify/require"
 )
 
-var now = time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC)
+var (
+	now   = time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC)
+	owner = identity.User{ID: "u-owner", Kind: identity.KindPerson, Login: "adrianozp", Name: "Adriano"}
+)
 
 type store struct {
 	teams       []team.Team
@@ -35,6 +39,8 @@ type store struct {
 	requests    []approvals.Request
 	events      []audit.Event
 	shifts      []time.Duration
+	wiped       []string
+	published   []bus.Event
 }
 
 func (s *store) FindBySlug(_ context.Context, slug string) (team.Team, error) {
@@ -54,8 +60,37 @@ func (s *store) PutMembership(_ context.Context, m team.Membership) error {
 	s.members = append(s.members, m)
 	return nil
 }
+func (s *store) MembershipsOfTeam(_ context.Context, teamID string) ([]team.Membership, error) {
+	result := []team.Membership{}
+	for _, m := range s.members {
+		if m.TeamID == teamID {
+			result = append(result, m)
+		}
+	}
+	return result, nil
+}
+
 func (s *store) Save(_ context.Context, u identity.User) error {
 	s.users = append(s.users, u)
+	return nil
+}
+
+func (s *store) FindByLogin(_ context.Context, login string) (identity.User, error) {
+	for _, u := range s.users {
+		if u.Login == login {
+			return u, nil
+		}
+	}
+	return identity.User{}, apperror.NotFound("user not found")
+}
+
+func (s *store) Publish(_ context.Context, e bus.Event) {
+	s.published = append(s.published, e)
+}
+
+func (s *store) Wipe(_ context.Context, teamID string) error {
+	s.wiped = append(s.wiped, teamID)
+	s.teams, s.members, s.services, s.events = nil, nil, nil, nil
 	return nil
 }
 
@@ -148,12 +183,12 @@ func (f events) Insert(_ context.Context, e audit.Event) error {
 
 func seeder(enabled bool) (*store, seed.SeedUsecase) {
 	clock.WithTime(now)
-	s := &store{}
+	s := &store{users: []identity.User{owner}}
 	deps := seed.Store{
 		Teams: s, Users: s, Services: services{s}, Configs: configs{s}, Releases: releases{s}, Changelogs: changelogs{s},
-		Deployments: deployments{s}, Requests: requests{s}, Events: events{s}, Shifter: shifter{s},
+		Deployments: deployments{s}, Requests: requests{s}, Events: events{s}, Shifter: shifter{s}, Wiper: s,
 	}
-	return s, seed.NewSeedUsecase(config.Config{Demo: config.Demo{Enabled: enabled}}, deps)
+	return s, seed.NewSeedUsecase(config.Config{Demo: config.Demo{Enabled: enabled, Member: owner.Login}}, deps, s)
 }
 
 func Test_Seed_DoesNothingWhileTheDemoIsOff(t *testing.T) {
@@ -172,11 +207,13 @@ func Test_Seed_PlantsASimulatedDemoTeamOnce(t *testing.T) {
 
 	require.Len(t, s.teams, 1)
 	require.True(t, s.teams[0].Demo)
-	require.Equal(t, demo.GuestID, s.users[0].ID)
-	require.True(t, s.users[0].Guest())
-	require.Len(t, s.members, 3)
+	require.Equal(t, demo.GuestID, s.users[1].ID)
+	require.True(t, s.users[1].Guest())
+	require.Equal(t, []team.Membership{{TeamID: s.teams[0].ID, UserID: owner.ID, Role: team.RoleMaintainer, CreatedAt: s.teams[0].CreatedAt}}, s.members)
 	require.Len(t, s.services, 1)
 	require.Equal(t, "demo-shop-api", s.services[0].Slug)
+	require.Len(t, s.published, 1)
+	require.Equal(t, "team.created", s.published[0].Action)
 	require.Len(t, s.revisions, 2)
 	for _, svc := range s.services {
 		require.True(t, svc.Simulated, svc.Slug)
@@ -198,6 +235,52 @@ func Test_Seed_LeavesOnlyFinishedDeploysAndOneWaitingRequest(t *testing.T) {
 	require.Contains(t, triggers(s.deployments), deploy.TriggerRollback)
 	require.NotEmpty(t, s.changelogs)
 	require.NotEmpty(t, s.events)
+}
+
+func Test_Seed_CreditsTheWholeDemoHistoryToTheMember(t *testing.T) {
+	s, u := seeder(true)
+
+	require.NoError(t, u.Seed(context.Background()))
+
+	for _, d := range s.deployments {
+		require.Equal(t, owner.ID, d.RequestedBy)
+	}
+	for _, r := range s.releases {
+		require.Equal(t, owner.ID, r.RequestedBy)
+	}
+	for _, e := range s.events {
+		require.Equal(t, owner.Login, e.ActorLogin)
+	}
+	for _, c := range s.changelogs {
+		require.Equal(t, owner.Login, c.Commits[0].Author)
+	}
+	require.Equal(t, owner.Login, s.requests[0].RequesterLogin)
+	require.Equal(t, owner.ID, s.revisions[0].AuthorID)
+}
+
+func Test_Seed_RefusesToPlantBeforeTheMemberHasSignedIn(t *testing.T) {
+	s, u := seeder(true)
+	s.users = nil
+
+	err := u.Seed(context.Background())
+
+	require.ErrorContains(t, err, `demo member "adrianozp"`)
+	require.Empty(t, s.teams)
+}
+
+func Test_Seed_ReplantsADemoWhoseMembersAreNotJustTheMember(t *testing.T) {
+	s, u := seeder(true)
+	require.NoError(t, u.Seed(context.Background()))
+	old := s.teams[0].ID
+	s.members = append(s.members, team.Membership{TeamID: old, UserID: "persona"})
+
+	require.NoError(t, u.Seed(context.Background()))
+
+	require.Equal(t, []string{old}, s.wiped)
+	require.Len(t, s.teams, 1)
+	require.NotEqual(t, old, s.teams[0].ID)
+	require.Len(t, s.members, 1)
+	require.Len(t, s.services, 1)
 }
 
 func Test_Seed_RemovesDemoServicesNoLongerPlanted(t *testing.T) {

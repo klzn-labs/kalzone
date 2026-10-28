@@ -37,6 +37,7 @@ type Config struct {
 
 type Demo struct {
 	Enabled    bool          `mapstructure:"enabled"`
+	Member     string        `mapstructure:"member" validate:"required_if=Enabled true"`
 	SessionTTL time.Duration `mapstructure:"session_ttl" default:"2h" validate:"gt=0"`
 	PerIPHour  int           `mapstructure:"per_ip_per_hour" default:"20" validate:"gt=0"`
 }
