@@ -1,20 +1,5 @@
 package seed
 
-import team "github.com/klzn-labs/kalzone/app/team/entities"
-
-type person struct {
-	id    string
-	login string
-	name  string
-	role  team.Role
-}
-
-var people = []person{
-	{id: "00000000-0000-4000-8000-000000000011", login: "ana.demo", name: "Ana Ribeiro", role: team.RoleMaintainer},
-	{id: "00000000-0000-4000-8000-000000000012", login: "mia.demo", name: "Mia Santos", role: team.RoleMaintainer},
-	{id: "00000000-0000-4000-8000-000000000013", login: "bruno.demo", name: "Bruno Costa", role: team.RoleMember},
-}
-
 type workload struct {
 	slug        string
 	name        string

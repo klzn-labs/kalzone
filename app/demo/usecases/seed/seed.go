@@ -3,6 +3,7 @@ package seed
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	approvals "github.com/klzn-labs/kalzone/app/approvals/entities"
@@ -17,6 +18,7 @@ import (
 	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/klzn-labs/kalzone/pkg/config"
 	"github.com/klzn-labs/kalzone/pkg/demo"
+	"github.com/klzn-labs/kalzone/pkg/events"
 	"github.com/klzn-labs/kalzone/pkg/uuid"
 )
 
@@ -24,10 +26,12 @@ type Teams interface {
 	FindBySlug(ctx context.Context, slug string) (team.Team, error)
 	Create(ctx context.Context, t team.Team) error
 	PutMembership(ctx context.Context, m team.Membership) error
+	MembershipsOfTeam(ctx context.Context, teamID string) ([]team.Membership, error)
 }
 
 type Users interface {
 	Save(ctx context.Context, user identity.User) error
+	FindByLogin(ctx context.Context, login string) (identity.User, error)
 }
 
 type Services interface {
@@ -64,6 +68,14 @@ type Shifter interface {
 	Shift(ctx context.Context, teamID string, by time.Duration) error
 }
 
+type Wiper interface {
+	Wipe(ctx context.Context, teamID string) error
+}
+
+type Publisher interface {
+	Publish(ctx context.Context, event events.Event)
+}
+
 type Store struct {
 	Teams       Teams
 	Users       Users
@@ -75,29 +87,50 @@ type Store struct {
 	Requests    Requests
 	Events      Events
 	Shifter     Shifter
+	Wiper       Wiper
 }
 
 type SeedUsecase struct {
-	store   Store
-	enabled bool
+	store     Store
+	publisher Publisher
+	enabled   bool
+	member    string
 }
 
-func NewSeedUsecase(cfg config.Config, store Store) SeedUsecase {
-	return SeedUsecase{store: store, enabled: cfg.Demo.Enabled}
+func NewSeedUsecase(cfg config.Config, store Store, publisher Publisher) SeedUsecase {
+	return SeedUsecase{store: store, publisher: publisher, enabled: cfg.Demo.Enabled, member: cfg.Demo.Member}
 }
 
 func (u SeedUsecase) Seed(ctx context.Context) error {
 	if !u.enabled {
 		return nil
 	}
+	member, err := u.store.Users.FindByLogin(ctx, u.member)
+	if err != nil {
+		return fmt.Errorf("demo member %q: %w", u.member, err)
+	}
 	t, err := u.store.Teams.FindBySlug(ctx, demo.TeamSlug)
 	if errors.Is(err, apperror.NotFound("")) {
-		return u.plant(ctx, clock.Now().UTC().Truncate(time.Second))
+		return u.plant(ctx, member, clock.Now().UTC().Truncate(time.Second))
 	}
 	if err != nil {
 		return err
 	}
-	return u.prune(ctx, t.ID)
+	return u.refresh(ctx, t.ID, member)
+}
+
+func (u SeedUsecase) refresh(ctx context.Context, teamID string, member identity.User) error {
+	members, err := u.store.Teams.MembershipsOfTeam(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	if len(members) == 1 && members[0].UserID == member.ID {
+		return u.prune(ctx, teamID)
+	}
+	if err := u.store.Wiper.Wipe(ctx, teamID); err != nil {
+		return err
+	}
+	return u.plant(ctx, member, clock.Now().UTC().Truncate(time.Second))
 }
 
 func (u SeedUsecase) prune(ctx context.Context, teamID string) error {
@@ -142,20 +175,24 @@ func (u SeedUsecase) Sweep(ctx context.Context) (int, error) {
 	return 1, u.store.Shifter.Shift(ctx, t.ID, drift)
 }
 
-func (u SeedUsecase) plant(ctx context.Context, now time.Time) error {
+func (u SeedUsecase) plant(ctx context.Context, member identity.User, now time.Time) error {
 	teamID := uuid.NewUUID()
-	if err := u.team(ctx, teamID, now); err != nil {
+	if err := u.team(ctx, teamID, member, now); err != nil {
 		return err
 	}
 	for _, w := range workloads {
-		if err := u.workload(ctx, teamID, w, now); err != nil {
+		if err := u.workload(ctx, teamID, member, w, now); err != nil {
 			return err
 		}
 	}
+	u.publisher.Publish(ctx, events.Event{
+		At: now, ActorID: member.ID, ActorLogin: member.Login, Action: "team.created",
+		TargetKind: events.TargetTeam, TargetID: teamID, TargetName: demo.TeamSlug, TeamID: teamID,
+	})
 	return nil
 }
 
-func (u SeedUsecase) team(ctx context.Context, teamID string, now time.Time) error {
+func (u SeedUsecase) team(ctx context.Context, teamID string, member identity.User, now time.Time) error {
 	if err := u.store.Teams.Create(ctx, team.Team{ID: teamID, Slug: demo.TeamSlug, Name: demo.TeamName, Demo: true, CreatedAt: now.Add(-teamAge)}); err != nil {
 		return err
 	}
@@ -163,18 +200,5 @@ func (u SeedUsecase) team(ctx context.Context, teamID string, now time.Time) err
 	if err := u.store.Users.Save(ctx, guest); err != nil {
 		return err
 	}
-	for _, p := range people {
-		if err := u.person(ctx, teamID, p, now); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (u SeedUsecase) person(ctx context.Context, teamID string, p person, now time.Time) error {
-	user := identity.User{ID: p.id, Kind: identity.KindPersona, Login: p.login, Name: p.name, CreatedAt: now.Add(-30 * day), LastLoginAt: now}
-	if err := u.store.Users.Save(ctx, user); err != nil {
-		return err
-	}
-	return u.store.Teams.PutMembership(ctx, team.Membership{TeamID: teamID, UserID: p.id, Role: p.role, CreatedAt: now.Add(-30 * day)})
+	return u.store.Teams.PutMembership(ctx, team.Membership{TeamID: teamID, UserID: member.ID, Role: team.RoleMaintainer, CreatedAt: now.Add(-teamAge)})
 }
