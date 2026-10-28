@@ -14,13 +14,17 @@ import (
 	identityMysql "github.com/klzn-labs/kalzone/app/identity/repositories/mysql"
 	releaseMysql "github.com/klzn-labs/kalzone/app/release/repositories/mysql"
 	teamMysql "github.com/klzn-labs/kalzone/app/team/repositories/mysql"
+	"github.com/klzn-labs/kalzone/internal/eventbus"
 	"github.com/klzn-labs/kalzone/internal/sweeper"
 	"go.uber.org/fx"
 )
 
 func Demo() fx.Option {
 	return fx.Options(
-		fx.Provide(seed.NewSeedUsecase, demoStore, demoMysql.NewShiftRepository),
+		fx.Provide(
+			seed.NewSeedUsecase, demoStore, demoMysql.NewShiftRepository, demoMysql.NewWipeRepository,
+			func(b *eventbus.Bus) seed.Publisher { return b },
+		),
 		fx.Invoke(seedOnStart, startDemoSweeper),
 	)
 }
@@ -37,12 +41,13 @@ type demoRepositories struct {
 	Requests    approvalsMysql.RequestRepository
 	Events      auditMysql.EventRepository
 	Shifter     demoMysql.ShiftRepository
+	Wiper       demoMysql.WipeRepository
 }
 
 func demoStore(r demoRepositories) seed.Store {
 	return seed.Store{
 		Teams: r.Teams, Users: r.Users, Services: r.Services, Configs: r.Configs, Releases: r.Releases,
-		Changelogs: r.Changelogs, Deployments: r.Deployments, Requests: r.Requests, Events: r.Events, Shifter: r.Shifter,
+		Changelogs: r.Changelogs, Deployments: r.Deployments, Requests: r.Requests, Events: r.Events, Shifter: r.Shifter, Wiper: r.Wiper,
 	}
 }
 

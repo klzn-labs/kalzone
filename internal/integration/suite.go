@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	driver "github.com/go-sql-driver/mysql"
+	"github.com/klzn-labs/kalzone/app/demo/usecases/seed"
 	"github.com/klzn-labs/kalzone/app/release/repositories/registry"
 	"github.com/klzn-labs/kalzone/cmd/controlplane/options"
 	"github.com/klzn-labs/kalzone/internal/apispec"
@@ -26,6 +28,7 @@ import (
 	"github.com/klzn-labs/kalzone/internal/httpserver/wait"
 	"github.com/klzn-labs/kalzone/internal/testdb"
 	"github.com/klzn-labs/kalzone/pkg/config"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
 	"go.uber.org/fx/fxtest"
@@ -40,6 +43,7 @@ const (
 	BuildWorkflow = "klzn-labs/kalzone-actions/.github/workflows/build.yml"
 	RegistryToken = "dckr_pat_test"
 	TelemetryKey  = "telemetry-key"
+	DemoMember    = "root"
 )
 
 type Suite struct {
@@ -53,6 +57,7 @@ type Suite struct {
 	Engine      *gin.Engine
 	Catalog     *apispec.Catalog
 	Drain       *wait.Drain
+	demo        seed.SeedUsecase
 	db          *gorm.DB
 	contract    *contract
 	nextID      int64
@@ -61,7 +66,7 @@ type Suite struct {
 type Option func(*config.Config)
 
 func WithDemo(cfg *config.Config) {
-	cfg.Demo.Enabled = true
+	cfg.Demo.Enabled, cfg.Demo.Member = true, DemoMember
 }
 
 func NewSuite(t *testing.T, tweaks ...Option) *Suite {
@@ -74,13 +79,18 @@ func NewSuite(t *testing.T, tweaks ...Option) *Suite {
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
 		fx.Decorate(func(config.Config) config.Config { return withOptions(testConfig(t, s), tweaks) }),
 		fx.Decorate(func(registry.Resolver) registry.Resolver { return registry.WithBaseURL(s.Registry.URL) }),
-		fx.Populate(&s.Engine, &s.db, &s.Catalog, &s.Drain),
+		fx.Populate(&s.Engine, &s.db, &s.Catalog, &s.Drain, &s.demo),
 	)
 	app.RequireStart()
 	s.contract = loadContract(t, s.Catalog)
 	s.Server = httptest.NewServer(s.Engine)
 	t.Cleanup(func() { s.close(app) })
 	return s
+}
+
+func (s *Suite) PlantDemo(t *testing.T) {
+	t.Helper()
+	require.NoError(t, s.demo.Seed(context.Background()))
 }
 
 func (s *Suite) close(app *fxtest.App) {
