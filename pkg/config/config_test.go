@@ -62,3 +62,13 @@ func Test_LoadConfig_PublishesMetricsToTheStackPushgateway(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "http://pushgateway:9091", cfg.Metrics.PushgatewayURL)
 }
+
+func Test_LoadConfig_ReadsTheDemoMember(t *testing.T) {
+	t.Setenv("PLATFORM_DEMO_ENABLED", "true")
+	t.Setenv("PLATFORM_DEMO_MEMBER", "adrianozp")
+
+	cfg, err := config.LoadConfig()
+
+	require.NoError(t, err)
+	require.Equal(t, "adrianozp", cfg.Demo.Member)
+}
