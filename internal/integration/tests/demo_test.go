@@ -14,7 +14,9 @@ import (
 
 func setupDemo(t *testing.T) (*integration.Suite, people) {
 	t.Helper()
-	return setupPlaces(t, integration.WithDemo)
+	s, p := setupPlaces(t, integration.WithDemo)
+	s.PlantDemo(t)
+	return s, p
 }
 
 func Test_TheLoginPageOffersTheDemoOnlyWhenItIsOpen(t *testing.T) {
@@ -29,6 +31,20 @@ func Test_TheLoginPageOffersTheDemoOnlyWhenItIsOpen(t *testing.T) {
 	require.Contains(t, withDemo.Body, "Continue with GitHub")
 	require.NotContains(t, without.Body, "Open the demo")
 	require.Equal(t, "/login?error=demo", refused.Location)
+}
+
+func Test_TheDemoTeamHasOnlyItsMember(t *testing.T) {
+	s, _ := setupDemo(t)
+	var members struct {
+		Items []struct {
+			Login string `json:"login"`
+		} `json:"items"`
+	}
+
+	s.Guest(t).MustJSON(t, http.MethodGet, "/api/v1/teams/demo/members", nil, http.StatusOK, &members)
+
+	require.Len(t, members.Items, 1)
+	require.Equal(t, integration.DemoMember, members.Items[0].Login)
 }
 
 func Test_AGuestSeesOnlyTheDemoTeam(t *testing.T) {
