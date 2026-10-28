@@ -185,7 +185,7 @@ var envKeys = []string{
 	"queues.gateway_url", "queues.token", "approvals.webhook_url", "metrics.pushgateway_url",
 	"databases.admin_dsn", "databases.host", "databases.port",
 	"health.response_ms", "health.cpu_percent", "health.db_cpu_percent",
-	"demo.enabled", "demo.session_ttl", "demo.per_ip_per_hour",
+	"demo.enabled", "demo.member", "demo.session_ttl", "demo.per_ip_per_hour",
 }
 
 func bindEnvVars() {
