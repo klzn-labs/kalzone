@@ -76,7 +76,9 @@ func Test_NowReadsEachMetricAgainstTheDefaultOrTheServiceLimit(t *testing.T) {
 	require.False(t, readings[entities.MetricResponse].OverNow())
 	require.Equal(t, 70, readings[entities.MetricCPU].Limit)
 	require.Equal(t, 46.0, readings[entities.MetricDBCPU].Now)
-	require.Contains(t, q.asked[1], "* 100000 / 500")
+	require.Contains(t, q.asked[1], "min_over_time((histogram_quantile")
+	require.Contains(t, q.asked[1], "[5m:1m])")
+	require.Contains(t, q.asked[2], "* 100000 / 500")
 }
 
 func Test_NowSkipsMetricsTheServiceCannotHave(t *testing.T) {
@@ -97,7 +99,7 @@ func Test_AFailedQueryIsUnknownAndNeverOver(t *testing.T) {
 	require.Empty(t, h.Over())
 }
 
-func Test_DayKeepsTheSeriesAndItsPeak(t *testing.T) {
+func Test_DayKeepsTheSeriesAndItsPeakButIgnoresAOneMinuteSpike(t *testing.T) {
 	clock.WithTime(time.Date(2026, 10, 21, 9, 0, 0, 0, time.UTC))
 	q := &querier{values: map[string]float64{"plateful-mysql-1": 46}}
 
@@ -106,7 +108,8 @@ func Test_DayKeepsTheSeriesAndItsPeak(t *testing.T) {
 
 	require.Len(t, db.Series, 3)
 	require.Equal(t, 92.0, db.Peak)
-	require.True(t, db.WentOver())
+	require.Equal(t, time.Minute, db.Longest)
+	require.False(t, db.WentOver())
 	require.False(t, db.OverNow())
 }
 

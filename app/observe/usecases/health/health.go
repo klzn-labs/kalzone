@@ -16,7 +16,7 @@ var builtIn = config.Health{ResponseMS: 300, CPUPercent: 70, DBCPUPercent: 70}
 const (
 	queryTimeout = 3 * time.Second
 	day          = 24 * time.Hour
-	step         = 5 * time.Minute
+	step         = time.Minute
 )
 
 type Querier interface {
@@ -57,10 +57,15 @@ func (u HealthUsecase) Now(ctx context.Context, t Target) entities.Health {
 	defer cancel()
 	h := entities.Health{}
 	for _, p := range u.probes(t) {
-		value, found, err := u.querier.Instant(ctx, u.uid, p.query)
-		h.Readings = append(h.Readings, entities.Reading{Metric: p.metric, Limit: p.limit, Now: value, Peak: value, Known: found && err == nil})
+		h.Readings = append(h.Readings, u.instant(ctx, p))
 	}
 	return h
+}
+
+func (u HealthUsecase) instant(ctx context.Context, p probe) entities.Reading {
+	value, found, err := u.querier.Instant(ctx, u.uid, p.query)
+	held, _, _ := u.querier.Instant(ctx, u.uid, entities.SustainedQuery(p.query))
+	return entities.Reading{Metric: p.metric, Limit: p.limit, Now: value, Peak: value, Held: held, Known: found && err == nil}
 }
 
 func (u HealthUsecase) Day(ctx context.Context, t Target) entities.Health {
