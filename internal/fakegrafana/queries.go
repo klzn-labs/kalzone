@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 )
+
+const sustainedSamples = 5
 
 var containerName = regexp.MustCompile(`name="([^"]+)"`)
 
@@ -59,7 +62,7 @@ func (g *Grafana) seriesFor(query string) ([]float64, bool) {
 func (g *Grafana) prometheusRange(w http.ResponseWriter, r *http.Request) {
 	result := []any{}
 	if values, ok := g.seriesFor(r.URL.Query().Get("query")); ok {
-		result = append(result, map[string]any{"metric": map[string]string{}, "values": spread(values, r.URL.Query().Get("end"))})
+		result = append(result, map[string]any{"metric": map[string]string{}, "values": spread(values, r.URL.Query().Get("end"), r.URL.Query().Get("step"))})
 	}
 	writeJSON(w, map[string]any{"status": "success", "data": map[string]any{"resultType": "matrix", "result": result}})
 }
@@ -69,20 +72,31 @@ func writeVector(w http.ResponseWriter, value string) {
 	writeJSON(w, map[string]any{"status": "success", "data": map[string]any{"resultType": "vector", "result": vector}})
 }
 
-func spread(values []float64, end string) [][2]any {
+func spread(values []float64, end, step string) [][2]any {
 	last, _ := strconv.ParseInt(end, 10, 64)
+	every, _ := strconv.ParseInt(step, 10, 64)
 	points := make([][2]any, 0, len(values))
 	for i, v := range values {
-		at := last - int64(len(values)-1-i)*300
+		at := last - int64(len(values)-1-i)*every
 		points = append(points, [2]any{at, strconv.FormatFloat(v, 'f', -1, 64)})
 	}
 	return points
 }
 
+func instantOf(query string, values []float64) float64 {
+	if !strings.HasPrefix(query, "min_over_time(") {
+		return values[len(values)-1]
+	}
+	if len(values) < sustainedSamples {
+		return 0
+	}
+	return slices.Min(values[len(values)-sustainedSamples:])
+}
+
 func (g *Grafana) prometheus(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("query")
 	if values, ok := g.seriesFor(query); ok {
-		writeVector(w, strconv.FormatFloat(values[len(values)-1], 'f', -1, 64))
+		writeVector(w, strconv.FormatFloat(instantOf(query, values), 'f', -1, 64))
 		return
 	}
 	match := containerName.FindStringSubmatch(query)
