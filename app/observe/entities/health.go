@@ -40,8 +40,10 @@ func (r Reading) OverNow() bool { return r.Known && r.Held >= float64(r.Limit) }
 
 func (r Reading) WentOver() bool { return r.Known && (r.OverNow() || r.Longest >= SustainFor) }
 
+func (r Reading) Sustained() string { return fmt.Sprintf("for %d min", int(SustainFor.Minutes())) }
+
 func (r Reading) Problem() string {
-	return fmt.Sprintf("%s over %d%s", r.Label(), r.Limit, r.Unit())
+	return fmt.Sprintf("%s over %d%s %s", r.Label(), r.Limit, r.Unit(), r.Sustained())
 }
 
 func ReadingOf(metric Metric, limit int, samples []Sample, step time.Duration) Reading {

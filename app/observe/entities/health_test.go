@@ -27,7 +27,7 @@ func Test_AReadingKnowsItsPeakAndHowLongItWasOver(t *testing.T) {
 	require.Equal(t, 15*time.Minute, r.Longest)
 	require.False(t, r.OverNow())
 	require.True(t, r.WentOver())
-	require.Equal(t, "DB CPU over 70%", r.Problem())
+	require.Equal(t, "DB CPU over 70% for 5 min", r.Problem())
 }
 
 func Test_AReadingWithoutSamplesIsNeverOver(t *testing.T) {
@@ -74,7 +74,7 @@ func Test_ProblemsListMetricsOverNowThenFailures(t *testing.T) {
 	problems := entities.Problems(h, entities.Delivery{FailedBuild: 9, FailedDeploy: 17})
 	calm := entities.Problems(entities.Health{}, entities.Delivery{})
 
-	require.Equal(t, []string{"Response p95 over 300 ms", "Build #9 failed", "Deploy #17 to prod failed"}, problems)
+	require.Equal(t, []string{"Response p95 over 300 ms for 5 min", "Build #9 failed", "Deploy #17 to prod failed"}, problems)
 	require.Empty(t, calm)
 	require.Len(t, h.WentOver(), 2)
 	require.Empty(t, h.Calm())

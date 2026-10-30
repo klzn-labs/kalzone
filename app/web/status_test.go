@@ -110,7 +110,7 @@ func Test_AMetricOverItsLimitMakesTheServiceBroken(t *testing.T) {
 	all, _ := statuses(s).Now(context.Background(), actor.Actor{}, []catalog.Service{grid}, "prod")
 
 	require.True(t, all[0].Broken())
-	require.Equal(t, []string{"Response p95 over 300 ms"}, all[0].Problems)
+	require.Equal(t, []string{"Response p95 over 300 ms for 5 min"}, all[0].Problems)
 }
 
 func Test_EachReleaseKnowsWhetherItReachedProd(t *testing.T) {
