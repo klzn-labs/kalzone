@@ -37,7 +37,7 @@ func Test_AFailedBuildBlinksInTheCatalog(t *testing.T) {
 
 func Test_AMetricOverItsLimitBlinksUntilTheServiceRaisesItsLimit(t *testing.T) {
 	s, p := setupPlaces(t)
-	s.Grafana.SetSeries(p95, 210, 260, 450)
+	s.Grafana.SetSeries(p95, 210, 260, 450, 440, 460, 430, 450)
 
 	before := p.bob.Do(t, http.MethodGet, "/services", nil)
 	overview := p.bob.Do(t, http.MethodGet, "/services/places-api", nil)
@@ -53,6 +53,18 @@ func Test_AMetricOverItsLimitBlinksUntilTheServiceRaisesItsLimit(t *testing.T) {
 	require.NotContains(t, after.Body, `class="alarm"`)
 	require.Contains(t, calm.Body, "Prod is healthy")
 	require.Contains(t, calm.Body, "<b>450 ms</b>")
+}
+
+func Test_AShortSpikeOverTheLimitDoesNotBlink(t *testing.T) {
+	s, p := setupPlaces(t)
+	s.Grafana.SetSeries(p95, 210, 260, 230, 250, 450, 470)
+
+	catalog := p.bob.Do(t, http.MethodGet, "/services", nil)
+	overview := p.bob.Do(t, http.MethodGet, "/services/places-api", nil)
+
+	require.NotContains(t, catalog.Body, `class="alarm"`)
+	require.Contains(t, overview.Body, "Prod is healthy")
+	require.Contains(t, overview.Body, "<b>470 ms</b>")
 }
 
 func Test_AServiceWithoutSamplesSaysSoAndIsNeverBroken(t *testing.T) {
