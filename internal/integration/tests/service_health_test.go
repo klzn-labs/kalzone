@@ -46,8 +46,8 @@ func Test_AMetricOverItsLimitBlinksUntilTheServiceRaisesItsLimit(t *testing.T) {
 	after := p.bob.Do(t, http.MethodGet, "/services", nil)
 	calm := p.bob.Do(t, http.MethodGet, "/services/places-api", nil)
 
-	require.Contains(t, before.Body, "Response p95 over 300 ms")
-	require.Contains(t, overview.Body, "Response p95 is over 300 ms")
+	require.Contains(t, before.Body, "Response p95 over 300 ms for 5 min")
+	require.Contains(t, overview.Body, "Response p95 is over 300 ms for 5 min")
 	require.Contains(t, overview.Body, `class="metric-chart"`)
 	require.Equal(t, 500, raised.Limits.ResponseMS)
 	require.NotContains(t, after.Body, `class="alarm"`)

@@ -69,7 +69,7 @@
   {{range $over}}
   <div class="health-alert {{if .OverNow}}now{{end}}">
     <div>
-      <span class="health-title">{{icon "alert"}}{{.Label}} {{if .OverNow}}is over{{else}}went over{{end}} {{.Limit}}{{.Unit}}</span>
+      <span class="health-title">{{icon "alert"}}{{.Label}} {{if .OverNow}}is over{{else}}went over{{end}} {{.Limit}}{{.Unit}} {{.Sustained}}</span>
       <p>Peaked at {{rounded .Peak}}{{.Unit}} at {{clock .PeakAt}} UTC{{if .OverFor}} and was over the limit for {{span .OverFor}}{{end}}. Now {{rounded .Now}}{{.Unit}}.{{if eq (print .Metric) "db_cpu"}} The MySQL server is shared by every service on it.{{end}}</p>
     </div>
     <div class="health-chart">{{chart .}}<div class="axis"><span>24 h ago</span><span>limit {{.Limit}}{{.Unit}}</span><span>now</span></div></div>
