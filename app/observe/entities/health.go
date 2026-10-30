@@ -26,7 +26,9 @@ type Reading struct {
 	Known   bool
 	Peak    float64
 	PeakAt  time.Time
+	Held    float64
 	OverFor time.Duration
+	Longest time.Duration
 	Series  []Sample
 }
 
@@ -34,9 +36,9 @@ func (r Reading) Label() string { return metricNames[r.Metric][0] }
 
 func (r Reading) Unit() string { return metricNames[r.Metric][1] }
 
-func (r Reading) OverNow() bool { return r.Known && r.Now >= float64(r.Limit) }
+func (r Reading) OverNow() bool { return r.Known && r.Held >= float64(r.Limit) }
 
-func (r Reading) WentOver() bool { return r.Known && (r.OverNow() || r.Peak >= float64(r.Limit)) }
+func (r Reading) WentOver() bool { return r.Known && (r.OverNow() || r.Longest >= SustainFor) }
 
 func (r Reading) Problem() string {
 	return fmt.Sprintf("%s over %d%s", r.Label(), r.Limit, r.Unit())
@@ -44,18 +46,50 @@ func (r Reading) Problem() string {
 
 func ReadingOf(metric Metric, limit int, samples []Sample, step time.Duration) Reading {
 	r := Reading{Metric: metric, Limit: limit, Series: samples, Known: len(samples) > 0}
-	for _, s := range samples {
-		if s.Value >= r.Peak {
-			r.Peak, r.PeakAt = s.Value, s.At
-		}
-		if s.Value >= float64(limit) {
-			r.OverFor += step
-		}
+	if !r.Known {
+		return r
 	}
-	if r.Known {
-		r.Now = samples[len(samples)-1].Value
-	}
+	r.Now = samples[len(samples)-1].Value
+	r.Held = held(samples, step)
+	r.Peak, r.PeakAt = peak(samples)
+	r.OverFor, r.Longest = overSpans(samples, float64(limit), step)
 	return r
+}
+
+func peak(samples []Sample) (float64, time.Time) {
+	top := samples[0]
+	for _, s := range samples {
+		if s.Value >= top.Value {
+			top = s
+		}
+	}
+	return top.Value, top.At
+}
+
+func held(samples []Sample, step time.Duration) float64 {
+	window := max(1, int(SustainFor/step))
+	if len(samples) < window {
+		return 0
+	}
+	low := samples[len(samples)-1].Value
+	for _, s := range samples[len(samples)-window:] {
+		low = min(low, s.Value)
+	}
+	return low
+}
+
+func overSpans(samples []Sample, limit float64, step time.Duration) (total, longest time.Duration) {
+	run := time.Duration(0)
+	for _, s := range samples {
+		if s.Value < limit {
+			run = 0
+			continue
+		}
+		run += step
+		total += step
+		longest = max(longest, run)
+	}
+	return total, longest
 }
 
 type Health struct {

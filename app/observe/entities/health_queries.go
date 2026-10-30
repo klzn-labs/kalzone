@@ -1,8 +1,18 @@
 package entities
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
-const HealthWindow = "5m"
+const (
+	HealthWindow = "5m"
+	SustainFor   = 5 * time.Minute
+)
+
+func SustainedQuery(query string) string {
+	return fmt.Sprintf(`min_over_time((%s)[%s:1m])`, query, HealthWindow)
+}
 
 func ResponseQuery(slug string) string {
 	return fmt.Sprintf(`histogram_quantile(0.95, sum by (le) (rate(traefik_service_request_duration_seconds_bucket{service=~"%s-prod-(blue|green)@file"}[%s]))) * 1000`, slug, HealthWindow)

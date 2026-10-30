@@ -62,7 +62,7 @@ func (s *sources) health() observe.Health {
 	if s.over {
 		value = 500
 	}
-	return observe.Health{Readings: []observe.Reading{{Metric: observe.MetricResponse, Limit: 300, Now: value, Known: true}}}
+	return observe.Health{Readings: []observe.Reading{{Metric: observe.MetricResponse, Limit: 300, Now: value, Held: value, Known: true}}}
 }
 
 func statuses(s *sources) web.Statuses {
