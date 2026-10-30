@@ -24,6 +24,7 @@ func Test_AReadingKnowsItsPeakAndHowLongItWasOver(t *testing.T) {
 	require.Equal(t, 78.0, r.Peak)
 	require.Equal(t, time.Date(2026, 10, 21, 0, 10, 0, 0, time.UTC), r.PeakAt)
 	require.Equal(t, 15*time.Minute, r.OverFor)
+	require.Equal(t, 15*time.Minute, r.Longest)
 	require.False(t, r.OverNow())
 	require.True(t, r.WentOver())
 	require.Equal(t, "DB CPU over 70%", r.Problem())
@@ -39,15 +40,35 @@ func Test_AReadingWithoutSamplesIsNeverOver(t *testing.T) {
 }
 
 func Test_TheLimitItselfCountsAsOver(t *testing.T) {
-	r := entities.Reading{Metric: entities.MetricCPU, Limit: 70, Now: 70, Known: true}
+	r := entities.Reading{Metric: entities.MetricCPU, Limit: 70, Now: 70, Held: 70, Known: true}
 
 	require.True(t, r.OverNow())
 }
 
+func Test_AMetricIsOverOnlyAfterStayingOverForFiveMinutes(t *testing.T) {
+	brief := entities.ReadingOf(entities.MetricResponse, 300, samples(120, 120, 120, 450, 460, 470, 480), time.Minute)
+	held := entities.ReadingOf(entities.MetricResponse, 300, samples(120, 120, 450, 460, 470, 480, 490), time.Minute)
+	dipped := entities.ReadingOf(entities.MetricResponse, 300, samples(450, 460, 470, 120, 480, 490, 500, 510), time.Minute)
+
+	require.False(t, brief.OverNow())
+	require.False(t, brief.WentOver())
+	require.True(t, held.OverNow())
+	require.Equal(t, 450.0, held.Held)
+	require.False(t, dipped.WentOver())
+	require.Equal(t, 7*time.Minute, dipped.OverFor)
+}
+
+func Test_ASpikeNowWithoutFiveMinutesOverIsNotOver(t *testing.T) {
+	r := entities.Reading{Metric: entities.MetricResponse, Limit: 300, Now: 900, Peak: 900, Held: 120, Known: true}
+
+	require.False(t, r.OverNow())
+	require.False(t, r.WentOver())
+}
+
 func Test_ProblemsListMetricsOverNowThenFailures(t *testing.T) {
 	h := entities.Health{Readings: []entities.Reading{
-		{Metric: entities.MetricResponse, Limit: 300, Now: 410, Known: true},
-		{Metric: entities.MetricCPU, Limit: 70, Now: 12, Peak: 90, Known: true},
+		{Metric: entities.MetricResponse, Limit: 300, Now: 410, Held: 360, Known: true},
+		{Metric: entities.MetricCPU, Limit: 70, Now: 12, Peak: 90, Longest: 10 * time.Minute, Known: true},
 	}}
 
 	problems := entities.Problems(h, entities.Delivery{FailedBuild: 9, FailedDeploy: 17})
