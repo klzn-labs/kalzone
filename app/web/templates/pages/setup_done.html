@@ -1,0 +1,24 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+<div class="login-page">
+  <div class="card login-card join-card">
+    <span class="brand-mark">{{icon "logo"}}</span>
+    {{$d := .Data}}
+    {{if $d.Unfinished}}
+    <h1>Your account is ready</h1>
+    <div class="alert alert-warn">{{icon "alert"}}<span>We created your account but could not finish setting it up.</span></div>
+    <p class="lead">Sign in with your new username and password, then create a token for your agent on the Access tokens page.</p>
+    <a class="btn btn-primary btn-wide" href="/login?next=%2Ftokens">Sign in</a>
+    {{else}}
+    <h1>You're in</h1>
+    <p class="lead">Your agent's token is shown only once. Copy it now.</p>
+    <div class="field"><label for="agent-token">Agent token</label><input id="agent-token" type="text" class="mono" value="{{$d.Token}}" readonly></div>
+    <div class="field"><label for="mcp-command">Add Kalzone to Claude Code</label><textarea id="mcp-command" class="mono" rows="4" readonly>{{$d.Command}}</textarea><span class="hint">Run it in a terminal. The token is called agent, lasts 90 days and can be revoked on the Access tokens page.</span></div>
+    <a class="btn btn-primary btn-wide" href="/">Go to the dashboard</a>
+    {{end}}
+  </div>
+</div>
+</body>
+</html>{{end}}

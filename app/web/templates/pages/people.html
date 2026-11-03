@@ -8,6 +8,10 @@
   </div>
 </div>
 
+{{if $d.ResetURL}}
+<div class="alert alert-warn" style="margin-bottom:20px">{{icon "key"}}<span>Send this reset link to <b>@{{$d.ResetFor}}</b> now, it is shown only once and works for 24 hours: <code class="mono">{{$d.ResetURL}}</code></span></div>
+{{end}}
+
 <div class="card">
   <table class="table">
     <thead><tr><th>Person</th><th>Teams</th><th>Last sign-in</th><th class="right">Role</th></tr></thead>
@@ -19,13 +23,25 @@
         <td class="muted nowrap" title="{{date .User.LastLoginAt}}">{{ago .User.LastLoginAt}}</td>
         <td class="right">
           <div class="row" style="justify-content:flex-end">
+          {{if .User.Disabled}}<span class="badge">removed</span>
+          {{else}}
           {{if .User.Admin}}<span class="badge badge-warn">{{icon "shield"}}admin</span>{{end}}
+          {{if and $d.Passwords (eq .User.Login $d.Self) .User.Local}}<a class="btn btn-sm btn-ghost" href="/account/password">{{icon "key"}}Change password</a>{{end}}
           {{if and $d.IsAdmin (ne .User.Login $d.Self)}}
             <form method="post" action="/people/{{.User.Login}}/admin" hx-post="/people/{{.User.Login}}/admin" hx-target="closest .card" hx-swap="afterbegin">
               {{template "csrf" $csrf}}
               {{if .User.Admin}}<input type="hidden" name="admin" value="false"><button class="btn btn-sm btn-ghost">Revoke admin</button>
               {{else}}<input type="hidden" name="admin" value="true"><button class="btn btn-sm">Make admin</button>{{end}}
             </form>
+            {{if and $d.Passwords .User.Local}}
+            <form method="post" action="/people/{{.User.Login}}/reset">
+              {{template "csrf" $csrf}}<button class="btn btn-sm btn-ghost">Reset link</button>
+            </form>
+            {{end}}
+            <form method="post" action="/people/{{.User.Login}}/remove" hx-post="/people/{{.User.Login}}/remove" hx-confirm="Remove @{{.User.Login}}? They are signed out, their tokens stop working and they cannot sign in again." hx-target="closest .card" hx-swap="afterbegin">
+              {{template "csrf" $csrf}}<button class="btn btn-sm btn-ghost" title="Remove @{{.User.Login}}">{{icon "trash"}}Remove</button>
+            </form>
+          {{end}}
           {{end}}
           </div>
         </td>

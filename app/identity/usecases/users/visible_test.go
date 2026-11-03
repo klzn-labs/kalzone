@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/klzn-labs/kalzone/app/authz"
 	"github.com/klzn-labs/kalzone/app/identity/entities"
@@ -89,3 +90,21 @@ func logins(list []entities.User) []string {
 	}
 	return result
 }
+
+func Test_SetAdmin_RefusesARemovedPerson(t *testing.T) {
+	gone := now()
+	people := store{{ID: "u1", Login: "gone", DisabledAt: &gone}}
+	p := &recorded{}
+
+	_, err := users.NewUsersUsecase(people, coMembers{}, allow{}, p).SetAdmin(ctx, actor.Actor{UserID: "root", Admin: true}, "gone", true)
+
+	require.ErrorIs(t, err, apperror.Conflict(""))
+	require.EqualError(t, err, "this person was removed")
+	require.Empty(t, p.events)
+}
+
+type recorded struct{ events []events.Event }
+
+func (r *recorded) Publish(_ context.Context, e events.Event) { r.events = append(r.events, e) }
+
+func now() time.Time { return time.Date(2026, 11, 3, 9, 0, 0, 0, time.UTC) }

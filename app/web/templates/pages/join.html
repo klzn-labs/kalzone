@@ -1,0 +1,51 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+<div class="login-page">
+  <div class="card login-card join-card">
+    <span class="brand-mark">{{icon "logo"}}</span>
+    {{$d := .Data}}
+    {{if $d.Failed}}
+    <h1>Something went wrong</h1>
+    <div class="alert alert-danger">{{icon "alert"}}<span>{{$d.Failed}}</span></div>
+    <p class="fine">Reload the page in a moment to try again.</p>
+    {{else if $d.Gone}}
+    <h1>Link no longer valid</h1>
+    <div class="alert alert-danger">{{icon "alert"}}<span>{{$d.Gone}}</span></div>
+    <p class="fine">Ask the owner of this Kalzone for a new link.</p>
+    <a class="btn" href="/login">Go to sign in</a>
+    {{else if $d.ResetOK}}
+    <h1>Your password is set</h1>
+    <p class="lead">Sign in with your username and your new password.</p>
+    <a class="btn btn-primary btn-wide" href="/login">Sign in</a>
+    {{else if and (eq $d.Kind "invite") $d.SignedIn}}
+    <h1>Join Kalzone</h1>
+    {{with $d.Error}}<div class="alert alert-danger">{{icon "alert"}}<span>{{.}}</span></div>{{end}}
+    <p class="lead">Sign out to accept this invite.</p>
+    <form method="post" action="/logout">
+      {{template "csrf" $d.CSRF}}
+      <button class="btn btn-primary btn-wide">Sign out</button>
+    </form>
+    <p class="fine">Then open this link again.</p>
+    {{else}}
+    {{if eq $d.Kind "setup"}}<h1>Create the owner</h1><p class="lead">Choose the username and password of the first person on this Kalzone. They can do anything, including inviting others.</p>
+    {{else if eq $d.Kind "invite"}}<h1>Join Kalzone</h1><p class="lead">Choose a username and a password to join the team you were invited to.</p>
+    {{else}}<h1>Choose a new password</h1><p class="lead">Your other sessions are signed out once it is set.</p>{{end}}
+    {{with $d.Error}}<div class="alert alert-danger">{{icon "alert"}}<span>{{.}}</span></div>{{end}}
+    <form class="join-form" method="post">
+      {{if ne $d.Kind "reset"}}
+      <div class="field"><label for="username">Username</label><input id="username" name="username" type="text" class="mono" value="{{$d.Username}}" required maxlength="39" pattern="[A-Za-z0-9-]{1,39}" autocomplete="username" autocapitalize="none" spellcheck="false"><span class="hint">Lowercase letters, digits and dashes.</span></div>
+      {{end}}
+      <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password"><span class="hint">12 to 128 characters.</span></div>
+      <div class="field"><label for="confirm">Password again</label><input id="confirm" name="confirm" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></div>
+      {{if eq $d.Kind "setup"}}
+      <div class="field"><label class="switch"><input type="checkbox" name="bypass" value="on"{{if $d.Bypass}} checked{{end}}>Let the agent token change protected environments without approval</label><span class="hint">The deploy gate and automatic rollback still apply. Turn it off to approve every prod change yourself.</span></div>
+      {{end}}
+      <button class="btn btn-primary btn-wide">{{if eq $d.Kind "setup"}}Create the owner{{else if eq $d.Kind "invite"}}Join{{else}}Set password{{end}}</button>
+    </form>
+    {{end}}
+  </div>
+</div>
+</body>
+</html>{{end}}

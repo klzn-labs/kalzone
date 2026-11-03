@@ -1,7 +1,11 @@
 package modules
 
 import (
+	"context"
+	"log"
+
 	"github.com/klzn-labs/kalzone/app/authz"
+	accountsHandler "github.com/klzn-labs/kalzone/app/identity/handlers/accounts"
 	"github.com/klzn-labs/kalzone/app/identity/handlers/auth"
 	"github.com/klzn-labs/kalzone/app/identity/handlers/guard"
 	"github.com/klzn-labs/kalzone/app/identity/handlers/me"
@@ -10,6 +14,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/identity/repositories/github"
 	"github.com/klzn-labs/kalzone/app/identity/repositories/mysql"
 	identityTeams "github.com/klzn-labs/kalzone/app/identity/repositories/teams"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/accounts"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/sessions"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/signin"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"
@@ -31,8 +36,55 @@ func Identity() fx.Option {
 		),
 		identityInjections(),
 		tokenInjections(),
+		Accounts(),
 		fx.Invoke(auth.RegisterAuthRoutes, auth.RegisterDemoRoutes, startSessionSweeper, me.RegisterMeRoutes, usersHandler.RegisterUsersRoutes, tokensHandler.RegisterTokensRoutes),
 	)
+}
+
+func Accounts() fx.Option {
+	return fx.Options(
+		fx.Provide(
+			accounts.NewMode, mysql.NewAccountLinkRepository, mysql.NewAccountRepository,
+			accounts.NewSetupUsecase, accounts.NewPasswordSignIn, accounts.NewInvitesUsecase, accounts.NewPeopleUsecase,
+			accountsHandler.NewPagesHandler, accountsHandler.NewInvitesHandler,
+			func() accounts.Logger { return log.Default() },
+		),
+		accountStoreInjections(),
+		accountHandlerInjections(),
+		fx.Invoke(accountsHandler.RegisterPagesRoutes, accountsHandler.RegisterInvitesRoutes, ensureSetupLinkOnStart),
+	)
+}
+
+func accountStoreInjections() fx.Option {
+	return fx.Provide(
+		func(r mysql.AccountLinkRepository) accounts.LinkStore { return r },
+		func(r mysql.AccountLinkRepository) accounts.InviteLinks { return r },
+		func(r mysql.AccountRepository) accounts.AccountStore { return r },
+		func(r mysql.AccountRepository) accounts.InviteAccounts { return r },
+		func(r mysql.AccountRepository) accounts.PeopleAccounts { return r },
+		func(r mysql.UserRepository) accounts.UserStore { return r },
+		func(r mysql.UserRepository) accounts.PeopleUsers { return r },
+		func(r mysql.SessionRepository) accounts.SessionStore { return r },
+		func(u tokens.TokensUsecase) accounts.TokenIssuer { return u },
+		func(l identityTeams.Lookup) accounts.TeamLookup { return l },
+		func(p authz.Policy) accounts.Authorizer { return p },
+		func(b *eventbus.Bus) accounts.Publisher { return b },
+		func(p accounts.PasswordSignIn) accounts.FailureClearer { return p },
+	)
+}
+
+func accountHandlerInjections() fx.Option {
+	return fx.Provide(
+		func(u accounts.SetupUsecase) accountsHandler.Setup { return u },
+		func(u accounts.InvitesUsecase) accountsHandler.InviteAccepter { return u },
+		func(u accounts.InvitesUsecase) accountsHandler.Invites { return u },
+		func(u accounts.PeopleUsecase) accountsHandler.PasswordResetter { return u },
+		func(p accounts.PasswordSignIn) accountsHandler.PasswordSignIner { return p },
+	)
+}
+
+func ensureSetupLinkOnStart(lc fx.Lifecycle, u accounts.SetupUsecase) {
+	lc.Append(fx.Hook{OnStart: func(ctx context.Context) error { return u.EnsureSetupLink(ctx) }})
 }
 
 func tokenInjections() fx.Option {

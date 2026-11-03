@@ -105,3 +105,16 @@ func Test_SignIn_FailsWithoutCodeOrWhenGitHubFails(t *testing.T) {
 	require.ErrorIs(t, noCode, apperror.New(apperror.CodeSignInFailed, ""))
 	require.ErrorIs(t, githubDown, apperror.New(apperror.CodeSignInFailed, ""))
 }
+
+func Test_GitHubSignInRefusesADisabledUser(t *testing.T) {
+	disabledAt := now.Add(-time.Hour)
+	users := fakeUsers{42: {ID: "u-1", GitHubID: 42, Login: "ana", DisabledAt: &disabledAt}}
+	sessions := &fakeSessions{}
+	github := fakeGitHub{user: entities.GitHubUser{ID: 42, Login: "ana-renamed"}}
+
+	_, err := newUsecase(github, users, sessions).SignIn(context.Background(), "code", "")
+
+	require.ErrorIs(t, err, apperror.New(apperror.CodeSignInFailed, ""))
+	require.Empty(t, sessions.created)
+	require.Equal(t, "ana", users[42].Login)
+}

@@ -1,3 +1,10 @@
+{{define "password-form"}}<form class="login-form" method="post" action="/login">
+  <input type="hidden" name="next" value="{{.RawNext}}">
+  <div class="field"><label for="username">Username</label><input id="username" name="username" type="text" class="mono" required autocomplete="username" autocapitalize="none" spellcheck="false" autofocus></div>
+  <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" required autocomplete="current-password"></div>
+  <button class="btn btn-primary btn-wide">Sign in</button>
+</form>{{end}}
+
 {{define "layout"}}<!doctype html>
 <html lang="en">
 <head>{{template "head" .}}</head>
@@ -20,8 +27,13 @@
     <div class="card login-door">
       <span class="eyebrow">Ship your own</span>
       <h2>Sign in</h2>
+      {{if .Data.Passwords}}
+      <p>Ask the owner of this Kalzone for an invite link.</p>
+      {{template "password-form" .Data}}
+      {{else}}
       <p>Use your GitHub account. A team maintainer adds you to their team once you've signed in.</p>
       <a class="btn btn-github" href="/auth/github?next={{.Data.Next}}">{{icon "github"}}Continue with GitHub</a>
+      {{end}}
     </div>
     <p class="fine">Until someone adds you to a team, you see the Demo team.</p>
   </div>
@@ -31,8 +43,13 @@
     <h1>Welcome to Kalzone</h1>
     <p class="lead">Your services, teams and environments in one place.</p>
     {{with .Data.Error}}<div class="alert alert-danger">{{icon "alert"}}<span>{{.}}</span></div>{{end}}
+    {{if .Data.Passwords}}
+    {{template "password-form" .Data}}
+    <p class="fine">Ask the owner of this Kalzone for an invite link.</p>
+    {{else}}
     <a class="btn btn-github" href="/auth/github?next={{.Data.Next}}">{{icon "github"}}Continue with GitHub</a>
     <p class="fine">You see the services of the teams you belong to.<br>A team maintainer adds you once you have signed in.</p>
+    {{end}}
   </div>
   {{end}}
 </div>

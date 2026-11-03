@@ -13,7 +13,7 @@ var scopeOf = map[Action]scope.Scope{
 	CreateService: scope.Services, EditService: scope.Services, EditQueue: scope.Services, EditDatabase: scope.Services, EditCron: scope.Services,
 	DeleteService: scope.ServicesAdmin, TransferService: scope.ServicesAdmin, AdoptDatabase: scope.ServicesAdmin,
 	CreateRelease: scope.Builds, EditConfig: scope.Config, EditSecrets: scope.Secrets, Deploy: scope.Deploy, ReadLogs: scope.Logs,
-	ManageMembers: scope.TeamsAdmin, ManageTeams: scope.TeamsAdmin, ManageTokens: scope.TokensAdmin,
+	ManageMembers: scope.TeamsAdmin, ManageInvites: scope.TeamsAdmin, ManageTeams: scope.TeamsAdmin, ManageTokens: scope.TokensAdmin,
 }
 
 var protectable = map[Action]bool{EditConfig: true, EditSecrets: true, EditQueue: true, EditDatabase: true, EditCron: true, Deploy: true}

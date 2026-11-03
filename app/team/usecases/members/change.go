@@ -25,6 +25,9 @@ func (u MembersUsecase) Put(ctx context.Context, a actor.Actor, teamSlug, login 
 	if err != nil {
 		return entities.Member{}, err
 	}
+	if t.user.Disabled {
+		return entities.Member{}, errRemovedPerson
+	}
 	if err := u.guardLastMaintainer(ctx, a, t, role); err != nil {
 		return entities.Member{}, err
 	}

@@ -6,10 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/klzn-labs/kalzone/app/identity/entities"
-	"github.com/klzn-labs/kalzone/app/identity/handlers/guard"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
 	"github.com/klzn-labs/kalzone/internal/ratelimit"
-	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/klzn-labs/kalzone/pkg/config"
 )
 
@@ -37,7 +35,7 @@ func (h DemoHandler) Enter(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "/login?error=demo")
 		return
 	}
-	setCookie(c, h.secure, guard.SessionCookie, issued.Token, int(issued.ExpiresAt.Sub(clock.Now()).Seconds()))
+	SetSessionCookie(c, h.secure, issued)
 	c.Redirect(http.StatusSeeOther, "/")
 }
 

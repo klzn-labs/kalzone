@@ -14,6 +14,9 @@ var publicRoutes = map[string]bool{
 	"GET /metrics":              true,
 	"GET /auth/github":          true,
 	"GET /auth/github/callback": true,
+	"GET /join/:token":          true,
+	"POST /join/:token":         true,
+	"POST /login":               true,
 }
 
 var param = regexp.MustCompile(`:[a-z]+`)

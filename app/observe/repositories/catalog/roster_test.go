@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"testing"
+	"time"
 
 	identity "github.com/klzn-labs/kalzone/app/identity/entities"
 	"github.com/klzn-labs/kalzone/app/observe/entities"
@@ -37,4 +38,15 @@ func Test_Roster_NamesTeamMembersAndWhoIsOnARealTeam(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []entities.OrgTeam{{ID: "t1", Slug: "places", Members: []string{"bob"}}, {ID: "d1", Slug: "demo-shop", Demo: true, Members: []string{"guest.demo"}}}, orgTeams)
 	require.Equal(t, []entities.Person{{Login: "bob", OnTeam: true}, {Login: "guest.demo"}, {Login: "root", Admin: true}}, people)
+}
+
+func Test_Roster_LeavesOutRemovedPeople(t *testing.T) {
+	removedAt := time.Date(2026, 11, 3, 9, 0, 0, 0, time.UTC)
+	users := userList{{ID: "u1", Login: "bob", Kind: identity.KindPerson}, {ID: "u2", Login: "gone", Kind: identity.KindPerson, DisabledAt: &removedAt}}
+
+	orgTeams, people, err := catalog.NewRoster(teamList{{ID: "t1", Slug: "places"}}, members{"t1": {"u1", "u2"}}, users).Roster(context.Background())
+
+	require.NoError(t, err)
+	require.Equal(t, []entities.OrgTeam{{ID: "t1", Slug: "places", Members: []string{"bob"}}}, orgTeams)
+	require.Equal(t, []entities.Person{{Login: "bob", OnTeam: true}}, people)
 }

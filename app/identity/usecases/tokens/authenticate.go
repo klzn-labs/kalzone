@@ -32,7 +32,7 @@ func (u TokensUsecase) Authenticate(ctx context.Context, raw, ip string) (entiti
 
 func (u TokensUsecase) owned(ctx context.Context, t entities.AccessToken) (entities.TokenAuthenticated, error) {
 	user, err := u.users.FindByID(ctx, t.OwnerID)
-	if err != nil {
+	if err != nil || user.Disabled() {
 		return entities.TokenAuthenticated{}, entities.ErrTokenInvalid
 	}
 	teams, err := u.scope.VisibleTeamIDs(ctx, user.ID)

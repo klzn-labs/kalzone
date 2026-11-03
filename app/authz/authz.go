@@ -24,6 +24,8 @@ const (
 	CreateRelease   Action = "release.create"
 	Deploy          Action = "deploy"
 	ManageMembers   Action = "team.members"
+	ManageInvites   Action = "team.invites"
+	ManagePeople    Action = "people.manage"
 	ManageTeams     Action = "teams.manage"
 	ManageAdmins    Action = "admins.manage"
 	ManageTokens    Action = "tokens.manage"
@@ -149,7 +151,7 @@ func (p Policy) requiredRole(ctx context.Context, action Action, r Resource) (Ro
 	switch action {
 	case CreateService, EditService, CreateRelease, ReadLogs:
 		return RoleMember, nil
-	case DeleteService, TransferService, ManageMembers, ApproveRequest:
+	case DeleteService, TransferService, ManageMembers, ManageInvites, ApproveRequest:
 		return RoleMaintainer, nil
 	case EditConfig, EditSecrets, EditQueue, EditDatabase, EditCron, Deploy:
 		return p.roleForEnvironment(ctx, r.Environment)

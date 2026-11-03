@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -50,21 +51,30 @@ func (c *Client) UseToken(token string) {
 
 func (s *Suite) SignIn(t *testing.T, login string) *Client {
 	t.Helper()
-	s.nextID++
+	c, callback := s.TrySignIn(t, login)
+	require.Equal(t, http.StatusSeeOther, callback.Status, callback.Body)
+	require.Equal(t, "/", callback.Location)
+	c.LoadCSRF(t)
+	return c
+}
+
+func (s *Suite) TrySignIn(t *testing.T, login string) (*Client, Response) {
+	t.Helper()
 	code := "code-" + login
-	s.GitHub.WillSignIn(code, fakegithub.User{ID: s.nextID, Login: login, Name: strings.ToUpper(login), AvatarURL: ""})
+	s.GitHub.WillSignIn(code, fakegithub.User{ID: s.githubID(login), Login: login, Name: strings.ToUpper(login), AvatarURL: ""})
 	c := s.Anonymous(t)
 	start := c.Do(t, http.MethodGet, "/auth/github", nil)
 	state := queryParam(t, start.Location, "state")
-	callback := c.Do(t, http.MethodGet, "/auth/github/callback?code="+code+"&state="+state, nil)
-	require.Equal(t, http.StatusSeeOther, callback.Status, callback.Body)
-	require.Equal(t, "/", callback.Location)
-	var me struct {
-		CSRFToken string `json:"csrf_token"`
+	return c, c.Do(t, http.MethodGet, "/auth/github/callback?code="+code+"&state="+state, nil)
+}
+
+func (s *Suite) githubID(login string) int64 {
+	if id, ok := s.githubIDs[login]; ok {
+		return id
 	}
-	c.MustJSON(t, http.MethodGet, "/api/v1/me", nil, http.StatusOK, &me)
-	c.CSRFToken = me.CSRFToken
-	return c
+	s.nextID++
+	s.githubIDs[login] = s.nextID
+	return s.nextID
 }
 
 func (s *Suite) Guest(t *testing.T) *Client {
@@ -73,12 +83,36 @@ func (s *Suite) Guest(t *testing.T) *Client {
 	entered := c.Do(t, http.MethodPost, "/demo", nil)
 	require.Equal(t, http.StatusSeeOther, entered.Status, entered.Body)
 	require.Equal(t, "/", entered.Location)
+	c.LoadCSRF(t)
+	return c
+}
+
+func (c *Client) LoadCSRF(t *testing.T) {
+	t.Helper()
 	var me struct {
 		CSRFToken string `json:"csrf_token"`
 	}
 	c.MustJSON(t, http.MethodGet, "/api/v1/me", nil, http.StatusOK, &me)
 	c.CSRFToken = me.CSRFToken
+}
+
+func (s *Suite) SignInWithPassword(t *testing.T, login, password string) *Client {
+	t.Helper()
+	c := s.Anonymous(t)
+	signedIn := c.Form(t, "/login", url.Values{"username": {login}, "password": {password}})
+	require.Equal(t, http.StatusSeeOther, signedIn.Status, signedIn.Body)
+	require.Equal(t, "/", signedIn.Location)
+	c.LoadCSRF(t)
 	return c
+}
+
+var setupLine = regexp.MustCompile(`WARN setup: open (\S+) to create the owner`)
+
+func (s *Suite) SetupLink(t *testing.T) string {
+	t.Helper()
+	found := setupLine.FindAllStringSubmatch(s.Logs.String(), -1)
+	require.NotEmpty(t, found, "no setup link in the logs: %s", s.Logs.String())
+	return found[len(found)-1][1]
 }
 
 func queryParam(t *testing.T, raw, name string) string {
@@ -134,15 +168,33 @@ func (c *Client) MustJSON(t *testing.T, method, path string, body any, status in
 
 func (c *Client) Form(t *testing.T, path string, values url.Values) Response {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodPost, c.suite.Server.URL+path, strings.NewReader(values.Encode()))
+	return c.FormWith(t, path, values, nil)
+}
+
+func (c *Client) FormWith(t *testing.T, path string, values url.Values, headers map[string]string) Response {
+	t.Helper()
+	resp, err := c.TryForm(path, values, headers)
 	require.NoError(t, err)
+	return resp
+}
+
+func (c *Client) TryForm(path string, values url.Values, headers map[string]string) (Response, error) {
+	req, err := http.NewRequest(http.MethodPost, c.suite.Server.URL+path, strings.NewReader(values.Encode()))
+	if err != nil {
+		return Response{}, err
+	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("HX-Request", "true")
+	for name, value := range headers {
+		req.Header.Set(name, value)
+	}
 	resp, err := c.http.Do(req)
-	require.NoError(t, err)
+	if err != nil {
+		return Response{}, err
+	}
 	defer resp.Body.Close()
-	raw, _ := io.ReadAll(resp.Body)
-	return Response{Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location"), CacheControl: resp.Header.Get("Cache-Control")}
+	raw, err := io.ReadAll(resp.Body)
+	return Response{Status: resp.StatusCode, Body: string(raw), Location: resp.Header.Get("Location"), CacheControl: resp.Header.Get("Cache-Control")}, err
 }
 
 func encode(t *testing.T, body any) io.Reader {

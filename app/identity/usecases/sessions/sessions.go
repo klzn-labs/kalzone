@@ -56,7 +56,7 @@ func (u SessionsUsecase) Authenticate(ctx context.Context, token string) (entiti
 		return entities.Authenticated{}, err
 	}
 	user, err := u.users.FindByID(ctx, session.UserID)
-	if err != nil {
+	if err != nil || user.Disabled() {
 		return entities.Authenticated{}, errUnauthenticated
 	}
 	if err := u.renewIfDue(ctx, session, user, now); err != nil {

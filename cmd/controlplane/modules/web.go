@@ -15,6 +15,7 @@ import (
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/deployments"
 	"github.com/klzn-labs/kalzone/app/deploy/usecases/platform"
 	"github.com/klzn-labs/kalzone/app/envconfig/usecases/configs"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/accounts"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/tokens"
 	"github.com/klzn-labs/kalzone/app/identity/usecases/users"
 	"github.com/klzn-labs/kalzone/app/observe/repositories/grafana"
@@ -138,6 +139,8 @@ func teamPageInjections() fx.Option {
 		func(u services.ServicesUsecase) teamPage.Services { return u },
 		func(u users.UsersUsecase) peoplePage.Users { return u },
 		func(u users.UsersUsecase) teamPage.Users { return u },
+		func(u accounts.PeopleUsecase) peoplePage.People { return u },
+		func(u accounts.InvitesUsecase) teamPage.Invites { return u },
 	)
 }
 

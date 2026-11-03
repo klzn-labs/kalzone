@@ -1,7 +1,10 @@
 package httpserver_test
 
 import (
+	"bytes"
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -27,4 +30,20 @@ func Test_Run_ClosesTheDrainWhenTheServerStops(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NoError(t, ctx.Err())
+}
+
+func Test_TheRequestLogHidesLinkTokens(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	var logged bytes.Buffer
+	previous := gin.DefaultWriter
+	gin.DefaultWriter = &logged
+	t.Cleanup(func() { gin.DefaultWriter = previous })
+	engine := httpserver.NewEngine()
+
+	engine.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/join/s3cret-token?x=1", nil))
+	engine.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/login", nil))
+
+	require.NotContains(t, logged.String(), "s3cret-token")
+	require.Contains(t, logged.String(), "/join/[redacted]")
+	require.Contains(t, logged.String(), `"/login"`)
 }

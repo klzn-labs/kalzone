@@ -70,6 +70,8 @@ var matrix = []rule{
 	{authz.DeleteService, "", []string{"maintainer", "admin"}},
 	{authz.TransferService, "", []string{"maintainer", "admin"}},
 	{authz.ManageMembers, "", []string{"maintainer", "admin"}},
+	{authz.ManageInvites, "", []string{"maintainer", "admin"}},
+	{authz.ManagePeople, "", []string{"admin"}},
 	{authz.ManageTeams, "", []string{"admin"}},
 	{authz.ManageAdmins, "", []string{"admin"}},
 	{authz.ApproveRequest, "", []string{"maintainer", "admin"}},
