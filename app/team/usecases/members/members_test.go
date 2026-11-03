@@ -62,7 +62,7 @@ func (teams) FindBySlug(_ context.Context, slug string) (entities.Team, error) {
 type users struct{}
 
 func (users) FindByLogin(_ context.Context, login string) (entities.UserRef, error) {
-	return entities.UserRef{ID: login, Login: login}, nil
+	return entities.UserRef{ID: login, Login: login, Disabled: login == "gone"}, nil
 }
 
 func (users) FindByIDs(_ context.Context, ids []string) ([]entities.UserRef, error) {
@@ -173,4 +173,15 @@ func Test_AnAdminsTokenCannotRemoveTheLastMaintainer(t *testing.T) {
 	err := usecase.Remove(ctx, adminToken, "places", "mia")
 
 	require.ErrorIs(t, err, apperror.New(apperror.CodeLastMaintainer, ""))
+}
+
+func Test_Put_RefusesARemovedPerson(t *testing.T) {
+	s, p, usecase := setup(map[string]entities.Role{}, nil)
+
+	_, err := usecase.Put(ctx, admin, "places", "gone", entities.RoleMember)
+
+	require.ErrorIs(t, err, apperror.Conflict(""))
+	require.EqualError(t, err, "this person was removed")
+	require.Empty(t, s.roles)
+	require.Empty(t, p.events)
 }

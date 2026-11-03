@@ -38,5 +38,5 @@ func (d Directory) FindByIDs(ctx context.Context, ids []string) ([]entities.User
 }
 
 func toRef(u identity.User) entities.UserRef {
-	return entities.UserRef{ID: u.ID, Login: u.Login, Name: u.Name, AvatarURL: u.AvatarURL}
+	return entities.UserRef{ID: u.ID, Login: u.Login, Name: u.Name, AvatarURL: u.AvatarURL, Disabled: u.Disabled()}
 }

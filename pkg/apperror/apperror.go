@@ -24,6 +24,7 @@ const (
 	CodeApprovalRequired Code = "err_approval_required"
 	CodeStale            Code = "err_stale"
 	CodeMediaType        Code = "err_unsupported_media_type"
+	CodeGitHubMode       Code = "err_github_mode"
 )
 
 type AppError struct {

@@ -64,7 +64,11 @@ func (fakeUsers) FindByID(_ context.Context, id string) (entities.User, error) {
 	if id == demo.GuestID {
 		return entities.User{ID: id, Kind: entities.KindGuest, Login: demo.GuestLogin}, nil
 	}
-	return entities.User{ID: id, Login: "ana", Admin: true}, nil
+	user := entities.User{ID: id, Login: "ana", Admin: true}
+	if id == "u-gone" {
+		user.DisabledAt = &now
+	}
+	return user, nil
 }
 
 type fakeTeams struct{}
@@ -166,4 +170,13 @@ func Test_Sweep_RemovesExpiredSessions(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, swept)
 	require.Empty(t, store.byHash)
+}
+
+func Test_Authenticate_RefusesASessionOfADisabledUser(t *testing.T) {
+	store, usecase := setup(72 * time.Hour)
+	store.byHash[entities.HashToken("gone")] = entities.Session{TokenHash: entities.HashToken("gone"), UserID: "u-gone", ExpiresAt: now.Add(time.Hour)}
+
+	_, err := usecase.Authenticate(context.Background(), "gone")
+
+	require.ErrorIs(t, err, apperror.New(apperror.CodeUnauthenticated, ""))
 }

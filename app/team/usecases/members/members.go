@@ -39,6 +39,7 @@ var (
 	errInvalidRole    = apperror.Invalid("role must be member or maintainer")
 	errLastMaintainer = apperror.New(apperror.CodeLastMaintainer, "a team needs at least one maintainer, promote someone else first")
 	errNotAMember     = apperror.NotFound("this user is not a member of the team")
+	errRemovedPerson  = apperror.Conflict("this person was removed")
 	errTeamNotVisible = apperror.NotFound("team not found").WithHint("list teams with GET /api/v1/teams")
 )
 

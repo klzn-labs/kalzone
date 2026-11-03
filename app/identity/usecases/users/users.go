@@ -6,8 +6,11 @@ import (
 	"github.com/klzn-labs/kalzone/app/authz"
 	"github.com/klzn-labs/kalzone/app/identity/entities"
 	"github.com/klzn-labs/kalzone/pkg/actor"
+	"github.com/klzn-labs/kalzone/pkg/apperror"
 	"github.com/klzn-labs/kalzone/pkg/events"
 )
+
+var errRemovedPerson = apperror.Conflict("this person was removed")
 
 type UserStore interface {
 	List(ctx context.Context) ([]entities.User, error)
@@ -61,6 +64,9 @@ func (u UsersUsecase) SetAdmin(ctx context.Context, a actor.Actor, login string,
 	user, err := u.users.FindByLogin(ctx, login)
 	if err != nil {
 		return entities.User{}, err
+	}
+	if user.Disabled() {
+		return entities.User{}, errRemovedPerson
 	}
 	user.Admin = admin
 	if err := u.users.Save(ctx, user); err != nil {

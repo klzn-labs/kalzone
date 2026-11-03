@@ -72,7 +72,7 @@ func loginsOf(ids []string, people map[string]*entities.Person, real bool) []str
 func peopleByID(users []identity.User) map[string]*entities.Person {
 	people := map[string]*entities.Person{}
 	for _, u := range users {
-		if u.Kind == identity.KindPersona {
+		if u.Kind == identity.KindPersona || u.Disabled() {
 			continue
 		}
 		people[u.ID] = &entities.Person{Login: u.Login, Name: u.Name, Admin: u.Admin}

@@ -89,7 +89,11 @@ func (s *store) Touch(_ context.Context, id string, at time.Time, ip string) err
 type users struct{}
 
 func (users) FindByID(_ context.Context, id string) (entities.User, error) {
-	return entities.User{ID: id, Login: id[2:]}, nil
+	user := entities.User{ID: id, Login: id[2:]}
+	if user.Login == "gone" {
+		user.DisabledAt = &now
+	}
+	return user, nil
 }
 
 type teams map[string]string

@@ -81,6 +81,9 @@ func (u SignInUsecase) upsert(ctx context.Context, g entities.GitHubUser) (entit
 	if err != nil {
 		return entities.User{}, err
 	}
+	if user.Disabled() {
+		return entities.User{}, errSignInFailed
+	}
 	user.Login, user.Name, user.AvatarURL, user.LastLoginAt = g.Login, g.Name, g.AvatarURL, now
 	user.Admin = user.Admin || u.admins[strings.ToLower(g.Login)]
 	return user, u.users.Save(ctx, user)

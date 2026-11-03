@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/klzn-labs/kalzone/app/identity/entities"
+	"github.com/klzn-labs/kalzone/pkg/actor"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/stretchr/testify/require"
 )
@@ -74,4 +75,17 @@ func Test_ActorOf_RebuildsTheTokensActorWhileItIsValid(t *testing.T) {
 	require.Equal(t, issued.Token.ID, a.Token.ID)
 	require.ErrorIs(t, gone, entities.ErrTokenRevoked)
 	require.ErrorIs(t, late, entities.ErrTokenExpired)
+}
+
+func Test_Authenticate_RefusesATokenOfADisabledOwner(t *testing.T) {
+	f := newFixture()
+	gone := actor.Actor{UserID: "u-gone", Login: "gone"}
+	issued, err := f.usecase.Create(ctx, gone, draftOf("read"))
+	require.NoError(t, err)
+
+	_, authErr := f.usecase.Authenticate(ctx, issued.Secret, "10.0.0.1")
+	_, actorErr := f.usecase.ActorOf(ctx, issued.Token.ID)
+
+	require.ErrorIs(t, authErr, entities.ErrTokenInvalid)
+	require.ErrorIs(t, actorErr, entities.ErrTokenInvalid)
 }

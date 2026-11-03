@@ -26,6 +26,7 @@ var statuses = map[apperror.Code]int{
 	apperror.CodeApprovalRequired: http.StatusForbidden,
 	apperror.CodeStale:            http.StatusConflict,
 	apperror.CodeMediaType:        http.StatusUnsupportedMediaType,
+	apperror.CodeGitHubMode:       http.StatusConflict,
 	apperror.CodeTokenInvalid:     http.StatusUnauthorized,
 	apperror.CodeTokenExpired:     http.StatusUnauthorized,
 	apperror.CodeTokenRevoked:     http.StatusUnauthorized,

@@ -37,6 +37,7 @@ type UserRef struct {
 	Login     string
 	Name      string
 	AvatarURL string
+	Disabled  bool
 }
 
 type Member struct {
