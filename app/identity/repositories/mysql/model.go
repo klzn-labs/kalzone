@@ -7,15 +7,17 @@ import (
 )
 
 type user struct {
-	ID          string `gorm:"primaryKey"`
-	GitHubID    *int64 `gorm:"column:github_id"`
-	Kind        string
-	Login       string
-	Name        string
-	AvatarURL   string
-	IsAdmin     bool
-	CreatedAt   time.Time
-	LastLoginAt time.Time
+	ID           string `gorm:"primaryKey"`
+	GitHubID     *int64 `gorm:"column:github_id"`
+	Kind         string
+	Login        string
+	Name         string
+	AvatarURL    string
+	IsAdmin      bool
+	CreatedAt    time.Time
+	LastLoginAt  time.Time
+	PasswordHash *string
+	DisabledAt   *time.Time
 }
 
 func (user) TableName() string { return "users" }
@@ -24,6 +26,7 @@ func (u user) toEntity() entities.User {
 	return entities.User{
 		ID: u.ID, GitHubID: valueOf(u.GitHubID), Kind: entities.Kind(u.Kind), Login: u.Login, Name: u.Name,
 		AvatarURL: u.AvatarURL, Admin: u.IsAdmin, CreatedAt: u.CreatedAt, LastLoginAt: u.LastLoginAt,
+		PasswordHash: stringValue(u.PasswordHash), DisabledAt: u.DisabledAt,
 	}
 }
 
@@ -52,7 +55,22 @@ func fromUser(u entities.User) user {
 	return user{
 		ID: u.ID, GitHubID: pointerOf(u.GitHubID), Kind: kindOf(u.Kind), Login: u.Login, Name: u.Name,
 		AvatarURL: u.AvatarURL, IsAdmin: u.Admin, CreatedAt: u.CreatedAt, LastLoginAt: u.LastLoginAt,
+		PasswordHash: stringPointer(u.PasswordHash), DisabledAt: u.DisabledAt,
 	}
+}
+
+func stringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func stringPointer(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 type session struct {

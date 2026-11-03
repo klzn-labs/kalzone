@@ -11,15 +11,17 @@ const (
 )
 
 type User struct {
-	ID          string
-	GitHubID    int64
-	Kind        Kind
-	Login       string
-	Name        string
-	AvatarURL   string
-	Admin       bool
-	CreatedAt   time.Time
-	LastLoginAt time.Time
+	ID           string
+	GitHubID     int64
+	Kind         Kind
+	Login        string
+	Name         string
+	AvatarURL    string
+	Admin        bool
+	CreatedAt    time.Time
+	LastLoginAt  time.Time
+	PasswordHash string
+	DisabledAt   *time.Time
 }
 
 func (u User) Guest() bool {
@@ -45,4 +47,19 @@ type IssuedSession struct {
 	Token     string
 	CSRFToken string
 	ExpiresAt time.Time
+}
+
+func (u User) Disabled() bool {
+	return u.DisabledAt != nil
+}
+
+func (u User) Local() bool {
+	return u.PasswordHash != ""
+}
+
+type NewTeam struct {
+	ID        string
+	Slug      string
+	Name      string
+	CreatedAt time.Time
 }

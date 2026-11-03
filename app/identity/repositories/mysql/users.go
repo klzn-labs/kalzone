@@ -20,7 +20,7 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r UserRepository) Save(ctx context.Context, u entities.User) error {
-	return r.db.WithContext(ctx).Save(fromUser(u)).Error
+	return r.db.WithContext(ctx).Omit("password_hash", "disabled_at").Save(fromUser(u)).Error
 }
 
 func (r UserRepository) FindByGitHubID(ctx context.Context, githubID int64) (entities.User, error) {
@@ -62,4 +62,8 @@ func (r UserRepository) findMany(_ context.Context, tx *gorm.DB) ([]entities.Use
 		users = append(users, m.toEntity())
 	}
 	return users, nil
+}
+
+func (r UserRepository) SetPassword(ctx context.Context, userID, hash string) error {
+	return r.db.WithContext(ctx).Model(&user{}).Where("id = ?", userID).Update("password_hash", hash).Error
 }
