@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/klzn-labs/kalzone/app/identity/entities"
 	"github.com/klzn-labs/kalzone/app/identity/handlers/guard"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/accounts"
 	"github.com/klzn-labs/kalzone/internal/httpserver"
 	"github.com/klzn-labs/kalzone/pkg/clock"
 	"github.com/klzn-labs/kalzone/pkg/config"
@@ -38,27 +39,36 @@ type AuthHandler struct {
 	signOuter   SignOuter
 	redirectURI string
 	secure      bool
+	passwords   bool
 }
 
-func NewAuthHandler(cfg config.Config, starter SignInStarter, signIner SignIner, signOuter SignOuter) AuthHandler {
+func NewAuthHandler(cfg config.Config, mode accounts.Mode, starter SignInStarter, signIner SignIner, signOuter SignOuter) AuthHandler {
 	return AuthHandler{
-		starter: starter, signIner: signIner, signOuter: signOuter,
+		starter: starter, signIner: signIner, signOuter: signOuter, passwords: !mode.GitHub,
 		redirectURI: strings.TrimRight(cfg.BaseURL, "/") + callbackPath, secure: cfg.SecureCookies(),
 	}
 }
 
 func (h AuthHandler) Start(c *gin.Context) {
+	if h.passwords {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	state, err := entities.NewToken()
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	h.setCookie(c, stateCookie, state, stateMaxAge)
-	h.setCookie(c, nextCookie, safeNext(c.Query("next")), stateMaxAge)
+	h.setCookie(c, nextCookie, SafeNext(c.Query("next")), stateMaxAge)
 	c.Redirect(http.StatusFound, h.starter.AuthorizeURL(state, h.redirectURI))
 }
 
 func (h AuthHandler) Callback(c *gin.Context) {
+	if h.passwords {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	expected, _ := c.Cookie(stateCookie)
 	next, _ := c.Cookie(nextCookie)
 	h.setCookie(c, stateCookie, "", -1)
@@ -72,8 +82,8 @@ func (h AuthHandler) Callback(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "/login?error=github")
 		return
 	}
-	h.setCookie(c, guard.SessionCookie, issued.Token, int(issued.ExpiresAt.Sub(clock.Now()).Seconds()))
-	c.Redirect(http.StatusSeeOther, safeNext(next))
+	SetSessionCookie(c, h.secure, issued)
+	c.Redirect(http.StatusSeeOther, SafeNext(next))
 }
 
 func (h AuthHandler) Logout(c *gin.Context) {
@@ -92,12 +102,16 @@ func (h AuthHandler) setCookie(c *gin.Context, name, value string, maxAge int) {
 	setCookie(c, h.secure, name, value, maxAge)
 }
 
+func SetSessionCookie(c *gin.Context, secure bool, issued entities.IssuedSession) {
+	setCookie(c, secure, guard.SessionCookie, issued.Token, int(issued.ExpiresAt.Sub(clock.Now()).Seconds()))
+}
+
 func setCookie(c *gin.Context, secure bool, name, value string, maxAge int) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(name, value, maxAge, "/", "", secure, true)
 }
 
-func safeNext(next string) string {
+func SafeNext(next string) string {
 	if !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") || strings.HasPrefix(next, "/\\") {
 		return "/"
 	}

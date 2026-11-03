@@ -46,21 +46,59 @@ Needs Go 1.26 and a MySQL 8 server.
 ```
 docker run -d --name platform-mysql -e MYSQL_ROOT_PASSWORD=test -p 3306:3306 mysql:8
 docker exec platform-mysql mysql -uroot -ptest -e "CREATE DATABASE platform"
-PLATFORM_GITHUB_CLIENT_ID=... PLATFORM_GITHUB_CLIENT_SECRET=... PLATFORM_ADMINS=your-login make run
+make run
 ```
 
-Open http://localhost:8080. The GitHub App needs `http://localhost:8080/auth/github/callback`
-as a callback URL.
+Open the setup link the control plane logs on its first start and create the owner.
+
+## Sign-in modes
+
+An instance signs people in one way, chosen at start:
+
+- **Password mode**, when `PLATFORM_GITHUB_CLIENT_ID` or `PLATFORM_GITHUB_CLIENT_SECRET`
+  is empty. People sign in with a username and password. While nobody has an account,
+  every start logs a one-time setup link (24 hours):
+  `WARN setup: open <base>/join/<token> to create the owner`. The owner becomes an
+  admin, maintainer of the `default` team, and gets an `agent` token with the
+  `claude mcp add` command. Admins and team maintainers bring others in with invite
+  links (7 days) from the team page or the `createInvite` operation; admins make
+  password reset links (24 hours) and remove people on the People page. Each link
+  works once.
+- **GitHub mode**, when both are set. People sign in with GitHub as before, and every
+  password feature is off: no password form, no setup link, `/join/…` answers 404, and
+  the invite and reset operations answer `409 err_github_mode`. `PLATFORM_ADMINS`
+  applies only here. The GitHub App needs `http://localhost:8080/auth/github/callback`
+  as a callback URL:
+
+  ```
+  PLATFORM_GITHUB_CLIENT_ID=... PLATFORM_GITHUB_CLIENT_SECRET=... PLATFORM_ADMINS=your-login make run
+  ```
+
+Switching an instance from one mode to the other is not supported. Password users keep
+their rows but cannot sign in once GitHub is configured, and GitHub users cannot sign in
+once it is removed.
+
+On the host, the same binary prints links without starting the server:
+
+```
+controlplane setup-link
+controlplane setup-link --reset <login>
+```
+
+The first prints a new setup link while there is no owner and refuses once there is.
+The second prints a password reset link for that person at any time, which is how a
+locked-out owner gets back in. Both print the URL on stdout, or the reason on stderr
+with exit status 1, and refuse in GitHub mode.
 
 ## Configuration
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `PLATFORM_HTTP_ADDR` | `:8080` | listen address |
-| `PLATFORM_BASE_URL` | `http://localhost:8080` | public URL, used for the OAuth callback and secure cookies |
+| `PLATFORM_BASE_URL` | `http://localhost:8080` | public URL, used for the OAuth callback, setup, invite and reset links, and secure cookies |
 | `PLATFORM_DB_DSN` | `root:test@tcp(127.0.0.1:3306)/platform` | MySQL DSN |
-| `PLATFORM_GITHUB_CLIENT_ID` / `_SECRET` | | GitHub App user-auth credentials |
-| `PLATFORM_ADMINS` | | comma-separated GitHub logins that are always admin |
+| `PLATFORM_GITHUB_CLIENT_ID` / `_SECRET` | | GitHub App user-auth credentials; when both are set the instance is in GitHub mode, otherwise in password mode |
+| `PLATFORM_ADMINS` | | comma-separated GitHub logins that are always admin; GitHub mode only |
 | `PLATFORM_SECRETS_KEY` | a development key | base64 of 32 random bytes: `openssl rand -base64 32` |
 | `PLATFORM_SECRETS_KEY_ID` | `k1` | stored next to each ciphertext for key rotation |
 | `PLATFORM_ALLOWED_DOMAINS` | `localhost` | hosts a service may claim must end with one of these |

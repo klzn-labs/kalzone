@@ -121,7 +121,7 @@ func concrete(path string) string {
 }
 
 func notGuarded(path string) bool {
-	for _, prefix := range []string{"/logout", "/demo", "/agent/", "/queued/", "/grafana/", "/telemetry/", "/webhooks/", "/mcp", "/api/v1/releases/:id/"} {
+	for _, prefix := range []string{"/logout", "/login", "/join/", "/demo", "/agent/", "/queued/", "/grafana/", "/telemetry/", "/webhooks/", "/mcp", "/api/v1/releases/:id/"} {
 		if strings.HasPrefix(path, prefix) {
 			return true
 		}

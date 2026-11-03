@@ -1,0 +1,14 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+<div class="login-page">
+  <div class="card login-card join-card">
+    <span class="brand-mark">{{icon "logo"}}</span>
+    <h1>Open Kalzone at its own address</h1>
+    <p class="lead">This form was sent from a different address than the one this Kalzone is set up for, so it was refused.</p>
+    <p>Open the link at <a class="mono" href="{{.Data.BaseURL}}">{{.Data.BaseURL}}</a> and try again.</p>
+  </div>
+</div>
+</body>
+</html>{{end}}

@@ -1,11 +1,13 @@
 package integration
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"log"
 	"net"
 	"net/http/httptest"
 	"strconv"
@@ -16,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	driver "github.com/go-sql-driver/mysql"
 	"github.com/klzn-labs/kalzone/app/demo/usecases/seed"
+	"github.com/klzn-labs/kalzone/app/identity/usecases/accounts"
 	"github.com/klzn-labs/kalzone/app/release/repositories/registry"
 	"github.com/klzn-labs/kalzone/cmd/controlplane/options"
 	"github.com/klzn-labs/kalzone/internal/apispec"
@@ -57,13 +60,37 @@ type Suite struct {
 	Engine      *gin.Engine
 	Catalog     *apispec.Catalog
 	Drain       *wait.Drain
+	Accounts    accounts.SetupUsecase
+	Logs        *Logs
 	demo        seed.SeedUsecase
 	db          *gorm.DB
 	contract    *contract
 	nextID      int64
+	githubIDs   map[string]int64
 }
 
 type Option func(*config.Config)
+
+type Logs struct {
+	mu      sync.Mutex
+	written bytes.Buffer
+}
+
+func (l *Logs) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.written.Write(p)
+}
+
+func (l *Logs) String() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.written.String()
+}
+
+func WithPasswordMode(cfg *config.Config) {
+	cfg.GitHub.ClientID, cfg.GitHub.ClientSecret = "", ""
+}
 
 func WithDemo(cfg *config.Config) {
 	cfg.Demo.Enabled, cfg.Demo.Member = true, DemoMember
@@ -71,15 +98,22 @@ func WithDemo(cfg *config.Config) {
 
 func NewSuite(t *testing.T, tweaks ...Option) *Suite {
 	t.Helper()
+	return NewSuiteWith(t, fx.Options(), tweaks...)
+}
+
+func NewSuiteWith(t *testing.T, extra fx.Option, tweaks ...Option) *Suite {
+	t.Helper()
 	gin.SetMode(gin.TestMode)
 	testdb.Open(t)
-	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), Grafana: fakegrafana.New(), Pushgateway: fakepushgateway.New(), Telemetry: faketelemetry.New(), nextID: 1000}
+	s := &Suite{GitHub: fakegithub.New(), OIDC: fakeoidc.New(), Registry: fakeregistry.New(), Grafana: fakegrafana.New(), Pushgateway: fakepushgateway.New(), Telemetry: faketelemetry.New(), Logs: &Logs{}, nextID: 1000, githubIDs: map[string]int64{}}
 	app := fxtest.New(t,
 		options.Options(),
 		fx.WithLogger(func() fxevent.Logger { return fxevent.NopLogger }),
 		fx.Decorate(func(config.Config) config.Config { return withOptions(testConfig(t, s), tweaks) }),
 		fx.Decorate(func(registry.Resolver) registry.Resolver { return registry.WithBaseURL(s.Registry.URL) }),
-		fx.Populate(&s.Engine, &s.db, &s.Catalog, &s.Drain, &s.demo),
+		fx.Decorate(func(accounts.Logger) accounts.Logger { return log.New(s.Logs, "", 0) }),
+		fx.Populate(&s.Engine, &s.db, &s.Catalog, &s.Drain, &s.demo, &s.Accounts),
+		extra,
 	)
 	app.RequireStart()
 	s.contract = loadContract(t, s.Catalog)
@@ -188,4 +222,11 @@ func (s *Suite) Routes() []Route {
 		routes = append(routes, Route{Method: r.Method, Path: r.Path})
 	}
 	return routes
+}
+
+func (s *Suite) AuditDetails(t *testing.T) []string {
+	t.Helper()
+	var details []string
+	require.NoError(t, s.db.Table("audit_events").Order("at").Pluck("CAST(details AS CHAR)", &details).Error)
+	return details
 }

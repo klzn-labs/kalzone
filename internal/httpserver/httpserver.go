@@ -3,8 +3,10 @@ package httpserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +47,19 @@ func serve(server *http.Server) {
 }
 
 func requestLogger() gin.HandlerFunc {
-	return gin.LoggerWithConfig(gin.LoggerConfig{SkipPaths: []string{"/healthz", "/metrics"}})
+	return gin.LoggerWithConfig(gin.LoggerConfig{SkipPaths: []string{"/healthz", "/metrics"}, Formatter: logLine})
+}
+
+func logLine(p gin.LogFormatterParams) string {
+	return fmt.Sprintf("[GIN] %v | %3d | %13v | %15s | %-7s %#v\n%s",
+		p.TimeStamp.Format("2006/01/02 - 15:04:05"), p.StatusCode, p.Latency, p.ClientIP, p.Method, withoutLinkToken(p.Path), p.ErrorMessage)
+}
+
+func withoutLinkToken(path string) string {
+	if strings.HasPrefix(path, "/join/") {
+		return "/join/[redacted]"
+	}
+	return path
 }
 
 func securityHeaders() gin.HandlerFunc {

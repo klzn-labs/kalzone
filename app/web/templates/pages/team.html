@@ -55,7 +55,7 @@
     <form class="card-body" style="border-top:1px solid var(--border)" method="post" action="/teams/{{$slug}}/members" hx-post="/teams/{{$slug}}/members" hx-target="find .form-error">
       {{template "csrf" $csrf}}
       <div class="form-error"></div>
-      <div class="field"><label for="member-login">GitHub login</label><input id="member-login" name="login" type="text" class="mono" placeholder="Search people by login or name" list="member-logins" autocomplete="off" required><span class="hint">Type their handle, shown on their account once they sign in. Suggestions are people you share a team with.</span></div>
+      <div class="field"><label for="member-login">{{if $d.Passwords}}Username{{else}}GitHub login{{end}}</label><input id="member-login" name="login" type="text" class="mono" placeholder="Search people by login or name" list="member-logins" autocomplete="off" required><span class="hint">{{if $d.Passwords}}For someone who already has an account. Invite people who don't.{{else}}Type their handle, shown on their account once they sign in.{{end}} Suggestions are people you share a team with.</span></div>
       <datalist id="member-logins">{{range $d.People}}<option value="{{.Login}}">{{if .Name}}{{.Name}}{{end}}</option>{{end}}</datalist>
       <div class="form-inline" style="margin-top:12px">
         <div class="field"><label for="member-role">Role</label><select id="member-role" name="role"><option value="member">Member — edits dev</option><option value="maintainer">Maintainer — edits prod, manages team</option></select></div>
@@ -63,6 +63,32 @@
       </div>
     </form>
     {{end}}
+    {{if $d.CanInvite}}{{template "invites" dict "D" $d "CSRF" $csrf}}{{end}}
   </div>
+</div>
+{{end}}
+
+{{define "invites"}}{{$d := .D}}{{$csrf := .CSRF}}{{$slug := $d.Team.Slug}}
+<div class="card-body" style="border-top:1px solid var(--border)">
+  <h3>Invites</h3>
+  <p class="small muted">A one-time link that lets a new person choose a username and password and join this team. It works for 7 days.</p>
+  {{if $d.InviteURL}}<div class="alert alert-warn" style="margin:12px 0">{{icon "key"}}<span>Send this {{$d.InviteRole}} invite now, it is shown only once: <code class="mono">{{$d.InviteURL}}</code></span></div>{{end}}
+  {{if $d.Invites}}
+  <ul class="timeline">
+    {{range $d.Invites}}
+    <li>
+      <div class="what"><div class="line">{{template "role-badge" .Role}}</div><div class="small muted">by @{{if .CreatedByLogin}}{{.CreatedByLogin}}{{else}}unknown{{end}} · expires in <span title="{{date .ExpiresAt}}">{{left .ExpiresAt}}</span></div></div>
+      <form style="margin-left:auto" method="post" action="/teams/{{$slug}}/invites/{{.ID}}/revoke" hx-post="/teams/{{$slug}}/invites/{{.ID}}/revoke" hx-confirm="Revoke this invite? Its link stops working." hx-target="closest .card" hx-swap="afterbegin">
+        {{template "csrf" $csrf}}<button class="btn btn-ghost btn-sm">Revoke</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{end}}
+  <form class="form-inline" style="margin-top:12px" method="post" action="/teams/{{$slug}}/invites">
+    {{template "csrf" $csrf}}
+    <div class="field"><label for="invite-role">Role</label><select id="invite-role" name="role"><option value="member">Member — edits dev</option><option value="maintainer">Maintainer — edits prod, manages team</option></select></div>
+    <button class="btn btn-primary">{{icon "plus"}}Create invite link</button>
+  </form>
 </div>
 {{end}}

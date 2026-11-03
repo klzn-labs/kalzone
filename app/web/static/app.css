@@ -442,6 +442,11 @@ details.disclosure:not([open]) > summary .open-only { display: none; }
 .login-door-demo .btn-primary { --btn-bg: var(--accent); --btn-border: var(--accent); --btn-fg: #fff; }
 .login-door form { display: contents; }
 .btn-wide { width: 100%; height: 44px; font-size: 15px; justify-content: center; }
+.join-card { max-width: 440px; }
+.join-card form, .join-card .field, .login-form { text-align: left; }
+.join-card .field, .login-form .field { margin-bottom: 16px; }
+.join-card .field + .field, .login-form .field + .field { margin-top: 0; }
+.join-card .btn-wide, .login-form .btn-wide { margin-top: 8px; }
 .login-doors .fine { color: var(--muted); font-size: 12px; }
 
 .section-title { display: flex; align-items: center; justify-content: space-between; margin: 32px 0 12px; }

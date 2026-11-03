@@ -64,11 +64,19 @@ GitHub repo ── build (Actions) ── release ── deployment (release + c
 ```
 docker run -d --name platform-mysql -e MYSQL_ROOT_PASSWORD=test -p 3306:3306 mysql:8
 docker exec platform-mysql mysql -uroot -ptest -e "CREATE DATABASE platform"
-PLATFORM_GITHUB_CLIENT_ID=... PLATFORM_GITHUB_CLIENT_SECRET=... PLATFORM_ADMINS=your-login make run
+make run
 ```
 
-Needs Go 1.26. See [Development](docs/development.md) for the GitHub App and every
-setting.
+On its first start the control plane logs a one-time setup link,
+`WARN setup: open http://localhost:8080/join/… to create the owner`. Open it, pick a
+username and password, and the page hands you an agent token with the
+`claude mcp add` command to paste. The link lasts 24 hours; print a fresh one with
+`go run ./cmd/controlplane setup-link` (inside a container, `controlplane setup-link`).
+Set `PLATFORM_BASE_URL` to the address people open in their browser (for example
+`https://kalzone.example.com`): links are built from it, and forms sent from any other address are refused.
+
+Needs Go 1.26. To sign people in with GitHub instead, see
+[Development](docs/development.md) for the two sign-in modes and every setting.
 
 ## License
 
